@@ -116,7 +116,7 @@ const About = () => {
           <GlowOrb size="xl" color="plasma" className="top-0 left-1/2 -translate-x-1/2" />
           <ParticleField count={10} />
 
-          <div className="container mx-auto px-6 py-20 relative z-10">
+          <div className="container mx-auto px-6 pt-32 pb-20 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               {/* LEFT: 3D Spline Globe */}
               <motion.div

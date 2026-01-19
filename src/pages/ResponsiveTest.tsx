@@ -13,7 +13,7 @@ const ResponsiveTest = () => {
             <FloatingNavbar />
 
             {/* Hero Section - Full Viewport */}
-            <section className="min-h-screen flex items-center justify-center section-padding">
+            <section className="min-h-screen flex items-center justify-center section-padding pt-28 md:pt-32">
                 <AnimatedSection animation="fadeInUp">
                     <div className="text-center">
                         <h1 className="text-responsive-5xl font-bold mb-6 text-gradient-metal">

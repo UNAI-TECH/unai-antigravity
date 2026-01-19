@@ -31,7 +31,7 @@ export const HeroSection = () => {
       {/* Navbar */}
       <FloatingNavbar />
 
-      <div className="container relative z-10 mx-auto section-padding max-w-7xl h-full flex flex-col justify-center">
+      <div className="container relative z-10 mx-auto section-padding pt-28 md:pt-32 max-w-7xl h-full flex flex-col justify-center">
         {/* Centered Content - Responsive */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
