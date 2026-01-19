@@ -88,9 +88,6 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     /* Prevent horizontal scroll */
     overflow-x: hidden;
-    /* GPU acceleration */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
   }
 
   /* Performance optimizations for animations */
