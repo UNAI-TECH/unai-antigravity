@@ -1,150 +1,164 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About", path: "/about" },
-  { name: "Services", path: "/services" },
-  { name: "Products", path: "/products" },
-  { name: "Events", path: "/events" },
-  { name: "Gallery", path: "/gallery" },
-  { name: "Team", path: "/team" },
-  { name: "Contact", path: "/contact" },
-];
 
 export const FloatingNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+    { name: "Services", href: "/services" },
+    { name: "Products", href: "/products" },
+    { name: "Events", href: "/events" },
+    { name: "Gallery", href: "/gallery" },
+    { name: "Contacts", href: "/contact" },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === "/" && location.pathname !== "/") return false;
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <>
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled ? "py-3" : "py-6"
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-4 px-4" : "py-6 px-6"
         }`}
+    >
+      <div
+        className={`mx-auto max-w-7xl transition-all duration-500 relative ${isScrolled
+          ? "bg-[#0B1221]/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] rounded-2xl px-6 py-3"
+          : "bg-transparent px-0"
+          }`}
       >
-        <div className="container mx-auto px-6">
-          <div
-            className={`glass-metal rounded-2xl px-6 py-4 flex items-center justify-between transition-all duration-500 ${
-              isScrolled ? "shadow-ambient-lg" : ""
-            }`}
-          >
-            {/* Logo */}
-            <Link to="/" className="relative group">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="font-heading text-2xl font-bold text-gradient-metal"
+        {/* Lavender Glow Effect on Scrolled State */}
+        {isScrolled && (
+          <>
+            {/* Animated Lavender Glow Border */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-purple-500/20 to-transparent opacity-50 blur-xl" />
+              <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-blue-500/30 opacity-40 animate-pulse" />
+            </div>
+            {/* Shimmer Effect */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
+            </div>
+          </>
+        )}
+
+        <div className="flex items-center justify-between relative z-10">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 cursor-pointer group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110">
+              <span className="text-white font-bold text-xl">U</span>
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300">
+              UNAI
+            </span>
+          </Link>
+
+          {/* Desktop Navigation - Enhanced Glassmorphism */}
+          <div className={`hidden lg:flex items-center gap-1 relative ${isScrolled ? "" : "bg-gradient-to-r from-[#0B1221]/50 via-[#0B1221]/60 to-[#0B1221]/50 backdrop-blur-xl rounded-full px-3 py-1.5 border border-white/10 shadow-[0_0_30px_rgba(139,92,246,0.15)]"}`}>
+            {/* Lavender Glow for Non-Scrolled State */}
+            {!isScrolled && (
+              <>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 blur-md" />
+                <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-50" />
+              </>
+            )}
+
+            {navLinks.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`relative px-5 py-2.5 text-sm font-semibold transition-all duration-300 rounded-full group overflow-hidden ${isActive(item.href) ? "text-white" : "text-gray-300 hover:text-white"
+                  }`}
               >
-                UNAI TECH
-              </motion.div>
-              <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-metal group-hover:w-full transition-all duration-300" />
-            </Link>
+                <span className="relative z-10">{item.name}</span>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <NavLink key={link.path} {...link} isActive={location.pathname === link.path} />
-              ))}
-            </div>
+                {/* Hover Background with Shine */}
+                <div className={`absolute inset-0 bg-gradient-to-r from-white/5 via-white/10 to-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full ${isActive(item.href) ? "translate-y-0 from-purple-500/20 via-blue-500/20 to-purple-500/20" : ""}`} />
 
-            {/* CTA Button */}
-            <div className="hidden lg:block">
-              <Button variant="hero" size="sm">
-                Get Started
-              </Button>
-            </div>
+                {/* Shimmer on Hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                </div>
 
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                {/* Active/Hover Indicator with Lavender Glow */}
+                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 transition-all duration-300 shadow-[0_0_8px_rgba(167,139,250,0.6)] ${isActive(item.href) ? "w-3/4" : "w-0 group-hover:w-3/4"}`} />
+
+                {/* Glow Effect on Active */}
+                {isActive(item.href) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-full blur-sm" />
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* CTA Button - Enhanced */}
+          <div className="hidden lg:flex items-center gap-4">
+            <button className="relative px-6 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white transition-all duration-300 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] transform hover:-translate-y-0.5 active:scale-95 overflow-hidden group">
+              <span className="relative z-10">Get Started</span>
+              {/* Animated Shine */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              {/* Glow Border */}
+              <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
             </button>
           </div>
-        </div>
-      </motion.nav>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-x-0 top-24 z-40 mx-6 lg:hidden"
+          {/* Mobile Menu Toggle */}
+          <button
+            className="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <div className="glass-metal rounded-2xl p-6 shadow-ambient-lg">
-              <div className="flex flex-col gap-2">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === link.path
-                        ? "bg-gradient-metal text-white"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-                <div className="mt-4 pt-4 border-t border-border">
-                  <Button variant="hero" className="w-full">
-                    Get Started
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-};
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
 
-const NavLink = ({ name, path, isActive }: { name: string; path: string; isActive: boolean }) => {
-  return (
-    <Link to={path} className="relative group">
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-          isActive
-            ? "text-metal-blue-300"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        {name}
-        
-        {/* Active indicator */}
-        {isActive && (
-          <motion.div
-            layoutId="navbar-indicator"
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-metal-blue-400 shadow-glow-blue"
-          />
-        )}
-        
-        {/* Hover glow */}
-        <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-metal-blue-500/5" />
-      </motion.div>
-    </Link>
+      {/* Mobile Menu - Enhanced */}
+      {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="absolute top-24 left-4 right-4 bg-gradient-to-br from-[#0B1221]/95 via-[#0B1221]/98 to-[#0B1221]/95 backdrop-blur-2xl border border-purple-500/20 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(139,92,246,0.3)] z-40"
+        >
+          {/* Lavender Glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
+
+          <div className="p-6 flex flex-col gap-2 relative z-10">
+            {navLinks.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`p-3 text-lg font-medium hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-blue-500/10 rounded-xl transition-all border border-transparent hover:border-purple-500/20 ${isActive(item.href) ? "text-white bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-500/30" : "text-gray-300 hover:text-white"
+                  }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.name}
+              </Link>
+            ))}
+            <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent my-4" />
+            <button className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white font-bold shadow-[0_0_30px_rgba(139,92,246,0.4)] active:scale-95 transition-transform relative overflow-hidden group">
+              <span className="relative z-10">Get Started</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-500" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </nav>
   );
 };
 

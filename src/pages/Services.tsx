@@ -55,19 +55,36 @@ const Services = () => {
   return (
     <div className="min-h-screen bg-background">
       <FloatingNavbar />
-      
+
       <main className="pt-32">
         {/* Hero Section */}
         <section className="relative py-20 overflow-hidden">
+          {/* Video Background */}
+          <div className="absolute inset-0 z-0">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover opacity-60 mix-blend-screen"
+            >
+              <source src="/cards-video.webm" type="video/webm" />
+            </video>
+            {/* Gradient Overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/60" />
+          </div>
+
+          {/* Glow Orbs */}
           <GlowOrb size="xl" color="blue" className="top-0 right-0" />
           <GlowOrb size="lg" color="purple" className="bottom-0 left-0" />
-          
+
           <div className="container mx-auto px-6 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center max-w-4xl mx-auto"
+              style={{ willChange: "transform, opacity" }}
             >
               <span className="inline-block px-4 py-2 rounded-full glass-metal text-sm text-metal-purple-300 mb-6">
                 Service Modules
@@ -78,15 +95,15 @@ const Services = () => {
                 <span className="text-gradient-metal">Defy Gravity</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Each service is forged with precision and engineered for excellence. 
+                Each service is forged with precision and engineered for excellence.
                 Discover how we can elevate your business to new heights.
               </p>
             </motion.div>
           </div>
         </section>
-        
+
         <div className="energy-line" />
-        
+
         {/* Services Grid */}
         <section className="relative py-24 overflow-hidden">
           <div className="container mx-auto px-6">
@@ -94,45 +111,43 @@ const Services = () => {
               {services.map((service, index) => (
                 <motion.div
                   key={service.title}
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: index * 0.06, ease: "easeOut" }}
+                  style={{ willChange: "transform, opacity" }}
                 >
                   <GlassCard glowColor={service.color} className="h-full flex flex-col">
-                    <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 ${
-                      service.color === "blue" 
-                        ? "bg-metal-blue-500/20" 
-                        : "bg-metal-purple-500/20"
-                    }`}>
-                      <service.icon className={`w-8 h-8 ${
-                        service.color === "blue" 
-                          ? "text-metal-blue-400" 
-                          : "text-metal-purple-400"
-                      }`} />
+                    <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 ${service.color === "blue"
+                      ? "bg-metal-blue-500/20"
+                      : "bg-metal-purple-500/20"
+                      }`}>
+                      <service.icon className={`w-8 h-8 ${service.color === "blue"
+                        ? "text-metal-blue-400"
+                        : "text-metal-purple-400"
+                        }`} />
                     </div>
-                    
+
                     <h3 className="font-heading text-2xl font-semibold mb-4 text-foreground">
                       {service.title}
                     </h3>
-                    
+
                     <p className="text-muted-foreground mb-6 flex-grow">
                       {service.description}
                     </p>
-                    
+
                     <ul className="space-y-2 mb-6">
                       {service.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Check className={`w-4 h-4 ${
-                            service.color === "blue" 
-                              ? "text-metal-blue-400" 
-                              : "text-metal-purple-400"
-                          }`} />
+                          <Check className={`w-4 h-4 ${service.color === "blue"
+                            ? "text-metal-blue-400"
+                            : "text-metal-purple-400"
+                            }`} />
                           {feature}
                         </li>
                       ))}
                     </ul>
-                    
+
                     <Button variant="outline" className="w-full group">
                       Learn More
                       <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -143,27 +158,28 @@ const Services = () => {
             </div>
           </div>
         </section>
-        
+
         <div className="energy-line" />
-        
+
         {/* CTA Section */}
         <section className="relative py-24 overflow-hidden">
           <GlowOrb size="xl" color="plasma" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          
+
           <div className="container mx-auto px-6 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center max-w-3xl mx-auto"
+              style={{ willChange: "transform, opacity" }}
             >
               <h2 className="font-heading text-4xl md:text-5xl font-bold mb-6">
                 <span className="text-foreground">Ready to </span>
                 <span className="text-gradient-metal">Elevate?</span>
               </h2>
               <p className="text-xl text-muted-foreground mb-10">
-                Let's discuss how our services can transform your business. 
+                Let's discuss how our services can transform your business.
                 Our team is ready to craft the perfect solution for you.
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
@@ -179,7 +195,7 @@ const Services = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );
