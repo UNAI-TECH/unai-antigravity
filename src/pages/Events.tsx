@@ -156,41 +156,52 @@ const Events = () => {
 
           {/* Content Section */}
           <section className="py-12 md:py-20 relative">
-            <div className="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-12">
-              {/* Main Description */}
-              <div className="lg:col-span-2 space-y-8">
-                <GlassCard className="p-8">
-                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+            <div className="container mx-auto px-6">
+              {/* Two Column Layout: About (Left) + Poster (Right) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                {/* Left: About the Event - 14.14" container equivalent */}
+                <GlassCard className="p-8 h-[600px] flex flex-col">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0">
                     <div className="w-2 h-2 rounded-full bg-metal-blue-400" />
                     About the Event
                   </h2>
-                  <p className="text-gray-300 leading-relaxed whitespace-pre-line text-lg">
-                    {selectedEvent.description}
-                  </p>
+                  <div className="overflow-y-auto custom-scrollbar pr-2 flex-1">
+                    <p className="text-gray-300 leading-relaxed whitespace-pre-line text-lg break-all">
+                      {selectedEvent.description}
+                    </p>
+                  </div>
                 </GlassCard>
 
-                {/* Event Posters Gallery */}
+                {/* Right: Event Poster - Fits Image Size */}
                 {selectedEvent.posters && selectedEvent.posters.length > 0 && (
-                  <GlassCard className="p-8">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                  <GlassCard className="p-8 h-[600px] flex flex-col items-center">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 self-start">
                       <div className="w-2 h-2 rounded-full bg-metal-purple-400" />
-                      Event Posters
+                      Event Poster
                     </h2>
-                    <PosterCarousel posters={selectedEvent.posters} />
+                    {/* Container matches exact image bounds */}
+                    <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+                      <img
+                        src={selectedEvent.posters[0]}
+                        alt="Event Poster"
+                        className="h-full w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+                        style={{ aspectRatio: '3/4' }}
+                      />
+                    </div>
                   </GlassCard>
                 )}
               </div>
 
-              {/* Sidebar / Actions */}
-              <div className="lg:col-span-1 space-y-6">
-                <GlassCard className="p-6 sticky top-32">
-                  <h3 className="text-xl font-bold mb-6">Registration</h3>
+              {/* Register Button - Centered Below */}
+              <div className="flex justify-center">
+                <GlassCard className="p-8 max-w-md w-full text-center hover:border-metal-blue-500/50 transition-colors duration-300">
+                  <h3 className="text-2xl font-bold mb-4">Registration</h3>
                   <p className="text-muted-foreground mb-6">
                     Secure your spot for this exclusive event. Spaces are limited.
                   </p>
                   {selectedEvent.registration_link && (
                     <Button
-                      className="w-full bg-metal-blue-500 hover:bg-metal-blue-600 text-lg py-6"
+                      className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 hover:from-metal-blue-600 hover:to-metal-purple-600 text-lg py-6 font-semibold shadow-glow-blue hover:shadow-glow-purple transition-all duration-300"
                       onClick={() => window.open(selectedEvent.registration_link, '_blank')}
                     >
                       Register Now <ExternalLink className="ml-2 w-5 h-5" />
