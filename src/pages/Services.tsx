@@ -2,12 +2,14 @@ import { motion } from "framer-motion";
 import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { MagicBento, ParticleCard } from "@/components/effects/MagicBento";
 import { Button } from "@/components/ui/button";
 import { Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const services = [
   {
+    id: "ai-solutions",
     icon: Cpu,
     title: "AI Solutions",
     description: "Cutting-edge artificial intelligence systems tailored to your business needs. From machine learning to natural language processing.",
@@ -15,20 +17,7 @@ const services = [
     color: "blue" as const,
   },
   {
-    icon: Shield,
-    title: "Cybersecurity",
-    description: "Enterprise-grade security protocols to protect your digital assets. Comprehensive threat detection and response systems.",
-    features: ["Threat Detection", "Security Audits", "Penetration Testing", "24/7 Monitoring"],
-    color: "purple" as const,
-  },
-  {
-    icon: Globe,
-    title: "Cloud Infrastructure",
-    description: "Scalable cloud solutions that grow with your business demands. Optimize performance and reduce operational costs.",
-    features: ["Cloud Migration", "Multi-Cloud Setup", "Cost Optimization", "Auto-Scaling"],
-    color: "blue" as const,
-  },
-  {
+    id: "automation",
     icon: Zap,
     title: "Automation",
     description: "Streamline operations with intelligent automation systems. Reduce manual work and increase efficiency across your organization.",
@@ -36,6 +25,15 @@ const services = [
     color: "purple" as const,
   },
   {
+    id: "custom-software",
+    icon: Code,
+    title: "Custom Software",
+    description: "Bespoke software solutions engineered for your specific requirements. Built with scalability and maintainability in mind.",
+    features: ["Web Applications", "Mobile Apps", "Enterprise Systems", "API Development"],
+    color: "purple" as const,
+  },
+  {
+    id: "product-development",
     icon: Rocket,
     title: "Product Development",
     description: "End-to-end product development from concept to launch. We transform ideas into market-ready solutions.",
@@ -43,22 +41,33 @@ const services = [
     color: "blue" as const,
   },
   {
-    icon: Code,
-    title: "Custom Software",
-    description: "Bespoke software solutions engineered for your specific requirements. Built with scalability and maintainability in mind.",
-    features: ["Web Applications", "Mobile Apps", "Enterprise Systems", "API Development"],
+    id: "cloud-infrastructure",
+    icon: Globe,
+    title: "Cloud Infrastructure",
+    description: "Scalable cloud solutions that grow with your business demands. Optimize performance and reduce operational costs.",
+    features: ["Cloud Migration", "Multi-Cloud Setup", "Cost Optimization", "Auto-Scaling"],
+    color: "blue" as const,
+  },
+  {
+    id: "cybersecurity",
+    icon: Shield,
+    title: "Cybersecurity",
+    description: "Enterprise-grade security protocols to protect your digital assets. Comprehensive threat detection and response systems.",
+    features: ["Threat Detection", "Security Audits", "Penetration Testing", "24/7 Monitoring"],
     color: "purple" as const,
   },
 ];
 
 const Services = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       <FloatingNavbar />
 
-      <main className="pt-32">
+      <main className="pt-0">
         {/* Hero Section */}
-        <section className="relative py-20 overflow-hidden">
+        <section className="relative pt-40 pb-20 overflow-hidden">
           {/* Video Background */}
           <div className="absolute inset-0 z-0">
             <video
@@ -105,9 +114,9 @@ const Services = () => {
         <div className="energy-line" />
 
         {/* Services Grid */}
-        <section className="relative py-24 overflow-hidden">
+        <section className="relative py-16 overflow-hidden">
           <div className="container mx-auto px-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <MagicBento className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {services.map((service, index) => (
                 <motion.div
                   key={service.title}
@@ -117,7 +126,11 @@ const Services = () => {
                   transition={{ duration: 0.4, delay: index * 0.06, ease: "easeOut" }}
                   style={{ willChange: "transform, opacity" }}
                 >
-                  <GlassCard glowColor={service.color} className="h-full flex flex-col">
+                  <ParticleCard
+                    particleCount={8}
+                    glowColor={service.color === "blue" ? "96, 165, 250" : "192, 132, 252"}
+                    className={`h-full flex flex-col glass-metal rounded-2xl p-6 glow-border transition-all duration-500 hover:shadow-glow-${service.color}`}
+                  >
                     <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 ${service.color === "blue"
                       ? "bg-metal-blue-500/20"
                       : "bg-metal-purple-500/20"
@@ -148,21 +161,25 @@ const Services = () => {
                       ))}
                     </ul>
 
-                    <Button variant="outline" className="w-full group">
+                    <Button
+                      variant="outline"
+                      className="w-full group"
+                      onClick={() => navigate(`/services/${service.id}`)}
+                    >
                       Learn More
                       <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
-                  </GlassCard>
+                  </ParticleCard>
                 </motion.div>
               ))}
-            </div>
+            </MagicBento>
           </div>
         </section>
 
         <div className="energy-line" />
 
         {/* CTA Section */}
-        <section className="relative py-24 overflow-hidden">
+        <section className="relative pt-24 pb-12 overflow-hidden">
           <GlowOrb size="xl" color="plasma" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
           <div className="container mx-auto px-6 relative z-10">

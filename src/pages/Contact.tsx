@@ -19,13 +19,13 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <FloatingNavbar />
-      
-      <main className="pt-32">
+
+      <main className="pt-0">
         {/* Hero Section */}
-        <section className="relative py-20 overflow-hidden">
+        <section className="relative pt-40 pb-20 overflow-hidden">
           <GlowOrb size="xl" color="blue" className="top-0 -right-32" />
           <GlowOrb size="lg" color="purple" className="bottom-0 -left-32" />
-          
+
           <div className="container mx-auto px-6 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -42,15 +42,15 @@ const Contact = () => {
                 <span className="text-gradient-metal">Something Legendary</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Ready to transform your ideas into reality? 
+                Ready to transform your ideas into reality?
                 Connect with us and let's start forging the future together.
               </p>
             </motion.div>
           </div>
         </section>
-        
+
         <div className="energy-line" />
-        
+
         {/* Contact Section */}
         <section className="relative py-24 overflow-hidden">
           <div className="container mx-auto px-6">
@@ -67,51 +67,51 @@ const Contact = () => {
                   <h2 className="font-heading text-2xl font-bold mb-8 text-foreground">
                     Send Us a Message
                   </h2>
-                  
+
                   <form className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">First Name</label>
-                        <Input 
-                          placeholder="John" 
+                        <Input
+                          placeholder="John"
                           className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">Last Name</label>
-                        <Input 
-                          placeholder="Doe" 
+                        <Input
+                          placeholder="Doe"
                           className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">Email</label>
-                      <Input 
-                        type="email" 
-                        placeholder="john@example.com" 
+                      <Input
+                        type="email"
+                        placeholder="john@example.com"
                         className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">Company</label>
-                      <Input 
-                        placeholder="Your Company" 
+                      <Input
+                        placeholder="Your Company"
                         className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">Message</label>
-                      <Textarea 
-                        placeholder="Tell us about your project, goals, and how we can help..." 
+                      <Textarea
+                        placeholder="Tell us about your project, goals, and how we can help..."
                         rows={6}
                         className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 resize-none"
                       />
                     </div>
-                    
+
                     <Button variant="hero" size="xl" className="w-full group">
                       Send Message
                       <Send className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -119,7 +119,7 @@ const Contact = () => {
                   </form>
                 </GlassCard>
               </motion.div>
-              
+
               {/* Contact Info */}
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
@@ -131,7 +131,7 @@ const Contact = () => {
                 <h2 className="font-heading text-2xl font-bold mb-8 text-foreground">
                   Get in Touch
                 </h2>
-                
+
                 {contactInfo.map((item, index) => (
                   <motion.a
                     key={item.label}
@@ -155,7 +155,7 @@ const Contact = () => {
                     </GlassCard>
                   </motion.a>
                 ))}
-                
+
                 {/* Map placeholder */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -175,7 +175,7 @@ const Contact = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

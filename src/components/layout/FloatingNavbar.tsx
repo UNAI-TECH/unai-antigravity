@@ -4,26 +4,14 @@ import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 export const FloatingNavbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { name: "Services", href: "/services" },
-    { name: "Products", href: "/products" },
     { name: "Events", href: "/events" },
-    { name: "Gallery", href: "/gallery" },
-    { name: "Contacts", href: "/contact" },
   ];
 
   const isActive = (path: string) => {
@@ -33,29 +21,11 @@ export const FloatingNavbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-4 px-4" : "py-6 px-6"
-        }`}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 py-4 px-4"
     >
       <div
-        className={`mx-auto max-w-7xl transition-all duration-500 relative ${isScrolled
-          ? "bg-[#0B1221]/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] rounded-2xl px-6 py-3"
-          : "bg-transparent px-0"
-          }`}
+        className="mx-auto max-w-7xl transition-all duration-500 relative px-6 py-3"
       >
-        {/* Lavender Glow Effect on Scrolled State */}
-        {isScrolled && (
-          <>
-            {/* Animated Lavender Glow Border */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-purple-500/20 to-transparent opacity-50 blur-xl" />
-              <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-blue-500/30 opacity-40 animate-pulse" />
-            </div>
-            {/* Shimmer Effect */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-            </div>
-          </>
-        )}
 
         <div className="flex items-center justify-between relative z-10">
           {/* Logo */}
@@ -69,14 +39,10 @@ export const FloatingNavbar = () => {
           </Link>
 
           {/* Desktop Navigation - Enhanced Glassmorphism */}
-          <div className={`hidden lg:flex items-center gap-1 relative ${isScrolled ? "" : "bg-gradient-to-r from-[#0B1221]/50 via-[#0B1221]/60 to-[#0B1221]/50 backdrop-blur-xl rounded-full px-3 py-1.5 border border-white/10 shadow-[0_0_30px_rgba(139,92,246,0.15)]"}`}>
-            {/* Lavender Glow for Non-Scrolled State */}
-            {!isScrolled && (
-              <>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 blur-md" />
-                <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-50" />
-              </>
-            )}
+          <div className="hidden lg:flex items-center gap-1 relative bg-gradient-to-r from-[#0B1221]/50 via-[#0B1221]/60 to-[#0B1221]/50 backdrop-blur-xl rounded-full px-3 py-1.5 border border-white/10 shadow-[0_0_30px_rgba(139,92,246,0.15)]">
+            {/* Lavender Glow */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 blur-md" />
+            <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-50" />
 
             {navLinks.map((item) => (
               <Link
@@ -108,13 +74,16 @@ export const FloatingNavbar = () => {
 
           {/* CTA Button - Enhanced */}
           <div className="hidden lg:flex items-center gap-4">
-            <button className="relative px-6 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white transition-all duration-300 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] transform hover:-translate-y-0.5 active:scale-95 overflow-hidden group">
-              <span className="relative z-10">Get Started</span>
+            <Link
+              to="/contact"
+              className="relative px-6 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white transition-all duration-300 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] transform hover:-translate-y-0.5 active:scale-95 overflow-hidden group block text-center"
+            >
+              <span className="relative z-10">Contact</span>
               {/* Animated Shine */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               {/* Glow Border */}
               <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
-            </button>
+            </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -151,10 +120,14 @@ export const FloatingNavbar = () => {
               </Link>
             ))}
             <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent my-4" />
-            <button className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white font-bold shadow-[0_0_30px_rgba(139,92,246,0.4)] active:scale-95 transition-transform relative overflow-hidden group">
-              <span className="relative z-10">Get Started</span>
+            <Link
+              to="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white font-bold shadow-[0_0_30px_rgba(139,92,246,0.4)] active:scale-95 transition-transform relative overflow-hidden group block text-center"
+            >
+              <span className="relative z-10">Contact</span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-500" />
-            </button>
+            </Link>
           </div>
         </motion.div>
       )}

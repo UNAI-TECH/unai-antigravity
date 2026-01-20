@@ -26,7 +26,7 @@ const timelineItems = [
 
 export const AboutPreview = () => {
   return (
-    <section className="relative py-32 overflow-hidden">
+    <section className="relative pt-32 pb-12 overflow-hidden">
       {/* Background Effects */}
       <GlowOrb size="xl" color="plasma" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 

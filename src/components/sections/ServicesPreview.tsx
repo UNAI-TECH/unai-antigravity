@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { GlowOrb } from "@/components/effects/GlowOrb";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { MagicBento, ParticleCard } from "@/components/effects/MagicBento";
 import { GraduationCap, Briefcase, Code, FlaskConical } from "lucide-react";
 
 const services = [
@@ -32,7 +32,7 @@ const services = [
 
 export const ServicesPreview = () => {
   return (
-    <section className="relative py-32 overflow-hidden">
+    <section className="relative py-20 overflow-hidden">
       {/* Background Effects */}
       <GlowOrb size="lg" color="purple" className="top-20 -right-32" />
       <GlowOrb size="md" color="blue" className="bottom-20 -left-32" />
@@ -61,7 +61,7 @@ export const ServicesPreview = () => {
         </motion.div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MagicBento className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {services.map((service, index) => (
             <motion.div
               key={service.title}
@@ -70,14 +70,18 @@ export const ServicesPreview = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <GlassCard glowColor={service.color} className="h-full">
+              <ParticleCard
+                particleCount={8}
+                glowColor={service.color === "blue" ? "96, 165, 250" : "192, 132, 252"}
+                className={`h-full glass-metal rounded-2xl p-6 glow-border transition-all duration-500 hover:shadow-glow-${service.color} justify-start gap-4`}
+              >
                 <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${service.color === "blue"
-                    ? "bg-metal-blue-500/20"
-                    : "bg-metal-purple-500/20"
+                  ? "bg-metal-blue-500/20"
+                  : "bg-metal-purple-500/20"
                   }`}>
                   <service.icon className={`w-7 h-7 ${service.color === "blue"
-                      ? "text-metal-blue-400"
-                      : "text-metal-purple-400"
+                    ? "text-metal-blue-400"
+                    : "text-metal-purple-400"
                     }`} />
                 </div>
                 <h3 className="font-heading text-xl font-semibold mb-3 text-foreground">
@@ -86,10 +90,10 @@ export const ServicesPreview = () => {
                 <p className="text-muted-foreground">
                   {service.description}
                 </p>
-              </GlassCard>
+              </ParticleCard>
             </motion.div>
           ))}
-        </div>
+        </MagicBento>
       </div>
     </section>
   );
