@@ -69,6 +69,7 @@ export interface GalleryItem {
     description: string;
     highlights: string[];
     photos: string[];
+    banner?: string;
 }
 
 interface DataContextType {

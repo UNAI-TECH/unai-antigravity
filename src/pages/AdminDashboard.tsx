@@ -987,20 +987,87 @@ const AddTeamDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
 
 const AddGalleryDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
     const [open, setOpen] = useState(false);
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-        const data = Object.fromEntries(formData);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
 
-        // Process new fields
-        const processedData = {
-            ...data,
-            highlights: (data.highlights as string).split('\n').filter(line => line.trim() !== ''),
-            photos: (data.photos as string).split('\n').filter(line => line.trim() !== ''),
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUploading(true);
+        const formData = new FormData(e.target as HTMLFormElement);
+
+        // Upload Banner
+        let bannerUrl = "";
+        const bannerFile = formData.get("banner") as File;
+
+        if (bannerFile && bannerFile.size > 0) {
+            setUploadProgress("Uploading banner...");
+            const fileExt = bannerFile.name.split('.').pop();
+            const fileName = `gallery_banner_${Date.now()}_${Math.random()}.${fileExt}`;
+            const { error } = await supabase.storage
+                .from('event-banners')
+                .upload(fileName, bannerFile);
+
+            if (error) {
+                console.error("Error uploading banner:", error);
+                toast.error("Failed to upload banner");
+                setIsUploading(false);
+                setUploadProgress("");
+                return;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('event-banners')
+                .getPublicUrl(fileName);
+
+            bannerUrl = publicUrl;
+        }
+
+        // Upload Photos (Multiple)
+        const photoUrls: string[] = [];
+        const photoFiles = formData.getAll("photos_files") as File[];
+
+        if (photoFiles && photoFiles.length > 0 && photoFiles[0].size > 0) {
+            setUploadProgress(`Uploading photos (0/${photoFiles.length})...`);
+            for (let i = 0; i < photoFiles.length; i++) {
+                const photoFile = photoFiles[i];
+                if (photoFile.size > 0) {
+                    const fileExt = photoFile.name.split('.').pop();
+                    const fileName = `gallery_photo_${Date.now()}_${i}_${Math.random()}.${fileExt}`;
+                    const { error } = await supabase.storage
+                        .from('event-posters')
+                        .upload(fileName, photoFile);
+
+                    if (error) {
+                        console.error(`Error uploading photo ${i + 1}:`, error);
+                        toast.error(`Failed to upload photo ${i + 1}`);
+                        continue;
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('event-posters')
+                        .getPublicUrl(fileName);
+
+                    photoUrls.push(publicUrl);
+                    setUploadProgress(`Uploading photos (${i + 1}/${photoFiles.length})...`);
+                }
+            }
+        }
+
+        const data = {
+            title: formData.get("title"),
+            caption: formData.get("caption"),
+            category: formData.get("category"),
+            banner: bannerUrl,
+            description: formData.get("description"),
+            highlights: (formData.get("highlights") as string).split('\n').filter(line => line.trim() !== ''),
+            photos: photoUrls.length > 0 ? photoUrls : [],
+            color: "blue" // Defaulting to blue as field is removed but might be needed by types
         };
 
-        onAdd(processedData);
+        onAdd(data);
         setOpen(false);
+        setIsUploading(false);
+        setUploadProgress("");
         toast.success("Gallery item added successfully");
     };
 
@@ -1009,50 +1076,115 @@ const AddGalleryDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             <DialogTrigger asChild>
                 <Button variant="hero"><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px] bg-[#0B1221] border-white/10 text-white max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Add Gallery Item</DialogTitle>
+            <DialogContent className="sm:max-w-[650px] bg-[#0B1221] border-white/10 text-white max-h-[85vh] overflow-y-auto custom-scrollbar pr-6" data-lenis-prevent>
+                <DialogHeader className="pb-4 mb-4">
+                    <DialogTitle className="text-2xl font-bold text-gradient-metal">Add Gallery Item</DialogTitle>
+                    <p className="text-sm text-muted-foreground">Add new visual content to the gallery</p>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                    <Input name="title" placeholder="Title" required className="bg-white/5 border-white/10" />
-                    <Input name="caption" placeholder="One-line Caption" required className="bg-white/5 border-white/10" />
+                <form onSubmit={handleSubmit} className="space-y-5 pb-6">
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Select name="category" defaultValue="Events">
-                            <SelectTrigger className="bg-white/5 border-white/10">
-                                <SelectValue placeholder="Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Events">Events</SelectItem>
-                                <SelectItem value="Team">Team</SelectItem>
-                                <SelectItem value="Products">Products</SelectItem>
-                                <SelectItem value="Spaces">Spaces</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select name="color" defaultValue="blue">
-                            <SelectTrigger className="bg-white/5 border-white/10">
-                                <SelectValue placeholder="Color Theme" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="blue">Blue</SelectItem>
-                                <SelectItem value="purple">Purple</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    {/* Banner Upload */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-metal-blue-300">Gallery Banner *</label>
+                        <Input
+                            type="file"
+                            name="banner"
+                            accept="image/*"
+                            required
+                            className="h-auto py-3 bg-white/5 border-white/10 file:text-white file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                        />
+                        <p className="text-xs text-muted-foreground">Main banner image for the gallery page</p>
                     </div>
 
-                    <Textarea name="description" placeholder="Detailed Description" required className="bg-white/5 border-white/10 h-24" />
+                    {/* Title & Caption */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-metal-blue-300">Title *</label>
+                            <Input name="title" placeholder="Event Name" required className="bg-white/5 border-white/10 focus:border-metal-blue-500" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-metal-purple-300">Category *</label>
+                            <Select name="category" defaultValue="Events">
+                                <SelectTrigger className="bg-white/5 border-white/10 focus:border-metal-purple-500">
+                                    <SelectValue placeholder="Select Category" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#0B1221] border-white/10">
+                                    <SelectItem value="Events" className="text-white hover:bg-white/10">Events</SelectItem>
+                                    <SelectItem value="Team" className="text-white hover:bg-white/10">Team</SelectItem>
+                                    <SelectItem value="Products" className="text-white hover:bg-white/10">Products</SelectItem>
+                                    <SelectItem value="Spaces" className="text-white hover:bg-white/10">Spaces</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">Event Highlights (One per line)</label>
-                        <Textarea name="highlights" placeholder="- Keynote Speech&#10;- Network Session&#10;- Product Demo" required className="bg-white/5 border-white/10" />
+                        <label className="text-sm font-medium text-metal-blue-300">Caption *</label>
+                        <Input name="caption" placeholder="One-line Caption" required className="bg-white/5 border-white/10 focus:border-metal-blue-500" />
                     </div>
 
+                    {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">Event Photos URLs (One per line). First one is cover.</label>
-                        <Textarea name="photos" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg" required className="bg-white/5 border-white/10" />
+                        <label className="text-sm font-medium text-metal-blue-300">Detailed Description *</label>
+                        <Textarea
+                            name="description"
+                            placeholder="Full story about this event/item..."
+                            required
+                            className="bg-white/5 border-white/10 h-32 resize-none focus:border-metal-blue-500"
+                        />
                     </div>
 
-                    <Button type="submit" className="w-full bg-metal-blue-500 hover:bg-metal-blue-600">Add Item</Button>
+                    {/* Highlights */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-metal-purple-300">Highlights (One per line)</label>
+                        <Textarea
+                            name="highlights"
+                            placeholder="- Keynote Speech&#10;- Network Session&#10;- Product Demo"
+                            required
+                            className="bg-white/5 border-white/10 focus:border-metal-purple-500"
+                        />
+                    </div>
+
+                    {/* Photos Upload */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-metal-purple-300">Event Photos (Carousel)</label>
+                        <Input
+                            type="file"
+                            name="photos_files"
+                            accept="image/*"
+                            multiple
+                            className="bg-white/5 border-white/10 file:text-white file:bg-metal-purple-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-purple-500/30 transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground">Upload 2 or more photos for the carousel</p>
+                    </div>
+
+                    {/* Upload Progress */}
+                    {isUploading && uploadProgress && (
+                        <div className="p-3 rounded-lg bg-metal-blue-500/10 border border-metal-blue-500/20">
+                            <p className="text-sm text-metal-blue-300 flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-metal-blue-400 border-t-transparent rounded-full animate-spin" />
+                                {uploadProgress}
+                            </p>
+                        </div>
+                    )}
+
+                    <Button
+                        type="submit"
+                        disabled={isUploading}
+                        className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 hover:from-metal-blue-600 hover:to-metal-purple-600 text-white font-semibold py-6 text-lg shadow-lg shadow-metal-blue-500/20"
+                    >
+                        {isUploading ? (
+                            <span className="flex items-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Adding Item...
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                <Plus className="w-5 h-5" />
+                                Add Gallery Item
+                            </span>
+                        )}
+                    </Button>
                 </form>
             </DialogContent>
         </Dialog>

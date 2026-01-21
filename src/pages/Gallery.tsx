@@ -3,10 +3,67 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
-import { X, ArrowRight, CheckCircle2 } from "lucide-react";
+import { X, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useData } from "@/context/DataContext";
 
 const categories = ["All", "Events", "Team", "Products", "Spaces"];
+
+const PosterCarousel = ({ posters }: { posters: string[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!posters || posters.length === 0) return null;
+
+  const next = () => setCurrentIndex((prev) => (prev + 1) % posters.length);
+  const prev = () => setCurrentIndex((prev) => (prev - 1 + posters.length) % posters.length);
+
+  return (
+    <div className="relative group w-full max-w-4xl mx-auto my-8">
+      <div className="relative overflow-hidden rounded-xl aspect-video bg-black/50 border border-white/10 shadow-2xl">
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentIndex}
+            src={posters[currentIndex]}
+            alt={`Photo ${currentIndex + 1}`}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="w-full h-full object-contain bg-black/80"
+          />
+        </AnimatePresence>
+
+        {/* Navigation Overlays */}
+        {posters.length > 1 && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); prev(); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-metal-purple-500 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10 hover:border-white/30 z-10"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); next(); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-metal-purple-500 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10 hover:border-white/30 z-10"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+
+            {/* Dots */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-2 bg-black/30 backdrop-blur-sm rounded-full z-10">
+              {posters.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                  className={`h-2 rounded-full transition-all duration-300 ${idx === currentIndex ? "bg-metal-purple-400 w-6" : "bg-white/40 w-2 hover:bg-white/70"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Gallery = () => {
   const { galleryItems } = useData();
@@ -147,114 +204,170 @@ const Gallery = () => {
           </div>
         </section>
 
-        {/* Detailed View Overlay */}
+        {/* Detailed View - Fresh Page Overlay */}
         <AnimatePresence>
           {selectedItemId && selectedItem && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black-void/95 backdrop-blur-md overflow-y-auto"
+              className="fixed inset-0 z-[100] bg-background flex flex-col overflow-y-auto"
+              data-lenis-prevent
             >
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 50, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="min-h-screen relative"
-              >
-                {/* Close Button */}
+              <FloatingNavbar />
+
+              {/* Back Button (Floating) */}
+              <div className="fixed top-24 left-6 z-50">
                 <button
                   onClick={() => setSelectedItemId(null)}
-                  className="fixed top-6 right-6 z-50 p-4 rounded-full glass-metal hover:bg-white/10 transition-all duration-300 group"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full glass-metal hover:bg-white/10 hover:border-metal-blue-500/50 transition-all duration-300 group text-white backdrop-blur-md"
                 >
-                  <X className="w-6 h-6 text-white group-hover:rotate-90 transition-transform" />
+                  <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                  <span className="font-medium">Back to Gallery</span>
                 </button>
+              </div>
 
-                {/* Detail Content */}
-                <div className="container mx-auto px-6 py-20 md:py-32">
-                  <div className="max-w-5xl mx-auto">
-
-                    {/* Header */}
-                    <div className="mb-12">
-                      <span className={`inline-block px-4 py-1.5 rounded-full glass-metal text-sm font-medium mb-6 ${selectedItem.color === "blue" ? "text-metal-blue-300" : "text-metal-purple-300"
-                        }`}>
-                        {selectedItem.category}
-                      </span>
-                      <h1 className="font-heading text-4xl md:text-6xl font-bold text-white mb-6">
-                        {selectedItem.title}
-                      </h1>
-                      {selectedItem.caption && (
-                        <p className="text-xl md:text-2xl text-muted-foreground font-light leading-relaxed">
-                          {selectedItem.caption}
-                        </p>
-                      )}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="flex-1 min-h-screen flex flex-col"
+              >
+                {/* Hero Banner Header */}
+                <div className="relative h-[65vh] w-full overflow-hidden">
+                  {selectedItem.banner ? (
+                    <motion.img
+                      initial={{ scale: 1.1 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+                      src={selectedItem.banner}
+                      alt={selectedItem.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : selectedItem.photos && selectedItem.photos.length > 0 ? (
+                    <motion.img
+                      initial={{ scale: 1.1 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+                      src={selectedItem.photos[0]}
+                      alt={selectedItem.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-metal-blue-900 via-purple-900 to-black-deep flex items-center justify-center">
+                      <GlowOrb size="xl" color="plasma" />
                     </div>
+                  )}
 
-                    {/* Main Content Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-20">
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-black/30" />
 
-                      {/* Description & Output */}
-                      <div className="lg:col-span-2 space-y-8">
-                        <div className="glass-metal p-8 rounded-2xl relative overflow-hidden group">
-                          <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${selectedItem.color === "blue" ? "from-metal-blue-500 to-transparent" : "from-metal-purple-500 to-transparent"
-                            }`} />
-                          <h3 className="text-xl font-bold mb-4 flex items-center gap-3">
-                            <div className={`w-2 h-2 rounded-full ${selectedItem.color === "blue" ? "bg-metal-blue-400" : "bg-metal-purple-400"
-                              }`} />
-                            Overview
-                          </h3>
-                          <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-                            {selectedItem.description}
+                  {/* Title & Caption */}
+                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 z-10">
+                    <div className="container mx-auto">
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <span className={`inline-block px-4 py-1.5 rounded-full glass-metal text-sm font-medium mb-4 backdrop-blur-md border border-white/10 ${selectedItem.category === 'Events' ? 'text-metal-blue-300 shadow-[0_0_15px_rgba(56,189,248,0.3)]' : 'text-metal-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                          }`}>
+                          {selectedItem.category}
+                        </span>
+                        <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl">
+                          {selectedItem.title}
+                        </h1>
+                        {selectedItem.caption && (
+                          <p className="text-xl md:text-2xl text-gray-200 font-light max-w-3xl drop-shadow-lg border-l-4 border-metal-blue-500 pl-4">
+                            {selectedItem.caption}
                           </p>
-                        </div>
-
-                        {/* Photo Grid - Main Content */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {selectedItem.photos && selectedItem.photos.map((photo, index) => (
-                            <div
-                              key={index}
-                              className={`rounded-xl overflow-hidden glass-metal ${index === 0 ? "md:col-span-2 aspect-video" : "aspect-square"}`}
-                            >
-                              <img
-                                src={photo}
-                                alt={`Event photo ${index + 1}`}
-                                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105 cursor-pointer"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Sidebar - Highlights */}
-                      <div className="lg:col-span-1 space-y-6">
-                        <div className="glass-metal p-6 rounded-2xl sticky top-32">
-                          <h3 className="text-lg font-bold mb-6 text-white border-b border-white/10 pb-4">
-                            Event Highlights
-                          </h3>
-                          <ul className="space-y-4">
-                            {selectedItem.highlights && selectedItem.highlights.length > 0 ? (
-                              selectedItem.highlights.map((highlight, idx) => (
-                                <li key={idx} className="flex items-start gap-3">
-                                  <div className={`mt-1 min-w-[20px] ${selectedItem.color === "blue" ? "text-metal-blue-400" : "text-metal-purple-400"
-                                    }`}>
-                                    <CheckCircle2 className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-sm text-gray-300 leading-snug">
-                                    {highlight}
-                                  </span>
-                                </li>
-                              ))
-                            ) : (
-                              <li className="text-muted-foreground text-sm italic">No highlights listed.</li>
-                            )}
-                          </ul>
-                        </div>
-                      </div>
+                        )}
+                      </motion.div>
                     </div>
-
                   </div>
                 </div>
+
+                {/* Content Section */}
+                <div className="container mx-auto px-6 py-16 flex-1">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+
+                    {/* Description */}
+                    <div className="lg:col-span-2 space-y-8">
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="glass-metal p-8 rounded-2xl relative overflow-hidden group hover:border-metal-blue-500/30 hover:shadow-glow-blue transition-all duration-500"
+                      >
+                        {/* Shine Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                        <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-metal-blue-400 shadow-[0_0_10px_#38bdf8]" />
+                          About The Event
+                        </h3>
+                        <p className="text-gray-300 leading-relaxed whitespace-pre-line text-lg relative z-10">
+                          {selectedItem.description}
+                        </p>
+                      </motion.div>
+                    </div>
+
+                    {/* Highlights Sidebar */}
+                    <div className="lg:col-span-1">
+                      <motion.div
+                        initial={{ x: 20, opacity: 0 }}
+                        whileInView={{ x: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="glass-metal p-8 rounded-2xl sticky top-24 hover:border-metal-purple-500/30 hover:shadow-glow-purple transition-all duration-500 group"
+                      >
+                        {/* Shine Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                        <h3 className="text-xl font-bold mb-6 text-white border-b border-white/10 pb-4 flex items-center justify-between">
+                          <span>Event Highlights</span>
+                          <div className="h-1.5 w-1.5 rounded-full bg-metal-purple-500 shadow-[0_0_8px_#a855f7]" />
+                        </h3>
+                        <ul className="space-y-5 relative z-10">
+                          {selectedItem.highlights && selectedItem.highlights.length > 0 ? (
+                            selectedItem.highlights.map((highlight, idx) => (
+                              <li key={idx} className="flex items-start gap-3 group/item">
+                                <div className="mt-1 min-w-[20px] text-metal-purple-400 group-hover/item:text-metal-purple-300 transition-colors">
+                                  <CheckCircle2 className="w-5 h-5 drop-shadow-md" />
+                                </div>
+                                <span className="text-base text-gray-300 leading-snug group-hover/item:text-white transition-colors">
+                                  {highlight}
+                                </span>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="text-muted-foreground text-sm italic">No highlights listed.</li>
+                          )}
+                        </ul>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Photos Carousel */}
+                  {selectedItem.photos && selectedItem.photos.length > 0 && (
+                    <motion.div
+                      initial={{ y: 30, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      viewport={{ once: true }}
+                      className="mt-24"
+                    >
+                      <div className="flex items-center gap-4 mb-10">
+                        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
+                        <h3 className="text-3xl font-heading font-bold text-center text-gradient-metal">Captured Moments</h3>
+                        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
+                      </div>
+                      <PosterCarousel posters={selectedItem.photos} />
+                    </motion.div>
+                  )}
+
+                </div>
+
+                {/* Footer within the content flow */}
+                <Footer />
               </motion.div>
             </motion.div>
           )}
