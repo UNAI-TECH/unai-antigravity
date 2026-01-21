@@ -211,30 +211,25 @@ const Gallery = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-background flex flex-col overflow-y-auto"
+              className="fixed inset-0 z-[100] bg-background overflow-y-auto"
               data-lenis-prevent
             >
-              <FloatingNavbar />
+              <div className="relative min-h-screen flex flex-col">
+                <FloatingNavbar />
 
-              {/* Back Button (Floating) */}
-              <div className="fixed top-24 left-6 z-50">
-                <button
-                  onClick={() => setSelectedItemId(null)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full glass-metal hover:bg-white/10 hover:border-metal-blue-500/50 transition-all duration-300 group text-white backdrop-blur-md"
-                >
-                  <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                  <span className="font-medium">Back to Gallery</span>
-                </button>
-              </div>
+                {/* Back Button */}
+                <div className="absolute top-28 left-6 md:left-12 z-50">
+                  <button
+                    onClick={() => setSelectedItemId(null)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full glass-metal bg-black/60 hover:bg-white/10 hover:border-metal-blue-500/50 transition-all duration-300 group text-white backdrop-blur-xl border border-white/10 shadow-lg"
+                  >
+                    <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                    <span className="font-medium">Back to Gallery</span>
+                  </button>
+                </div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="flex-1 min-h-screen flex flex-col"
-              >
                 {/* Hero Banner Header */}
-                <div className="relative h-[65vh] w-full overflow-hidden">
+                <header className="relative h-[55vh] md:h-[70vh] w-full overflow-hidden shrink-0">
                   {selectedItem.banner ? (
                     <motion.img
                       initial={{ scale: 1.1 }}
@@ -259,116 +254,121 @@ const Gallery = () => {
                     </div>
                   )}
 
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-black/30" />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-black/40" />
 
-                  {/* Title & Caption */}
-                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 z-10">
+                  {/* Header Content */}
+                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 z-20">
                     <div className="container mx-auto">
                       <motion.div
-                        initial={{ y: 20, opacity: 0 }}
+                        initial={{ y: 30, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
+                        transition={{ delay: 0.2, duration: 0.5 }}
+                        className="max-w-4xl"
                       >
-                        <span className={`inline-block px-4 py-1.5 rounded-full glass-metal text-sm font-medium mb-4 backdrop-blur-md border border-white/10 ${selectedItem.category === 'Events' ? 'text-metal-blue-300 shadow-[0_0_15px_rgba(56,189,248,0.3)]' : 'text-metal-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-                          }`}>
-                          {selectedItem.category}
-                        </span>
-                        <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className={`px-4 py-1.5 rounded-full glass-metal text-sm font-bold tracking-wide backdrop-blur-md border border-white/10 uppercase ${selectedItem.category === 'Events' ? 'text-metal-blue-300 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'text-metal-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                            }`}>
+                            {selectedItem.category}
+                          </span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent w-24" />
+                        </div>
+
+                        <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-2xl leading-tight">
                           {selectedItem.title}
                         </h1>
+
                         {selectedItem.caption && (
-                          <p className="text-xl md:text-2xl text-gray-200 font-light max-w-3xl drop-shadow-lg border-l-4 border-metal-blue-500 pl-4">
-                            {selectedItem.caption}
-                          </p>
+                          <div className="flex flex-col md:flex-row gap-4 md:items-center">
+                            <div className="w-1 h-12 bg-gradient-to-b from-metal-blue-400 to-metal-purple-400 rounded-full hidden md:block" />
+                            <p className="text-lg md:text-2xl text-gray-200 font-light drop-shadow-lg leading-relaxed max-w-2xl">
+                              {selectedItem.caption}
+                            </p>
+                          </div>
                         )}
                       </motion.div>
                     </div>
                   </div>
-                </div>
+                </header>
 
-                {/* Content Section */}
-                <div className="container mx-auto px-6 py-16 flex-1">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                {/* Main Content */}
+                <main className="flex-1 container mx-auto px-6 py-12 md:py-20 relative z-10">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 items-start">
 
-                    {/* Description */}
-                    <div className="lg:col-span-2 space-y-8">
+                    {/* Left Column: Description */}
+                    <div className="lg:col-span-2 space-y-10 order-2 lg:order-1">
                       <motion.div
-                        initial={{ y: 20, opacity: 0 }}
+                        initial={{ y: 30, opacity: 0 }}
                         whileInView={{ y: 0, opacity: 1 }}
                         viewport={{ once: true }}
-                        className="glass-metal p-8 rounded-2xl relative overflow-hidden group hover:border-metal-blue-500/30 hover:shadow-glow-blue transition-all duration-500"
+                        className="glass-metal p-6 md:p-10 rounded-3xl relative overflow-hidden group hover:border-metal-blue-500/30 transition-all duration-500"
                       >
-                        {/* Shine Effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
 
-                        <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-metal-blue-400 shadow-[0_0_10px_#38bdf8]" />
+                        <h3 className="text-2xl md:text-3xl font-bold mb-8 flex items-center gap-4 text-white">
+                          <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-white/10 text-metal-blue-400">
+                            <ArrowRight className="w-5 h-5 -rotate-45" />
+                          </span>
                           About The Event
                         </h3>
-                        <p className="text-gray-300 leading-relaxed whitespace-pre-line text-lg relative z-10">
-                          {selectedItem.description}
-                        </p>
+                        <div className="prose prose-invert max-w-none">
+                          <p className="text-gray-300 leading-relaxed whitespace-pre-line text-lg font-light">
+                            {selectedItem.description}
+                          </p>
+                        </div>
                       </motion.div>
+
+                      {/* Photo Carousel (Moved inside main content flow) */}
+                      {selectedItem.photos && selectedItem.photos.length > 0 && (
+                        <div className="pt-8">
+                          <div className="flex items-center gap-6 mb-8">
+                            <h3 className="text-2xl font-bold text-white">Event Gallery</h3>
+                            <div className="h-px bg-white/10 flex-1" />
+                          </div>
+                          <PosterCarousel posters={selectedItem.photos} />
+                        </div>
+                      )}
                     </div>
 
-                    {/* Highlights Sidebar */}
-                    <div className="lg:col-span-1">
+                    {/* Right Column: Highlights Sidebar */}
+                    <div className="lg:col-span-1 order-1 lg:order-2">
                       <motion.div
-                        initial={{ x: 20, opacity: 0 }}
+                        initial={{ x: 30, opacity: 0 }}
                         whileInView={{ x: 0, opacity: 1 }}
                         viewport={{ once: true }}
-                        className="glass-metal p-8 rounded-2xl sticky top-24 hover:border-metal-purple-500/30 hover:shadow-glow-purple transition-all duration-500 group"
+                        className="glass-metal p-8 rounded-3xl sticky top-28 border border-white/10 shadow-xl"
                       >
-                        {/* Shine Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
-
-                        <h3 className="text-xl font-bold mb-6 text-white border-b border-white/10 pb-4 flex items-center justify-between">
-                          <span>Event Highlights</span>
-                          <div className="h-1.5 w-1.5 rounded-full bg-metal-purple-500 shadow-[0_0_8px_#a855f7]" />
+                        <h3 className="text-xl font-bold mb-6 text-white pb-4 border-b border-white/10 flex items-center justify-between">
+                          Highlights
+                          <div className="flex gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-metal-blue-400" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-metal-purple-400" />
+                          </div>
                         </h3>
-                        <ul className="space-y-5 relative z-10">
+                        <ul className="space-y-4">
                           {selectedItem.highlights && selectedItem.highlights.length > 0 ? (
                             selectedItem.highlights.map((highlight, idx) => (
-                              <li key={idx} className="flex items-start gap-3 group/item">
-                                <div className="mt-1 min-w-[20px] text-metal-purple-400 group-hover/item:text-metal-purple-300 transition-colors">
-                                  <CheckCircle2 className="w-5 h-5 drop-shadow-md" />
+                              <li key={idx} className="flex items-start gap-4 group/item p-2 rounded-lg hover:bg-white/5 transition-colors duration-300">
+                                <div className="mt-1 min-w-[24px] text-metal-purple-400 group-hover/item:text-white transition-colors">
+                                  <CheckCircle2 className="w-6 h-6" />
                                 </div>
-                                <span className="text-base text-gray-300 leading-snug group-hover/item:text-white transition-colors">
+                                <span className="text-pink-100/80 leading-snug group-hover/item:text-white transition-colors">
                                   {highlight}
                                 </span>
                               </li>
                             ))
                           ) : (
-                            <li className="text-muted-foreground text-sm italic">No highlights listed.</li>
+                            <li className="text-muted-foreground text-sm italic">No highlights available.</li>
                           )}
                         </ul>
                       </motion.div>
                     </div>
+
                   </div>
+                </main>
 
-                  {/* Photos Carousel */}
-                  {selectedItem.photos && selectedItem.photos.length > 0 && (
-                    <motion.div
-                      initial={{ y: 30, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      viewport={{ once: true }}
-                      className="mt-24"
-                    >
-                      <div className="flex items-center gap-4 mb-10">
-                        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
-                        <h3 className="text-3xl font-heading font-bold text-center text-gradient-metal">Captured Moments</h3>
-                        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1" />
-                      </div>
-                      <PosterCarousel posters={selectedItem.photos} />
-                    </motion.div>
-                  )}
-
-                </div>
-
-                {/* Footer within the content flow */}
                 <Footer />
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
