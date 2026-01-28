@@ -30,9 +30,9 @@ const XIcon = ({ className, size = 24, ...props }: { className?: string; size?: 
 );
 
 const socialLinks = [
-  { icon: XIcon, href: "#", label: "X" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Instagram, href: "#", label: "Instagram" },
+  { icon: XIcon, href: "https://x.com/UnaiTech74505?s=20", label: "X" },
+  { icon: Linkedin, href: "https://www.linkedin.com/company/unai-tech/", label: "LinkedIn" },
+  { icon: Instagram, href: "https://www.instagram.com/unai.tech?igsh=YmwwMTk1cW1xeHl0", label: "Instagram" },
 ];
 
 export const Footer = () => {
@@ -58,9 +58,11 @@ export const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link to="/" className="inline-block mb-6 group/brand">
-              <span className="font-heading text-3xl font-bold text-gradient-metal group-hover/brand:opacity-80 transition-opacity">
-                UNAI TECH
-              </span>
+              <img
+                src="/unai-logo.png"
+                alt="UNAI TECH"
+                className="h-12 w-auto group-hover/brand:opacity-80 transition-all group-hover/brand:drop-shadow-[0_0_10px_rgba(139,92,246,0.4)]"
+              />
             </Link>
             <p className="text-muted-foreground mb-6 max-w-xs leading-relaxed">
               Building the future of technology with innovative solutions that transform industries.

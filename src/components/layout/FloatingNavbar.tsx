@@ -29,13 +29,12 @@ export const FloatingNavbar = () => {
 
         <div className="flex items-center justify-between relative z-10">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 cursor-pointer group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110">
-              <span className="text-white font-bold text-xl">U</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300">
-              UNAI
-            </span>
+          <Link to="/" className="flex items-center cursor-pointer group">
+            <img
+              src="/unai-logo.png"
+              alt="UNAI"
+              className="h-10 w-auto transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(139,92,246,0.6)]"
+            />
           </Link>
 
           {/* Desktop Navigation - Enhanced Glassmorphism */}
