@@ -24,6 +24,7 @@ const serviceDetails: Record<string, any> = {
             "Predictive Cognitive Analytics",
             "Custom Neural Architectures"
         ],
+        heroImage: "/6246137-removebg-preview.png",
         bentoFeatures: [
             {
                 title: "Advanced NLP",
@@ -39,6 +40,11 @@ const serviceDetails: Record<string, any> = {
                 title: "Adaptive Learning",
                 desc: "Models that evolve in real-time as they ingest new organizational datasets.",
                 icon: Rocket
+            },
+            {
+                title: "Multimodal Synthesis",
+                desc: "Seamlessly finding patterns across text, image, and structured data streams.",
+                icon: ImageIcon
             }
         ]
     },
@@ -54,6 +60,7 @@ const serviceDetails: Record<string, any> = {
             "Intelligent Data Orbits",
             "Institutional Memory Integration"
         ],
+        heroImage: "/corporate-meeting-employees-cartoon-characters-discussing-business-strategy-planning-further-actions-brainstorming-formal-communication-seminar-concept-illustration.png",
         bentoFeatures: [
             {
                 title: "Smart Backends",
@@ -69,6 +76,11 @@ const serviceDetails: Record<string, any> = {
                 title: "Scalable Core",
                 desc: "Cloud-native architectures ready for the next decade of AI advancements.",
                 icon: Box
+            },
+            {
+                title: "Real-Time Sync",
+                desc: "Instant state propagation across all connected clients and services.",
+                icon: Zap
             }
         ]
     },
@@ -84,6 +96,7 @@ const serviceDetails: Record<string, any> = {
             "Operational Self-Healing",
             "Autonomous Agent Swarms"
         ],
+        heroImage: "/generation-x-abstract-concept-vector-illustration-middle-age-parents-work-life-balance-strong-professional-cold-war-personal-computing-pay-off-debt-stable-saving-plan-abstract-metaphor.png",
         bentoFeatures: [
             {
                 title: "Workflow Orchestration",
@@ -99,6 +112,11 @@ const serviceDetails: Record<string, any> = {
                 title: "Agentic Frameworks",
                 desc: "Deploy autonomous agents that perform complex tasks across your stack.",
                 icon: Cpu
+            },
+            {
+                title: "Resilient Healing",
+                desc: "Automated recovery protocols that resolve incidents without human intervention.",
+                icon: Shield
             }
         ]
     },
@@ -114,6 +132,7 @@ const serviceDetails: Record<string, any> = {
             "Liquid Computing Models",
             "Global Resiliency Design"
         ],
+        heroImage: "/5384286-removebg-preview.png",
         bentoFeatures: [
             {
                 title: "Elastic Foundations",
@@ -129,6 +148,11 @@ const serviceDetails: Record<string, any> = {
                 title: "Digital Twin Infra",
                 desc: "Simulate infrastructure changes in virtual environments before live deployment.",
                 icon: Globe
+            },
+            {
+                title: "Hybrid Edge",
+                desc: "Distributed processing power that brings intelligence closer to the data source.",
+                icon: Cpu
             }
         ]
     }
@@ -241,8 +265,16 @@ const ServiceDetail = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 1, delay: 0.2 }}
+                                className="relative flex justify-center items-center"
                             >
-                                <ImagePlaceholder label="HERO_CONCEPT_VISUAL" aspect="aspect-[4/5] sm:aspect-square" />
+                                <div className="relative aspect-square w-full max-w-[500px] flex items-center justify-center">
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${isBlue ? 'from-blue-500/20 to-transparent' : 'from-purple-500/20 to-transparent'} rounded-full blur-3xl`} />
+                                    <img
+                                        src={service.heroImage}
+                                        alt={service.title}
+                                        className="relative z-10 w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
+                                    />
+                                </div>
                             </motion.div>
                         </div>
                     </div>
@@ -271,9 +303,6 @@ const ServiceDetail = () => {
                                         <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
                                     </GlassCard>
                                 ))}
-                                <div className="sm:col-span-1">
-                                    <ImagePlaceholder label="FEATURE_PROCESS_DIAGRAM" aspect="aspect-square" className="h-full" />
-                                </div>
                             </div>
 
                             <div className="lg:col-span-1">
@@ -314,7 +343,14 @@ const ServiceDetail = () => {
                 <section className="py-24 sm:py-32 px-4 sm:px-6">
                     <div className="max-w-7xl mx-auto">
                         <div className="grid lg:grid-cols-2 gap-16 items-center">
-                            <ImagePlaceholder label="IMPLEMENTATION_SHOWCASE" aspect="aspect-video" />
+                            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-100 group">
+                                <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                <img
+                                    src="/illustration-1.png"
+                                    alt="Implementation Showcase"
+                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                />
+                            </div>
                             <div className="max-w-xl">
                                 <h2 className="text-3xl sm:text-5xl font-heading font-bold text-slate-900 mb-8 tracking-tight">Ready for Engineering?</h2>
                                 <p className="text-lg text-slate-500 mb-10 leading-relaxed font-light">

@@ -32,10 +32,11 @@ const services = [
 
 export const ServicesPreview = () => {
   return (
-    <section className="relative py-14 md:py-20 overflow-hidden">
+    <section className="relative py-14 md:py-20 overflow-hidden bg-gradient-to-br from-white via-blue-50/50 to-blue-100/30">
       {/* Background Effects */}
-      <GlowOrb size="lg" color="purple" className="top-20 -right-32" />
-      <GlowOrb size="md" color="blue" className="bottom-20 -left-32" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent pointer-events-none" />
+      <GlowOrb size="lg" color="blue" className="top-20 -right-32 opacity-40" />
+      <GlowOrb size="md" color="blue" className="bottom-20 -left-32 opacity-40" />
 
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Header */}
@@ -66,16 +67,17 @@ export const ServicesPreview = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative rounded-3xl p-8 lg:p-10 bg-white border border-gray-200 shadow-sm h-full"
+            className="relative rounded-3xl p-8 lg:p-10 glass-premium h-full group"
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             <div className="relative z-10">
-              <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-sm text-purple-700 mb-6 border border-purple-200">
+              <span className="inline-block px-4 py-2 rounded-full bg-blue-50 text-sm text-blue-700 mb-6 border border-blue-100 font-medium">
                 Introduction
               </span>
               <h2 className="font-heading text-4xl md:text-5xl font-bold mb-6 tracking-tight leading-tight">
                 <span className="text-foreground">Beyond Automation.</span>
                 <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600">
                   Beyond Integration.
                 </span>
                 <br />
@@ -87,24 +89,24 @@ export const ServicesPreview = () => {
 
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center mt-1 flex-shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center mt-1 flex-shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
                   </div>
                   <p className="text-gray-600">
                     <span className="font-bold text-gray-900">Cognitive Systems Engineering</span> — AI that learns your context
                   </p>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center mt-1 flex-shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center mt-1 flex-shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
                   </div>
                   <p className="text-gray-600">
                     <span className="font-bold text-gray-900">Adaptive Architecture Design</span> — Infrastructure that evolves
                   </p>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center mt-1 flex-shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center mt-1 flex-shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
                   </div>
                   <p className="text-gray-600">
                     <span className="font-bold text-gray-900">Intelligence-as-Infrastructure</span> — AI as a foundational utility
@@ -127,21 +129,21 @@ export const ServicesPreview = () => {
                 <ParticleCard
                   particleCount={8}
                   glowColor={service.color === "blue" ? "96, 165, 250" : "192, 132, 252"}
-                  className={`h-full glass-metal rounded-2xl p-6 glow-border transition-all duration-500 hover:shadow-glow-${service.color} justify-start gap-4`}
+                  className={`h-full glass-premium rounded-2xl p-6 glow-border transition-all duration-500 hover:shadow-glow-${service.color} justify-start gap-4 group`}
                 >
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${service.color === "blue"
-                    ? "bg-metal-blue-500/20"
-                    : "bg-metal-purple-500/20"
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 transition-colors duration-300 ${service.color === "blue"
+                    ? "bg-blue-50/80 group-hover:bg-blue-100/80"
+                    : "bg-purple-50/80 group-hover:bg-purple-100/80"
                     }`}>
-                    <service.icon className={`w-7 h-7 ${service.color === "blue"
-                      ? "text-metal-blue-400"
-                      : "text-metal-purple-400"
+                    <service.icon className={`w-7 h-7 transition-colors duration-300 ${service.color === "blue"
+                      ? "text-blue-500 group-hover:text-blue-600"
+                      : "text-purple-500 group-hover:text-purple-600"
                       }`} />
                   </div>
-                  <h3 className="font-heading text-xl font-semibold mb-3 text-foreground">
+                  <h3 className="font-heading text-xl font-semibold mb-3 text-foreground group-hover:text-blue-700 transition-colors">
                     {service.title}
                   </h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-sm group-hover:text-gray-600 transition-colors">
                     {service.description}
                   </p>
                 </ParticleCard>

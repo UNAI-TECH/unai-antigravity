@@ -8,6 +8,7 @@ import { ChevronDown, Check, ArrowRight, Cpu, Zap, Code, Globe } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
+import { FoundersNote } from "@/components/sections/FoundersNote";
 import "@/utils/removeSplineLogo";
 
 const timelineItems = [
@@ -358,31 +359,7 @@ const About = () => {
               <div className="energy-line" />
 
               {/* Founder's Note Section */}
-              <motion.section
-                className="relative py-14 lg:py-24 overflow-hidden"
-                {...fadeInUp}
-                transition={{ duration: 0.5, delay: 0.15 }}
-              >
-                <div className="container mx-auto px-6">
-                  <motion.div
-                    className="max-w-4xl mx-auto glass-premium p-8 sm:p-12 md:p-16 rounded-[2.5rem] sm:rounded-[3rem] relative overflow-hidden bg-slate-900 text-white"
-                  >
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600/20 blur-[100px] rounded-full" />
-
-                    <div className="relative z-10">
-                      <h2 className="font-heading text-3xl font-bold mb-8">A Note from the Founder</h2>
-                      <div className="space-y-6 text-lg text-slate-300 italic leading-relaxed font-light">
-                        <p>"UNAI TECH emerged from a conviction that we're living through a fundamental shift in how technology works."</p>
-                        <p>"For decades, software has been deterministic — if-then logic, explicit instructions, rigid workflows. Artificial intelligence represents something categorically different: systems that learn patterns, understand context, and make autonomous decisions."</p>
-                        <p>"But most organizations are still trying to use AI the old way — as a feature to bolt onto existing processes. That's like using a smartphone as a calculator."</p>
-                        <p>"We founded UNAI TECH to help organizations think differently. To build from an intelligence-first foundation. To create systems that don't just automate tasks but augment human cognitive capacity."</p>
-                        <p>"This is about more than technology. It's about fundamentally upgrading how organizations operate in an increasingly complex world. We're not building for today's problems. We're architecting for tomorrow's possibilities."</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              </motion.section>
+              <FoundersNote />
 
               {/* Closing CTA */}
               <section className="py-24 px-4 sm:px-6">

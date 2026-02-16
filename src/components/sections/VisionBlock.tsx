@@ -3,7 +3,7 @@ import { GlowOrb } from "@/components/effects/GlowOrb";
 
 export const VisionBlock = () => {
     return (
-        <section className="relative mx-4 my-4 py-16 lg:py-32 overflow-hidden rounded-[2.5rem] md:rounded-[4rem] shadow-2xl border border-white/10">
+        <section className="relative mx-4 my-4 py-12 lg:py-20 overflow-hidden rounded-[2.5rem] md:rounded-[4rem] shadow-2xl border border-white/10">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <img
@@ -27,17 +27,17 @@ export const VisionBlock = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
-                    className="max-w-4xl mx-auto will-change-transform"
+                    className="max-w-3xl mx-auto will-change-transform"
                 >
-                    <span className="inline-block px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-semibold mb-8 uppercase tracking-widest">
+                    <span className="inline-block px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-semibold mb-6 uppercase tracking-widest">
                         The Vision
                     </span>
 
-                    <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-10 leading-[1.1] tracking-tight font-heading">
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-8 leading-[1.1] tracking-tight font-heading">
                         Building the <span className="text-blue-500">Intelligent Layer</span> of Tomorrow's Economy
                     </h2>
 
-                    <div className="space-y-8 text-xl md:text-2xl text-slate-400 font-light leading-relaxed">
+                    <div className="space-y-6 text-lg md:text-xl text-slate-400 font-light leading-relaxed">
                         <p>
                             The future doesn't need more software. It needs systems that <span className="text-white font-medium">understand, anticipate, and evolve.</span>
                         </p>

@@ -50,7 +50,7 @@ export const HeroSection = () => {
   return (
     <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-background text-foreground flex items-center justify-center shadow-2xl border border-white/10">
       {/* Grainient Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 opacity-50">
         <Grainient
           color1="#666edb"
           color2="#ffffff"
@@ -143,7 +143,7 @@ export const HeroSection = () => {
 
                 {currentSlide.type === 'default' && (
                   <Link to="/contact" className="w-full sm:w-auto">
-                    <button className="w-full group relative tap-target px-6 py-4 md:px-10 md:py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-semibold text-base md:text-lg transition-all duration-300 hover:bg-white/20 active:scale-95 gpu-accelerated">
+                    <button className="w-full group relative tap-target px-6 py-4 md:px-10 md:py-5 bg-white/40 backdrop-blur-md border border-purple-200 text-purple-900 rounded-full font-semibold text-base md:text-lg transition-all duration-300 hover:bg-white/60 active:scale-95 gpu-accelerated">
                       <span className="relative z-10">Schedule Intelligence Consultation</span>
                     </button>
                   </Link>

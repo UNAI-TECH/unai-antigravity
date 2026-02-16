@@ -17,6 +17,7 @@ export default {
         heading: ["Outfit", "system-ui", "sans-serif"],
         sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
         body: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        handwriting: ["Caveat", "cursive"],
       },
       colors: {
         border: "hsl(var(--border))",

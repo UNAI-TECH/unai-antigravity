@@ -154,8 +154,7 @@ const Products = () => {
                     <img
                       src="/illustration2.png"
                       alt="Vidyon ERP Illustration"
-                      className="w-full h-auto rounded-3xl"
-                    />
+                      className="w-full h-auto rounded-3xl" />
                   </div>
 
                   {/* Background decorative elements */}
@@ -213,54 +212,20 @@ const Products = () => {
               </div>
             </div>
           </div>
-        </section>
-
-        {/* Feature Grid Section */}
-        <section className="py-14 lg:py-24 bg-white">
-          <div className="container mx-auto px-6">
-            <div className="text-center mb-16 max-w-2xl mx-auto">
-              <h2 className="font-heading text-4xl font-bold mb-4 text-[#1F2937]">Powerful Features, <br />Simple Experience</h2>
-              <p className="text-lg text-gray-500 leading-relaxed">Everything you need to manage your institution in one place. Engineered for speed and ease of use.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="p-8 rounded-3xl bg-gray-50/50 border border-gray-100 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group"
-                >
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${feature.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                    feature.color === 'purple' ? 'bg-purple-50 text-purple-600' : 'bg-indigo-50 text-indigo-600'
-                    } group-hover:scale-110 transition-transform`}>
-                    <feature.icon size={28} />
-                  </div>
-                  <h3 className="font-heading text-xl font-bold mb-3 text-[#1f2937]">{feature.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{feature.description}</p>
-                </motion.div>
-              ))}
-            </div>
+          {/* PremiumCTA Merged Here */}
+          <div className="mt-16 sm:mt-24">
+            <PremiumCTA
+              title={<>Empower Your Institution <br />With <span className="text-blue-300">My Vidyon</span></>}
+              description="Join hundreds of schools already transforming their administrative workflows and academic excellence."
+              primaryButton={{
+                label: "Schedule Free Demo",
+                onClick: () => navigate('/contact')
+              }} />
           </div>
         </section>
-
-        {/* CTA Section */}
-        <section className="py-14 lg:py-24 px-4 sm:px-6">
-          <PremiumCTA
-            title={<>Empower Your Institution <br />With <span className="text-blue-300">My Vidyon</span></>}
-            description="Join hundreds of schools already transforming their administrative workflows and academic excellence."
-            primaryButton={{
-              label: "Schedule Free Demo",
-              onClick: () => navigate('/contact')
-            }}
-          />
-        </section>
       </main>
-
       <Footer />
-    </div >
+    </div>
   );
 };
 
