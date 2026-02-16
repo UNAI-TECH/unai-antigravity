@@ -82,7 +82,7 @@ const Gallery = () => {
 
       <main className="pt-0 min-h-screen">
         {/* Hero Section */}
-        <section className="relative pt-36 pb-20 overflow-hidden">
+        <section className="relative pt-32 pb-12 md:pb-20 overflow-hidden">
           <GlowOrb size="xl" color="plasma" className="top-0 left-1/2 -translate-x-1/2" />
 
           <div className="container mx-auto px-6 relative z-10">
@@ -95,7 +95,7 @@ const Gallery = () => {
               <span className="inline-block px-4 py-2 rounded-full glass-metal text-sm text-metal-purple-300 mb-6">
                 Visual Void
               </span>
-              <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-8">
+              <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8">
                 <span className="text-foreground">Our </span>
                 <span className="text-gradient-metal">Gallery</span>
               </h1>
@@ -110,16 +110,16 @@ const Gallery = () => {
         <div className="energy-line" />
 
         {/* Filter Tabs */}
-        <section className="py-12">
+        <section className="py-8 md:py-12">
           <div className="container mx-auto px-6">
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex overflow-x-auto no-scrollbar justify-start sm:justify-center gap-3 px-4 sm:px-0">
               {categories.map((category) => (
                 <motion.button
                   key={category}
                   onClick={() => setActiveCategory(category)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`px-6 py-3 rounded-xl transition-all duration-300 ${activeCategory === category
+                  className={`px-6 py-3 rounded-xl whitespace-nowrap transition-all duration-300 ${activeCategory === category
                     ? "bg-gradient-metal text-white shadow-glow-blue"
                     : "glass-metal text-muted-foreground hover:text-foreground"
                     }`}
@@ -132,7 +132,7 @@ const Gallery = () => {
         </section>
 
         {/* Gallery Grid */}
-        <section className="relative py-12 pb-32 overflow-hidden">
+        <section className="relative py-8 md:py-12 pb-16 lg:pb-32 overflow-hidden">
           <GlowOrb size="lg" color="blue" className="top-1/4 -right-32" />
           <GlowOrb size="md" color="purple" className="bottom-1/4 -left-32" />
 
@@ -274,14 +274,14 @@ const Gallery = () => {
                           <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent w-24" />
                         </div>
 
-                        <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-2xl leading-tight">
+                        <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-2xl leading-tight">
                           {selectedItem.title}
                         </h1>
 
                         {selectedItem.caption && (
                           <div className="flex flex-col md:flex-row gap-4 md:items-center">
                             <div className="w-1 h-12 bg-gradient-to-b from-metal-blue-400 to-metal-purple-400 rounded-full hidden md:block" />
-                            <p className="text-lg md:text-2xl text-gray-200 font-light drop-shadow-lg leading-relaxed max-w-2xl">
+                            <p className="text-base sm:text-lg md:text-2xl text-gray-200 font-light drop-shadow-lg leading-relaxed max-w-2xl">
                               {selectedItem.caption}
                             </p>
                           </div>

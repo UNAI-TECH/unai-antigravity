@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["Sora", "system-ui", "sans-serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
+        heading: ["Outfit", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        body: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -23,13 +24,41 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        
+
         // Core blacks
         void: "hsl(var(--black-void))",
         "black-deep": "hsl(var(--black-deep))",
         "black-base": "hsl(var(--black-base))",
         "black-elevated": "hsl(var(--black-elevated))",
-        
+
+        // Blue color scale (Primary color #4954FA)
+        blue: {
+          50: '#f5f7ff',
+          100: '#e6ebff',
+          200: '#d4dcff',
+          300: '#b8c5ff',
+          400: '#8b9dff',
+          500: '#4954FA',  // Primary blue
+          600: '#3d45e8',
+          700: '#2f37d6',
+          800: '#252db8',
+          900: '#1d2494',
+        },
+
+        // Override purple to use blue values
+        purple: {
+          50: '#f5f7ff',
+          100: '#e6ebff',
+          200: '#d4dcff',
+          300: '#b8c5ff',
+          400: '#8b9dff',
+          500: '#4954FA',  // Primary blue
+          600: '#3d45e8',
+          700: '#2f37d6',
+          800: '#252db8',
+          900: '#1d2494',
+        },
+
         // Metal blue spectrum
         "metal-blue": {
           900: "hsl(var(--metal-blue-900))",
@@ -38,8 +67,8 @@ export default {
           400: "hsl(var(--metal-blue-400))",
           300: "hsl(var(--metal-blue-300))",
         },
-        
-        // Metal purple spectrum
+
+        // Metal purple spectrum (now uses blue)
         "metal-purple": {
           900: "hsl(var(--metal-purple-900))",
           700: "hsl(var(--metal-purple-700))",
@@ -47,14 +76,14 @@ export default {
           400: "hsl(var(--metal-purple-400))",
           300: "hsl(var(--metal-purple-300))",
         },
-        
+
         // Energy accents
         energy: {
           blue: "hsl(var(--energy-blue))",
           purple: "hsl(var(--energy-purple))",
           plasma: "hsl(var(--energy-plasma))",
         },
-        
+
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

@@ -11,7 +11,7 @@ interface Particle {
   duration: number;
 }
 
-export const ParticleField = ({ count = 30 }: { count?: number }) => {
+export const ParticleField = ({ count = 15 }: { count?: number }) => {
   const particles = useRef<Particle[]>([]);
 
   useEffect(() => {
@@ -19,10 +19,10 @@ export const ParticleField = ({ count = 30 }: { count?: number }) => {
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: Math.random() * 4 + 1,
+      size: Math.random() * 3 + 1,
       color: Math.random() > 0.5 ? "blue" : "purple",
       delay: Math.random() * 5,
-      duration: Math.random() * 10 + 15,
+      duration: Math.random() * 15 + 15,
     }));
   }, [count]);
 
@@ -31,7 +31,7 @@ export const ParticleField = ({ count = 30 }: { count?: number }) => {
       {particles.current.map((particle) => (
         <motion.div
           key={particle.id}
-          className="absolute rounded-full"
+          className="absolute rounded-full will-change-transform"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
@@ -39,24 +39,18 @@ export const ParticleField = ({ count = 30 }: { count?: number }) => {
             height: particle.size,
             background:
               particle.color === "blue"
-                ? "radial-gradient(circle, hsl(220 85% 55% / 0.6), transparent)"
-                : "radial-gradient(circle, hsl(265 75% 55% / 0.6), transparent)",
-            boxShadow:
-              particle.color === "blue"
-                ? "0 0 10px hsl(220 85% 55% / 0.4)"
-                : "0 0 10px hsl(265 75% 55% / 0.4)",
+                ? "radial-gradient(circle, hsl(220 85% 55% / 0.4), transparent)"
+                : "radial-gradient(circle, hsl(265 75% 55% / 0.4), transparent)",
           }}
           animate={{
-            y: [0, -30, 0],
-            x: [0, 15, -15, 0],
-            opacity: [0.3, 0.8, 0.3],
-            scale: [1, 1.2, 1],
+            y: [0, -40, 0],
+            opacity: [0.2, 0.5, 0.2],
           }}
           transition={{
             duration: particle.duration,
             delay: particle.delay,
             repeat: Infinity,
-            ease: "easeInOut",
+            ease: "linear",
           }}
         />
       ))}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,61 +11,79 @@
 
 @layer base {
   :root {
-    /* === CORE BLACKS (Base Material) === */
-    --black-void: 230 25% 2%;
-    --black-deep: 230 20% 4%;
-    --black-base: 230 18% 7%;
-    --black-elevated: 230 15% 10%;
+    /* === LIGHT THEME WHITES (Base Material) === */
+    --white-pure: 0 0% 100%;
+    --white-soft: 0 0% 98%;
+    --white-muted: 0 0% 96%;
+    --white-elevated: 0 0% 94%;
 
-    /* === METAL BLUE (Primary Alloy) === */
-    --metal-blue-900: 220 60% 15%;
-    --metal-blue-700: 220 55% 28%;
-    --metal-blue-500: 220 85% 55%;
-    --metal-blue-400: 215 90% 65%;
-    --metal-blue-300: 210 95% 75%;
+    /* === PRIMARY BLUE (#4954FA) === */
+    --purple-900: 236 95% 35%;
+    --purple-700: 236 95% 50%;
+    --purple-500: 236 95% 64%;
+    /* #4954FA */
+    --purple-400: 236 95% 72%;
+    --purple-300: 236 95% 80%;
+    --purple-200: 236 95% 90%;
+    --purple-100: 236 95% 97%;
 
-    /* === METAL PURPLE (Secondary Alloy) === */
-    --metal-purple-900: 270 50% 12%;
-    --metal-purple-700: 270 45% 25%;
-    --metal-purple-500: 265 75% 55%;
-    --metal-purple-400: 260 80% 65%;
-    --metal-purple-300: 255 85% 78%;
+    /* === ACCENT BLUE VARIATIONS === */
+    --accent-purple-light: 236 95% 75%;
+    --accent-purple-dark: 236 95% 55%;
+    --accent-glow: 236 95% 64%;
 
-    /* === ENERGY ACCENTS === */
-    --energy-blue: 195 100% 70%;
-    --energy-purple: 270 100% 75%;
-    --energy-plasma: 240deg 80% 65%;
+    /* === LAVENDER COLORS === */
+    --lavender-300: 270 60% 85%;
+    --lavender-200: 270 60% 90%;
+    --lavender-100: 270 60% 95%;
 
     /* === SEMANTIC TOKENS === */
-    --background: var(--black-deep);
-    --foreground: 0 0% 95%;
+    --background: var(--white-pure);
+    --foreground: 0 0% 15%;
 
-    --card: 230 20% 8%;
-    --card-foreground: 0 0% 95%;
+    --card: var(--white-soft);
+    --card-foreground: 0 0% 15%;
 
-    --popover: 230 20% 6%;
-    --popover-foreground: 0 0% 95%;
+    --popover: var(--white-pure);
+    --popover-foreground: 0 0% 15%;
 
-    --primary: var(--metal-blue-500);
+    --primary: var(--purple-500);
     --primary-foreground: 0 0% 100%;
 
-    --secondary: var(--metal-purple-500);
+    --secondary: var(--purple-400);
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 230 15% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: var(--energy-plasma);
+    --accent: var(--purple-500);
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 230 15% 20%;
-    --input: 230 15% 20%;
-    --ring: var(--metal-blue-500);
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: var(--purple-500);
 
     --radius: 0.5rem;
+
+    /* === LEGACY COMPATIBILITY (for existing components) === */
+    --metal-blue-900: var(--purple-900);
+    --metal-blue-700: var(--purple-700);
+    --metal-blue-500: var(--purple-500);
+    --metal-blue-400: var(--purple-400);
+    --metal-blue-300: var(--purple-300);
+
+    --metal-purple-900: var(--purple-900);
+    --metal-purple-700: var(--purple-700);
+    --metal-purple-500: var(--purple-500);
+    --metal-purple-400: var(--purple-400);
+    --metal-purple-300: var(--purple-300);
+
+    --energy-blue: var(--purple-400);
+    --energy-purple: var(--purple-300);
+    --energy-plasma: var(--purple-500);
   }
 }
 
@@ -106,10 +124,8 @@
 
 @layer components {
   .glass-metal {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
-    box-shadow:
-      0 8px 32px 0 rgba(31, 38, 135, 0.15),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    @apply bg-white/60 backdrop-blur-sm border border-gray-200;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
   }
 
   .glass-card {
@@ -118,10 +134,70 @@
   }
 
   .glass-card:hover {
-    @apply border-white/20;
+    @apply border-purple-200 bg-white/80;
+    box-shadow: 0 8px 24px 0 rgba(117, 76, 185, 0.1);
+  }
+
+  /* PREMIUM GLASS SYSTEM */
+  .glass-premium {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40;
     box-shadow:
-      0 12px 48px 0 rgba(31, 38, 135, 0.25),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -2px rgba(0, 0, 0, 0.05),
+      inset 0 0 20px rgba(255, 255, 255, 0.5);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-premium-hover {
+    @apply hover:bg-white/90 hover:border-white/60 hover:-translate-y-1.5;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 8px 10px -6px rgba(0, 0, 0, 0.1),
+      inset 0 0 30px rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(139, 92, 246, 0.1);
+  }
+
+  .glass-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent);
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    pointer-events: none;
+  }
+
+  .glass-shine:hover::after {
+    left: 150%;
+  }
+
+  .glass-inner-glow {
+    position: relative;
+  }
+
+  .glass-inner-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.6),
+        transparent 40%,
+        transparent 60%,
+        rgba(255, 255, 255, 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 }
 
@@ -166,17 +242,17 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(117, 76, 185, 0.05);
     border-radius: 3px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(117, 76, 185, 0.3);
     border-radius: 3px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(117, 76, 185, 0.5);
   }
 }
 
@@ -187,20 +263,20 @@
 @layer utilities {
   .shadow-glow-blue {
     box-shadow:
-      0 0 20px rgba(59, 130, 246, 0.3),
-      0 0 40px rgba(59, 130, 246, 0.15);
+      0 0 20px rgba(117, 76, 185, 0.3),
+      0 0 40px rgba(117, 76, 185, 0.15);
   }
 
   .shadow-glow-purple {
     box-shadow:
-      0 0 20px rgba(168, 85, 247, 0.3),
-      0 0 40px rgba(168, 85, 247, 0.15);
+      0 0 20px rgba(117, 76, 185, 0.3),
+      0 0 40px rgba(117, 76, 185, 0.15);
   }
 
   .shadow-glow-plasma {
     box-shadow:
-      0 0 20px rgba(139, 92, 246, 0.4),
-      0 0 40px rgba(59, 130, 246, 0.2);
+      0 0 20px rgba(117, 76, 185, 0.4),
+      0 0 40px rgba(117, 76, 185, 0.2);
   }
 }
 
@@ -211,8 +287,8 @@
 @layer components {
   .btn-metal {
     @apply relative overflow-hidden px-8 py-4 rounded-full font-semibold;
-    @apply bg-gradient-to-r from-metal-blue-500 to-metal-purple-500;
-    @apply text-white shadow-glow-blue;
+    @apply bg-gradient-to-r from-purple-500 to-purple-600;
+    @apply text-white shadow-glow-purple;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -229,7 +305,7 @@
     height: 100%;
     background: linear-gradient(90deg,
         transparent,
-        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.3),
         transparent);
     transition: left 0.5s;
   }
@@ -458,11 +534,11 @@ spline-viewer a#logo {
 
   /* Mobile (default) */
   .section-padding {
-    @apply px-4 py-12;
+    @apply px-4 py-14;
   }
 
   .section-margin {
-    @apply mx-4 my-12;
+    @apply mx-4 my-14;
   }
 
   /* Tablet (md: 768px) */
@@ -741,5 +817,19 @@ spline-viewer a#logo {
         hsl(var(--muted)) 100%);
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+}
+
+/* ============================================
+   SHIMMER ANIMATION
+   ============================================ */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
   }
 }

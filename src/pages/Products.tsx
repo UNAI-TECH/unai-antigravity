@@ -1,214 +1,266 @@
 import { motion } from "framer-motion";
 import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
-import { GlowOrb } from "@/components/effects/GlowOrb";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, ExternalLink } from "lucide-react";
+import { ExternalLink, CheckCircle2, Layout, Users, BarChart3, ShieldCheck, Zap, Globe, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { PremiumCTA } from "@/components/ui/PremiumCTA";
 
-const products = [
+import Grainient from "@/components/effects/Grainient";
+import ColumnGridBackground from "@/components/effects/ColumnGridBackground";
+
+const features = [
   {
-    name: "NexusAI Platform",
-    tagline: "Enterprise AI Infrastructure",
-    description: "A comprehensive AI platform that powers intelligent automation, predictive analytics, and machine learning at scale.",
-    features: ["Auto-ML Pipeline", "Real-time Inference", "Model Registry", "GPU Optimization"],
-    status: "Available",
-    color: "blue" as const,
+    icon: Layout,
+    title: "Unified Administration",
+    description: "Centrally manage students, staff, and operations with our intuitive dashboard.",
+    color: "blue"
   },
   {
-    name: "ShieldCore",
-    tagline: "Zero-Trust Security Suite",
-    description: "Next-generation cybersecurity platform with AI-powered threat detection and automated response systems.",
-    features: ["Threat Intelligence", "Zero-Trust Access", "SIEM Integration", "Incident Response"],
-    status: "Available",
-    color: "purple" as const,
+    icon: Users,
+    title: "Seamless Communication",
+    description: "Bridge the gap between parents, teachers, and students with real-time updates.",
+    color: "purple"
   },
   {
-    name: "CloudForge",
-    tagline: "Multi-Cloud Orchestration",
-    description: "Unified cloud management platform that simplifies multi-cloud deployments and optimizes costs automatically.",
-    features: ["Multi-Cloud Deploy", "Cost Analytics", "Auto-Scaling", "IaC Templates"],
-    status: "Available",
-    color: "blue" as const,
+    icon: BarChart3,
+    title: "Advanced Analytics",
+    description: "Make data-driven decisions with comprehensive performance and attendance reports.",
+    color: "indigo"
   },
   {
-    name: "FlowEngine",
-    tagline: "Intelligent Automation",
-    description: "Low-code automation platform that connects your entire tech stack and automates complex workflows.",
-    features: ["Visual Builder", "500+ Integrations", "AI Triggers", "Analytics Dashboard"],
-    status: "Beta",
-    color: "purple" as const,
+    icon: ShieldCheck,
+    title: "Secure Data",
+    description: "Enterprise-grade security to keep all educational and personal data protected.",
+    color: "blue"
   },
   {
-    name: "QuantumLeap",
-    tagline: "Quantum Computing SDK",
-    description: "Developer toolkit for building quantum-ready applications and algorithms for the next era of computing.",
-    features: ["Quantum Circuits", "Hybrid Computing", "Simulator", "Cloud Access"],
-    status: "Coming Soon",
-    color: "blue" as const,
+    icon: Zap,
+    title: "Instants Reports",
+    description: "Generate academic, financial, and attendance reports with a single click.",
+    color: "purple"
   },
   {
-    name: "SynapseDB",
-    tagline: "Vector Database",
-    description: "High-performance vector database optimized for AI applications, semantic search, and embeddings.",
-    features: ["Billion-Scale", "Real-time Index", "Multi-Modal", "Edge Deploy"],
-    status: "Coming Soon",
-    color: "purple" as const,
-  },
+    icon: Globe,
+    title: "Anywhere Access",
+    description: "Fully responsive platform accessible from mobile, tablet, or desktop devices.",
+    color: "indigo"
+  }
 ];
 
 const Products = () => {
+  const navigate = useNavigate();
+  const handleExploreNow = () => {
+    window.open("https://www.myvidyon.com/", "_blank", "noopener,noreferrer");
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F8FAFC]">
       <FloatingNavbar />
-      
-      <main className="pt-32">
-        {/* Hero Section */}
-        <section className="relative py-20 overflow-hidden">
-          <GlowOrb size="xl" color="plasma" className="top-0 left-1/2 -translate-x-1/2" />
-          
-          <div className="container mx-auto px-6 relative z-10">
+
+      <main>
+        {/* Premium Framing Hero Section */}
+        <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] flex items-center justify-center overflow-hidden pt-20 shadow-2xl bg-white">
+          {/* New Framing Background Component */}
+          <ColumnGridBackground />
+
+          <div className="container relative z-10 mx-auto px-6 h-full flex flex-col items-center justify-center py-20 text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-center max-w-4xl mx-auto"
+              className="max-w-4xl relative -top-12 sm:-top-24 md:-top-48"
             >
-              <span className="inline-block px-4 py-2 rounded-full glass-metal text-sm text-metal-purple-300 mb-6">
-                Artifact Showcase
-              </span>
-              <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-8">
-                <span className="text-foreground">Forged</span>
-                <br />
-                <span className="text-gradient-metal">Artifacts</span>
+              <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-7xl font-bold text-[#0D2872] mb-8 leading-tight tracking-tight">
+                My Vidyon
+                <span className="text-blue-500"> - ERP Solution</span>
               </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Explore our suite of products, each engineered to perfection. 
-                Tools that don't just solve problems—they transcend them.
+
+              <p className="text-xl md:text-2xl text-slate-500 mb-12 font-medium tracking-wide">
+                Organize <span className="mx-2 opacity-30">|</span> Educate <span className="mx-2 opacity-30">|</span> Elevate
               </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full px-6 sm:px-0">
+                <Button
+                  className="w-full sm:w-auto rounded-full bg-[#0D2872] text-white hover:bg-blue-900 px-12 h-16 text-lg font-bold shadow-2xl transition-all hover:scale-105"
+                  onClick={() => navigate("/contact")}
+                >
+                  Schedule Demo
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto rounded-full border-2 border-slate-200 bg-white/30 backdrop-blur-md text-[#0D2872] hover:bg-slate-50 px-12 h-16 text-lg font-bold transition-all hover:scale-105"
+                  onClick={handleExploreNow}
+                >
+                  Explore <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </div>
             </motion.div>
           </div>
         </section>
-        
-        <div className="energy-line" />
-        
-        {/* Products Grid */}
-        <section className="relative py-24 overflow-hidden">
-          <GlowOrb size="lg" color="blue" className="top-1/4 -right-32" />
-          <GlowOrb size="md" color="purple" className="bottom-1/4 -left-32" />
-          
-          <div className="container mx-auto px-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product, index) => (
+
+        {/* Side-by-Side ERP Solution Section with Triple Mockup PEeking */}
+        <section className="relative z-20 -mt-12 sm:-mt-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-transparent to-white">
+          <div className="container mx-auto relative">
+
+            {/* Triple Mobile Mockup Peek Layout (Behind Card) */}
+            <div className="absolute -top-20 sm:-top-48 md:-top-72 left-1/2 -translate-x-1/2 w-full max-w-[850px] md:max-w-[1100px] flex items-end justify-center pointer-events-none z-0 px-4 sm:px-10">
+              {/* Left Phone */}
+              <motion.div
+                initial={{ opacity: 0, y: 100, x: 20 }}
+                whileInView={{ opacity: 1, y: 0, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 0.2 }}
+                className="w-1/2 sm:w-1/3 md:w-[336px] -mr-16 sm:-mr-24 md:-mr-36"
+              >
+                <img src="/6.png" alt="Mockup Left" className="w-full h-auto drop-shadow-2xl opacity-90" />
+              </motion.div>
+
+              {/* Center Phone (Higher) */}
+              <motion.div
+                initial={{ opacity: 0, y: 120 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1 }}
+                className="w-3/5 sm:w-2/5 md:w-[441px] z-10 -mb-8 sm:-mb-10 md:-mb-16"
+              >
+                <img src="/5.png" alt="Mockup Center" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)]" />
+              </motion.div>
+
+              {/* Right Phone */}
+              <motion.div
+                initial={{ opacity: 0, y: 100, x: -20 }}
+                whileInView={{ opacity: 1, y: 0, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 0.4 }}
+                className="w-1/2 sm:w-1/3 md:w-[336px] -ml-16 sm:-ml-24 md:-ml-36"
+              >
+                <img src="/7.png" alt="Mockup Right" className="w-full h-auto drop-shadow-2xl opacity-90" />
+              </motion.div>
+            </div>
+
+            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
+              <div className="flex flex-col lg:flex-row items-center gap-16 relative z-10">
+                {/* Left Column: Illustration with Glows */}
                 <motion.div
-                  key={product.name}
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="flex-1 relative"
+                >
+                  <div className="relative p-2 md:p-4">
+                    {/* The Illustration */}
+                    <img
+                      src="/illustration2.png"
+                      alt="Vidyon ERP Illustration"
+                      className="w-full h-auto rounded-3xl"
+                    />
+                  </div>
+
+                  {/* Background decorative elements */}
+                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10" />
+                  <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-purple-100/30 rounded-full blur-3xl -z-10" />
+                </motion.div>
+
+                {/* Right Column: Text Content */}
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="flex-1"
+                >
+                  <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-6 text-[#1F2937] leading-tight">
+                    My Vidyon <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                      ERP Solution
+                    </span>
+                  </h1>
+
+                  <p className="text-lg text-gray-700/80 mb-8 leading-relaxed">
+                    Transform your educational institution with our comprehensive ERP ecosystem.
+                    Bridge communication, automate administration, and empower learning with
+                    a system designed for excellence and scale.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-6 mb-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                        <CheckCircle2 size={20} />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">Unified Data</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
+                        <CheckCircle2 size={20} />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">Real-time Sync</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    <Button
+                      onClick={handleExploreNow}
+                      size="xl"
+                      className="h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
+                    >
+                      Explore Now
+                      <ExternalLink className="ml-2 w-5 h-5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Feature Grid Section */}
+        <section className="py-14 lg:py-24 bg-white">
+          <div className="container mx-auto px-6">
+            <div className="text-center mb-16 max-w-2xl mx-auto">
+              <h2 className="font-heading text-4xl font-bold mb-4 text-[#1F2937]">Powerful Features, <br />Simple Experience</h2>
+              <p className="text-lg text-gray-500 leading-relaxed">Everything you need to manage your institution in one place. Engineered for speed and ease of use.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="p-8 rounded-3xl bg-gray-50/50 border border-gray-100 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group"
                 >
-                  <GlassCard glowColor={product.color} className="h-full flex flex-col relative overflow-hidden">
-                    {/* Status Badge */}
-                    <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${
-                      product.status === "Available" 
-                        ? "bg-green-500/20 text-green-400" 
-                        : product.status === "Beta"
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-metal-blue-500/20 text-metal-blue-400"
-                    }`}>
-                      {product.status}
-                    </div>
-                    
-                    {/* Product Icon */}
-                    <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 ${
-                      product.color === "blue" 
-                        ? "bg-metal-blue-500/20" 
-                        : "bg-metal-purple-500/20"
-                    }`}>
-                      <Star className={`w-8 h-8 ${
-                        product.color === "blue" 
-                          ? "text-metal-blue-400" 
-                          : "text-metal-purple-400"
-                      }`} />
-                    </div>
-                    
-                    <span className={`text-sm font-medium mb-2 ${
-                      product.color === "blue" 
-                        ? "text-metal-blue-400" 
-                        : "text-metal-purple-400"
-                    }`}>
-                      {product.tagline}
-                    </span>
-                    
-                    <h3 className="font-heading text-2xl font-bold mb-4 text-foreground">
-                      {product.name}
-                    </h3>
-                    
-                    <p className="text-muted-foreground mb-6 flex-grow">
-                      {product.description}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {product.features.map((feature) => (
-                        <span 
-                          key={feature} 
-                          className="px-3 py-1 rounded-full glass-metal text-xs text-muted-foreground"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                    
-                    <Button 
-                      variant={product.status === "Available" ? "default" : "outline"} 
-                      className="w-full group"
-                      disabled={product.status === "Coming Soon"}
-                    >
-                      {product.status === "Available" ? "Explore Product" : product.status === "Beta" ? "Join Beta" : "Coming Soon"}
-                      {product.status !== "Coming Soon" && (
-                        <ExternalLink className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      )}
-                    </Button>
-                  </GlassCard>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${feature.color === 'blue' ? 'bg-blue-50 text-blue-600' :
+                    feature.color === 'purple' ? 'bg-purple-50 text-purple-600' : 'bg-indigo-50 text-indigo-600'
+                    } group-hover:scale-110 transition-transform`}>
+                    <feature.icon size={28} />
+                  </div>
+                  <h3 className="font-heading text-xl font-bold mb-3 text-[#1f2937]">{feature.title}</h3>
+                  <p className="text-gray-500 leading-relaxed">{feature.description}</p>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
-        
-        <div className="energy-line" />
-        
+
         {/* CTA Section */}
-        <section className="relative py-24 overflow-hidden">
-          <GlowOrb size="xl" color="plasma" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          
-          <div className="container mx-auto px-6 relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="text-center max-w-3xl mx-auto"
-            >
-              <h2 className="font-heading text-4xl md:text-5xl font-bold mb-6">
-                <span className="text-foreground">Need a </span>
-                <span className="text-gradient-metal">Custom Solution?</span>
-              </h2>
-              <p className="text-xl text-muted-foreground mb-10">
-                Our products are powerful, but sometimes you need something unique. 
-                Let's build the perfect artifact for your specific needs.
-              </p>
-              <Button variant="hero" size="xl">
-                Discuss Custom Build
-                <ArrowRight className="ml-2" />
-              </Button>
-            </motion.div>
-          </div>
+        <section className="py-14 lg:py-24 px-4 sm:px-6">
+          <PremiumCTA
+            title={<>Empower Your Institution <br />With <span className="text-blue-300">My Vidyon</span></>}
+            description="Join hundreds of schools already transforming their administrative workflows and academic excellence."
+            primaryButton={{
+              label: "Schedule Free Demo",
+              onClick: () => navigate('/contact')
+            }}
+          />
         </section>
       </main>
-      
+
       <Footer />
-    </div>
+    </div >
   );
 };
 

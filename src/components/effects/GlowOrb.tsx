@@ -30,7 +30,8 @@ export const GlowOrb = ({
   return (
     <motion.div
       className={cn(
-        "absolute rounded-full blur-[80px] pointer-events-none",
+        "absolute rounded-full blur-[80px] pointer-events-none will-change-transform",
+        sizeMap[size],
         sizeMap[size],
         colorMap[color],
         className
@@ -38,15 +39,15 @@ export const GlowOrb = ({
       animate={
         animate
           ? {
-              scale: [1, 1.1, 1],
-              opacity: [0.5, 0.7, 0.5],
-            }
+            scale: [1, 1.05, 1],
+            opacity: [0.3, 0.4, 0.3],
+          }
           : undefined
       }
       transition={{
-        duration: 8,
+        duration: 20,
         repeat: Infinity,
-        ease: "easeInOut",
+        ease: "linear",
       }}
     />
   );

@@ -132,7 +132,7 @@ const Events = () => {
                   <span className="px-3 py-1 rounded-full bg-metal-blue-500/20 text-metal-blue-400 text-sm font-medium mb-4 inline-block">
                     {selectedEvent.type}
                   </span>
-                  <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-white">
+                  <h1 className="font-heading text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-white">
                     {selectedEvent.title}
                   </h1>
                   <div className="flex flex-wrap gap-4 md:gap-8 text-lg text-gray-300">
@@ -155,12 +155,12 @@ const Events = () => {
           </div>
 
           {/* Content Section */}
-          <section className="py-12 md:py-20 relative">
+          <section className="py-14 md:py-20 relative">
             <div className="container mx-auto px-6">
               {/* Two Column Layout: About (Left) + Poster (Right) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                 {/* Left: About the Event - 14.14" container equivalent */}
-                <GlassCard className="p-8 h-[600px] flex flex-col">
+                <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col">
                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0">
                     <div className="w-2 h-2 rounded-full bg-metal-blue-400" />
                     About the Event
@@ -174,7 +174,7 @@ const Events = () => {
 
                 {/* Right: Event Poster - Fits Image Size */}
                 {selectedEvent.posters && selectedEvent.posters.length > 0 && (
-                  <GlassCard className="p-8 h-[600px] flex flex-col items-center">
+                  <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col items-center">
                     <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 self-start">
                       <div className="w-2 h-2 rounded-full bg-metal-purple-400" />
                       Event Poster
@@ -184,7 +184,7 @@ const Events = () => {
                       <img
                         src={selectedEvent.posters[0]}
                         alt="Event Poster"
-                        className="h-full w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+                        className="h-auto max-h-[400px] lg:h-full w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
                         style={{ aspectRatio: '3/4' }}
                       />
                     </div>
@@ -224,22 +224,7 @@ const Events = () => {
 
       <main className="pt-0 min-h-screen">
         {/* Header */}
-        <section className="relative pt-36 pb-20 overflow-hidden">
-          {/* Video Background */}
-          <div className="absolute inset-0 z-0">
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover opacity-60 mix-blend-screen"
-            >
-              <source src="/cards-video.webm" type="video/webm" />
-            </video>
-            {/* Gradient Overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/60" />
-          </div>
-
+        <section className="relative pt-32 pb-12 md:pb-20 overflow-hidden">
           <GlowOrb size="xl" color="blue" className="top-0 right-0" />
           <div className="container mx-auto px-6 relative z-10 text-center">
             <motion.div
@@ -250,7 +235,7 @@ const Events = () => {
               <span className="inline-block px-4 py-2 rounded-full glass-metal text-sm text-metal-blue-300 mb-6">
                 Energy Timeline
               </span>
-              <h1 className="font-heading text-5xl md:text-6xl font-bold mb-6">
+              <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-6">
                 <span className="text-foreground">Global </span>
                 <span className="text-gradient-metal">Events</span>
               </h1>
@@ -264,7 +249,7 @@ const Events = () => {
         <div className="energy-line" />
 
         {/* Events Grid */}
-        <section className="pt-24 pb-32 px-6">
+        <section className="pt-16 pb-16 lg:pt-24 lg:pb-32 px-6">
           <div className="container mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {events.map((event, index) => (

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
-import GradientBlinds from "@/components/effects/GradientBlinds";
 import { useData } from "@/context/DataContext";
 import { ArrowRight, Calendar } from "lucide-react";
+import Grainient from "@/components/effects/Grainient";
 
 // --- Main Hero Section ---
 export const HeroSection = () => {
@@ -18,9 +18,9 @@ export const HeroSection = () => {
   const defaultSlide = {
     id: "default",
     type: "default",
-    titleLines: ["Learn AI.", "Do Nothing.", "Empower Everything."],
-    description: "At UNAI TECH, we are shaping the future by making AI accessible to everyone. Transforming education with innovative AI courses, practical skills, and cutting-edge research.",
-    cta: { text: "Start Learning AI", link: "/services" }
+    titleLines: ["Architecting Intelligence", "for Tomorrow's", "Digital Ecosystem"],
+    description: "Where artificial intelligence meets precision engineering — building adaptive systems that don't just process data, but understand context, anticipate needs, and evolve with purpose.",
+    cta: { text: "Explore Our Ecosystem", link: "/services" }
   };
 
   const eventSlides = upcomingEvents.map(event => ({
@@ -48,32 +48,39 @@ export const HeroSection = () => {
   const currentSlide = slides[currentSlideIndex];
 
   return (
-    <section className="relative w-full min-h-[100dvh] overflow-hidden bg-black text-white flex items-center justify-center">
-      {/* 1. Background System - GradientBlinds */}
-      <div className="absolute inset-0 z-0 gpu-accelerated">
-        <GradientBlinds
-          gradientColors={['#1a1a2e', '#0f3460', '#16213e', '#000000']}
-          angle={0}
-          noise={0.1}
-          blindCount={12}
-          blindMinWidth={50}
-          spotlightRadius={0.8}
-          spotlightSoftness={2}
-          spotlightOpacity={0.4}
-          mouseDampening={0.35}
-          distortAmount={0}
-          shineDirection="left"
-          mixBlendMode="normal"
+    <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-background text-foreground flex items-center justify-center shadow-2xl border border-white/10">
+      {/* Grainient Background */}
+      <div className="absolute inset-0 z-0">
+        <Grainient
+          color1="#666edb"
+          color2="#ffffff"
+          color3="#3d19b3"
+          timeSpeed={0.25}
+          colorBalance={0}
+          warpStrength={1}
+          warpFrequency={5}
+          warpSpeed={2}
+          warpAmplitude={50}
+          blendAngle={0}
+          blendSoftness={0.05}
+          rotationAmount={500}
+          noiseScale={2}
+          grainAmount={0.1}
+          grainScale={2}
+          grainAnimated={false}
+          contrast={1.5}
+          gamma={1}
+          saturation={1}
+          centerX={0}
+          centerY={0}
+          zoom={0.9}
         />
-
-        {/* Subtle Noise Texture Overlay */}
-        <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
       </div>
 
       {/* Navbar */}
       <FloatingNavbar />
 
-      <div className="container relative z-10 mx-auto section-padding pt-28 md:pt-32 max-w-7xl h-full flex flex-col justify-center">
+      <div className="container relative z-10 mx-auto section-padding pt-32 sm:pt-28 md:pt-32 max-w-7xl h-full flex flex-col justify-center">
         {/* Centered Content - Responsive */}
         <div className="flex flex-col items-center justify-center text-center w-full min-h-[50vh]">
 
@@ -83,15 +90,15 @@ export const HeroSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center max-w-5xl"
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="flex flex-col items-center max-w-5xl will-change-transform"
             >
               {/* Event Badge */}
               {currentSlide.type === "event" && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-metal-purple-500/20 border border-metal-purple-500/30 text-metal-purple-300 backdrop-blur-sm"
+                  className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 border border-purple-200 text-purple-700 backdrop-blur-sm"
                 >
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm font-medium">Upcoming Event</span>
@@ -100,13 +107,15 @@ export const HeroSection = () => {
 
               {/* Headline Group */}
               <div className="relative mb-6 md:mb-8 lg:mb-12">
-                <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.1] tracking-tight font-sans text-white">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.1] sm:leading-[1.2] tracking-tight font-heading" style={{ textShadow: '0 4px 40px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.2)' }}>
                   {currentSlide.titleLines.map((line, index) => (
                     <span
                       key={index}
-                      className={`block ${index === 1 && currentSlide.type === 'default' ? 'text-[#E2E8F0]' :
-                          index === 2 && currentSlide.type === 'default' ? 'text-[#CBD5E1]' :
-                            currentSlide.type === 'event' ? 'text-gradient-metal' : 'text-white'
+                      className={`block py-1 ${currentSlide.type === 'event'
+                        ? 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent'
+                        : index === 0
+                          ? 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent'
+                          : 'bg-gradient-to-r from-blue-700 via-blue-600 to-purple-600 bg-clip-text text-transparent'
                         }`}
                     >
                       {line}
@@ -116,20 +125,30 @@ export const HeroSection = () => {
               </div>
 
               {/* Supporting Paragraph */}
-              <p className="text-responsive-lg text-gray-400 max-w-3xl mb-8 md:mb-10 lg:mb-12 leading-relaxed font-light px-4 md:px-0">
+              <p className="text-base sm:text-lg md:text-xl text-gray-800 max-w-3xl mb-6 md:mb-10 lg:mb-12 leading-relaxed font-medium px-4 md:px-0 tracking-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.2)' }}>
                 {currentSlide.description}
               </p>
 
               {/* CTA Button */}
-              <Link to={currentSlide.cta.link}>
-                <button className="group relative tap-target px-6 py-4 md:px-10 md:py-5 bg-white text-black rounded-full font-semibold text-base md:text-lg transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] active:scale-95 gpu-accelerated">
-                  <span className="relative z-10 flex items-center gap-2">
-                    {currentSlide.cta.text}
-                    {currentSlide.type === 'event' && <ArrowRight className="w-5 h-5" />}
-                  </span>
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white to-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </button>
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-6 sm:px-0">
+                <Link to={currentSlide.cta.link} className="w-full sm:w-auto">
+                  <button className="w-full group relative tap-target px-6 py-4 md:px-10 md:py-5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full font-semibold text-base md:text-lg transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_0_40px_rgba(73,84,250,0.4)] active:scale-95 gpu-accelerated">
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {currentSlide.cta.text}
+                      {currentSlide.type === 'event' && <ArrowRight className="w-5 h-5" />}
+                    </span>
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </button>
+                </Link>
+
+                {currentSlide.type === 'default' && (
+                  <Link to="/contact" className="w-full sm:w-auto">
+                    <button className="w-full group relative tap-target px-6 py-4 md:px-10 md:py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-semibold text-base md:text-lg transition-all duration-300 hover:bg-white/20 active:scale-95 gpu-accelerated">
+                      <span className="relative z-10">Schedule Intelligence Consultation</span>
+                    </button>
+                  </Link>
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
 
@@ -141,8 +160,8 @@ export const HeroSection = () => {
                   key={idx}
                   onClick={() => setCurrentSlideIndex(idx)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentSlideIndex
-                      ? "bg-white w-8"
-                      : "bg-white/20 hover:bg-white/40"
+                    ? "bg-purple-500 w-8"
+                    : "bg-purple-300 hover:bg-purple-400"
                     }`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />

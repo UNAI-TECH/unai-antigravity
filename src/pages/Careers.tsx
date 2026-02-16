@@ -43,7 +43,7 @@ const Careers = () => {
 
             <main className="pt-0">
                 {/* Hero Section */}
-                <section className="relative pt-40 pb-20 overflow-hidden">
+                <section className="relative pt-32 pb-12 md:pb-20 overflow-hidden">
                     <GlowOrb size="xl" color="plasma" className="top-0 right-0" />
                     <GlowOrb size="lg" color="blue" className="bottom-0 left-0" />
 
@@ -73,7 +73,7 @@ const Careers = () => {
                 <div className="energy-line" />
 
                 {/* Open Positions */}
-                <section className="relative pt-24 pb-12 overflow-hidden">
+                <section className="relative pt-16 lg:pt-24 pb-12 overflow-hidden">
                     <div className="container mx-auto px-6">
                         {jobs.length > 0 && (
                             <motion.h2

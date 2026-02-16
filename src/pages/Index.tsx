@@ -2,7 +2,9 @@ import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { ServicesPreview } from "@/components/sections/ServicesPreview";
-import { AboutPreview } from "@/components/sections/AboutPreview";
+import { Differentiation } from "@/components/sections/Differentiation";
+import { VisionBlock } from "@/components/sections/VisionBlock";
+import { FinalCTA } from "@/components/sections/FinalCTA";
 
 const Index = () => {
   return (
@@ -11,10 +13,12 @@ const Index = () => {
       {/* <FloatingNavbar /> */}
       <main>
         <HeroSection />
-        <div className="energy-line" />
         <ServicesPreview />
         <div className="energy-line" />
-        <AboutPreview />
+        <Differentiation />
+        <VisionBlock />
+        <div className="energy-line" />
+        <FinalCTA />
       </main>
       <Footer />
     </div>

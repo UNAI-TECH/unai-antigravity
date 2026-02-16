@@ -7,125 +7,152 @@ import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight } from "lucide-react";
+import { ArrowLeft, Check, Cpu, Globe, Rocket, Code, ArrowRight, Sparkles, Box, Layout, Database, Image as ImageIcon, Zap, Shield, Brain } from "lucide-react";
+import { PremiumCTA } from "@/components/ui/PremiumCTA";
 
-// Detailed data for each service
+// Detailed data for each service - Synchronized with Services.tsx
 const serviceDetails: Record<string, any> = {
-    "ai-solutions": {
-        title: "AI Solutions",
+    "cognitive-ai": {
+        title: "Cognitive AI Systems",
         icon: Cpu,
         color: "blue",
-        subtitle: "Intelligence Engineered for Impact",
-        description: "Our AI Solutions empower businesses to automate complex processes, gain predictive insights, and create personalized experiences. We leverage state-of-the-art machine learning models and neural networks to solve your most challenging problems.",
-        benefits: [
-            "Process Automation & Efficiency",
-            "Data-Driven Decision Making",
-            "Enhanced Customer Experiences",
-            "Predictive Maintenance & Analytics"
+        subtitle: "Intelligence That Understands Context",
+        description: "We architect cognitive systems that move beyond simple pattern matching. Our NLU-driven platforms integrate contextual reasoning and autonomous decision-making to transform how your organization interacts with data.",
+        highlights: [
+            "Process Contextualization",
+            "Autonomous Decision Frameworks",
+            "Predictive Cognitive Analytics",
+            "Custom Neural Architectures"
         ],
-        features: [
-            { title: "Custom ML Models", desc: "Tailored algorithms designed to learn from your specific data patterns." },
-            { title: "NLP Integration", desc: "Advanced language processing for chatbots, sentiment analysis, and document parsing." },
-            { title: "Computer Vision", desc: "Visual recognition systems for quality control, security, and analysis." },
-            { title: "Predictive Analytics", desc: "Forecast trends and behaviors with high accuracy." }
+        bentoFeatures: [
+            {
+                title: "Advanced NLP",
+                desc: "Language processing that understands nuance, intent, and domain-specific terminology.",
+                icon: Sparkles
+            },
+            {
+                title: "Reasoning Engines",
+                desc: "Logic-based systems that simulate human expert decision-making processes.",
+                icon: Brain
+            },
+            {
+                title: "Adaptive Learning",
+                desc: "Models that evolve in real-time as they ingest new organizational datasets.",
+                icon: Rocket
+            }
         ]
     },
-    "automation": {
-        title: "Automation",
-        icon: Zap,
-        color: "purple",
-        subtitle: "Streamline Your Operations",
-        description: "Eliminate manual bottlenecks and accelerate your workflow with our intelligent automation systems. We design end-to-end automation strategies that integrate seamlessly with your existing infrastructure.",
-        benefits: [
-            "Reduced Operational Costs",
-            "Minimised Human Error",
-            "24/7 Productivity",
-            "Scalable Workflows"
-        ],
-        features: [
-            { title: "Process Automation", desc: "Automate repetitive tasks and standardized processes." },
-            { title: "Workflow Design", desc: "Optimized orchestration of people, systems, and data." },
-            { title: "RPA Solutions", desc: "Robotic Process Automation for legacy system integration." },
-            { title: "Integration APIs", desc: "Connect disparate systems for unified data flow." }
-        ]
-    },
-    "custom-software": {
-        title: "Custom Software",
+    "intelligent-software": {
+        title: "Intelligent Software Architecture",
         icon: Code,
         color: "purple",
-        subtitle: "Built Specifically For You",
-        description: "Off-the-shelf software often falls short. Our custom software development ensures that your technology stack aligns perfectly with your business goals, offering flexibility, scalability, and competitive advantage.",
-        benefits: [
-            "Tailored Functionality",
-            "Ownership & Control",
-            "Seamless Integration",
-            "Enhanced Security"
+        subtitle: "Evolving Digital Ecosystems",
+        description: "Building applications that aren't just tools, but intelligent partners. We create custom platforms where AI is the core foundation, enabling systems that learn, adapt, and scale inherently.",
+        highlights: [
+            "AI-First Architecture Design",
+            "Adaptive Microservices",
+            "Intelligent Data Orbits",
+            "Institutional Memory Integration"
         ],
-        features: [
-            { title: "Web Applications", desc: "Responsive, high-performance web apps for any device." },
-            { title: "Mobile Apps", desc: "Native and cross-platform mobile solutions." },
-            { title: "Enterprise Systems", desc: "Large-scale software for complex organizational needs." },
-            { title: "API Development", desc: "Robust interfaces for data exchange and connectivity." }
+        bentoFeatures: [
+            {
+                title: "Smart Backends",
+                desc: "API-first systems with built-in intelligence layers for predictive routing.",
+                icon: Database
+            },
+            {
+                title: "Dynamic UIs",
+                desc: "User interfaces that adapt their layout and content based on user behavior.",
+                icon: Layout
+            },
+            {
+                title: "Scalable Core",
+                desc: "Cloud-native architectures ready for the next decade of AI advancements.",
+                icon: Box
+            }
         ]
     },
-    "product-development": {
-        title: "Product Development",
-        icon: Rocket,
+    "autonomous-ops": {
+        title: "Autonomous Operations Engineering",
+        icon: Zap,
         color: "blue",
-        subtitle: "From Concept to Launch",
-        description: "We partner with visionaries to turn ideas into market-ready products. Our agile product development cycle ensures rapid iteration, user-centric design, and high-quality engineering from Day 1.",
-        benefits: [
-            "Accelerated Time-to-Market",
-            "User-Centric Design",
-            "Scalable Architecture",
-            "Continuous Improvement"
+        subtitle: "Self-Optimizing Ecosystems",
+        description: "Where complexity manages itself. We engineer operational frameworks where AI handles routine orchestration, allowing your human talent to focus on high-level strategy and innovation.",
+        highlights: [
+            "Hyper-Automated Workflows",
+            "AI-Powered RPA 2.0",
+            "Operational Self-Healing",
+            "Autonomous Agent Swarms"
         ],
-        features: [
-            { title: "MVP Development", desc: "Rapid prototyping to validate your core value proposition." },
-            { title: "Product Strategy", desc: "Roadmapping and market analysis for successful launch." },
-            { title: "UX/UI Design", desc: "Intuitive and engaging interfaces that users love." },
-            { title: "Agile Delivery", desc: "Iterative development with frequent feedback loops." }
+        bentoFeatures: [
+            {
+                title: "Workflow Orchestration",
+                desc: "Intelligent management of complex multi-system operational paths.",
+                icon: Rocket
+            },
+            {
+                title: "Predictive Ops",
+                desc: "Identify and resolve system bottlenecks before they impact performance.",
+                icon: Sparkles
+            },
+            {
+                title: "Agentic Frameworks",
+                desc: "Deploy autonomous agents that perform complex tasks across your stack.",
+                icon: Cpu
+            }
         ]
     },
-    "cloud-infrastructure": {
-        title: "Cloud Infrastructure",
+    "next-gen-infra": {
+        title: "Next-Generation IT Infrastructure",
         icon: Globe,
-        color: "blue",
-        subtitle: "Scalable, Secure, Resilient",
-        description: "Modernize your infrastructure with our cloud solutions. Whether you need public, private, or hybrid cloud architectures, we design systems that are secure, cost-effective, and ready to scale with your growth.",
-        benefits: [
-            "High Availability & Reliability",
-            "Global Scalability",
-            "Cost Efficiency",
-            "Disaster Recovery"
-        ],
-        features: [
-            { title: "Cloud Migration", desc: "Seamless transition of assets to the cloud." },
-            { title: "Multi-Cloud Setup", desc: "Strategies leveraging mostly AWS, Azure, and GCP." },
-            { title: "Cost Optimization", desc: "Resource management to minimize cloud spend." },
-            { title: "Auto-Scaling", desc: "Dynamic resource adjustment based on demand." }
-        ]
-    },
-    "cybersecurity": {
-        title: "Cybersecurity",
-        icon: Shield,
         color: "purple",
-        subtitle: "Protect Your Digital Assets",
-        description: "In an era of evolving threats, security cannot be an afterthought. We implement defense-in-depth strategies to safeguard your data, infrastructure, and reputation against sophisticated cyber attacks.",
-        benefits: [
-            "Data Protection & Privacy",
-            "Regulatory Compliance",
-            "Risk Mitigation",
-            "Business Continuity"
+        subtitle: "Foundations for the Intelligence Age",
+        description: "The next era of technology requires a different foundation. We architect cloud-native, AI-ready environments designed for continuous integration of emerging technologies.",
+        highlights: [
+            "AI-Ready Cloud Platforms",
+            "Intelligent Security Layers",
+            "Liquid Computing Models",
+            "Global Resiliency Design"
         ],
-        features: [
-            { title: "Threat Detection", desc: "Real-time monitoring and anomaly detection." },
-            { title: "Security Audits", desc: "Comprehensive assessment of vulnerabilities." },
-            { title: "Penetration Testing", desc: "Simulated attacks to identify and fix weaknesses." },
-            { title: "24/7 Monitoring", desc: "Continuous oversight by security operations center." }
+        bentoFeatures: [
+            {
+                title: "Elastic Foundations",
+                desc: "Infrastructure that scales horizontally and vertically with millisecond latency.",
+                icon: Box
+            },
+            {
+                title: "Secure Mesh",
+                desc: "Zero-trust security integrated into the very fabric of your network.",
+                icon: Shield
+            },
+            {
+                title: "Digital Twin Infra",
+                desc: "Simulate infrastructure changes in virtual environments before live deployment.",
+                icon: Globe
+            }
         ]
     }
 };
+
+// No extra imports needed here
+
+// Component for highlighting image locations
+const ImagePlaceholder = ({ label, className = "", aspect = "aspect-video" }: { label: string, className?: string, aspect?: string }) => (
+    <div className={`relative group overflow-hidden rounded-3xl border-2 border-dashed border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-all duration-500 ${aspect} flex flex-col items-center justify-center p-8 text-center ${className}`}>
+        <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <ImageIcon className="w-8 h-8 text-blue-400" />
+        </div>
+        <p className="text-blue-400 font-bold text-lg mb-2">IMAGE LOCATION: {label}</p>
+        <p className="text-blue-400/60 text-sm max-w-[250px]">
+            Place your premium {label.toLowerCase()} visual here to enhance the section's impact.
+        </p>
+        {/* Decorative corners */}
+        <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-blue-500/40 rounded-tl-lg" />
+        <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-blue-500/40 rounded-tr-lg" />
+        <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-blue-500/40 rounded-bl-lg" />
+        <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-blue-500/40 rounded-br-lg" />
+    </div>
+);
 
 const ServiceDetail = () => {
     const { id } = useParams();
@@ -133,18 +160,25 @@ const ServiceDetail = () => {
     const service = id ? serviceDetails[id] : null;
 
     useEffect(() => {
-        // Use Lenis for reliable scrolling
         lenisScrollTo(0, { immediate: true });
         window.scrollTo(0, 0);
     }, [id]);
 
     if (!service) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-4">Service Not Found</h2>
-                    <Button onClick={() => navigate("/services")}>Back to Services</Button>
-                </div>
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
+                <GlowOrb size="xl" color="blue" className="opacity-20" />
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative z-10"
+                >
+                    <h2 className="text-4xl font-heading font-bold mb-6 text-slate-900">Service Not Found</h2>
+                    <p className="text-slate-500 mb-10 max-w-md mx-auto">The service you're looking for might have moved or been updated. Let's get you back on track.</p>
+                    <Button size="xl" className="rounded-2xl bg-blue-600 shadow-xl shadow-blue-500/20" onClick={() => navigate("/services")}>
+                        <ArrowLeft className="mr-2 w-5 h-5" /> Back to Services
+                    </Button>
+                </motion.div>
             </div>
         );
     }
@@ -153,95 +187,158 @@ const ServiceDetail = () => {
     const isBlue = service.color === "blue";
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#F8FAFC]">
             <FloatingNavbar />
 
             <main className="pt-0">
-                {/* Detailed Hero */}
-                <section className="relative pt-40 pb-20 overflow-hidden">
-                    <GlowOrb size="xl" color={isBlue ? "blue" : "purple"} className="top-0 right-0" />
-                    <GlowOrb size="lg" color={isBlue ? "purple" : "blue"} className="bottom-0 left-0" />
+                {/* Premium Glassmorphic Hero */}
+                <section className="relative pt-32 sm:pt-48 pb-20 sm:pb-32 overflow-hidden px-4 sm:px-6">
+                    <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-                    <div className="container mx-auto px-6 relative z-10">
-                        <Button
-                            variant="ghost"
+                    <div className="max-w-7xl mx-auto relative z-10">
+                        <motion.button
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
                             onClick={() => navigate("/services")}
-                            className="mb-8 pl-0 hover:pl-2 transition-all text-muted-foreground hover:text-foreground"
+                            className="flex items-center gap-2 mb-12 text-slate-500 hover:text-blue-600 transition-colors group font-bold"
                         >
-                            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Services
-                        </Button>
+                            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center group-hover:-translate-x-1 transition-transform border border-slate-100">
+                                <ArrowLeft className="w-5 h-5" />
+                            </div>
+                            Back to Services
+                        </motion.button>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="max-w-4xl"
-                        >
-                            <span className={`inline-block px-4 py-2 rounded-full glass-metal text-sm ${isBlue ? 'text-metal-blue-300' : 'text-metal-purple-300'} mb-6`}>
-                                {service.subtitle}
-                            </span>
-                            <div className="flex items-center gap-6 mb-8">
-                                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center ${isBlue ? 'bg-metal-blue-500/20' : 'bg-metal-purple-500/20'}`}>
-                                    <Icon className={`w-10 h-10 ${isBlue ? 'text-metal-blue-400' : 'text-metal-purple-400'}`} />
+                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                <div className="flex items-center gap-4 mb-8">
+                                    <span className={`inline-block px-4 py-2 rounded-full border ${isBlue ? 'bg-blue-50 border-blue-100 text-blue-600' : 'bg-purple-50 border-purple-100 text-purple-600'} text-sm font-bold tracking-tight`}>
+                                        {service.subtitle}
+                                    </span>
                                 </div>
-                                <h1 className="font-heading text-5xl md:text-6xl font-bold">
+
+                                <h1 className="font-heading text-4xl sm:text-6xl md:text-7xl font-bold mb-8 text-slate-900 leading-[1.1] tracking-tight">
                                     {service.title}
                                 </h1>
-                            </div>
-                            <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                                {service.description}
-                            </p>
-                        </motion.div>
+
+                                <p className="text-xl text-slate-500 max-w-xl mb-12 leading-relaxed font-light">
+                                    {service.description}
+                                </p>
+
+                                <div className="flex flex-wrap gap-4">
+                                    <Button size="xl" className="h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xl shadow-blue-500/20 transition-all font-bold">
+                                        Discuss Solution
+                                        <ArrowRight className="ml-2 w-5 h-5" />
+                                    </Button>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 1, delay: 0.2 }}
+                            >
+                                <ImagePlaceholder label="HERO_CONCEPT_VISUAL" aspect="aspect-[4/5] sm:aspect-square" />
+                            </motion.div>
+                        </div>
                     </div>
                 </section>
 
-                <div className="energy-line" />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
-                {/* Features Grid */}
-                <section className="relative py-24 overflow-hidden">
-                    <div className="container mx-auto px-6">
-                        <div className="grid md:grid-cols-2 gap-12 items-start">
-                            <div className="space-y-8">
-                                <h2 className="text-3xl font-heading font-bold">Key Capabilities</h2>
-                                <div className="grid gap-6">
-                                    {service.features.map((feature: any, index: number) => (
-                                        <GlassCard key={index} className="p-6">
-                                            <h3 className={`text-xl font-bold mb-2 ${isBlue ? 'text-metal-blue-300' : 'text-metal-purple-300'}`}>
-                                                {feature.title}
-                                            </h3>
-                                            <p className="text-muted-foreground">{feature.desc}</p>
-                                        </GlassCard>
-                                    ))}
+                {/* Unique Bento Features Grid */}
+                <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-white overflow-hidden">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-20">
+                            <h2 className="text-3xl sm:text-5xl font-heading font-bold text-slate-900 mb-6">Core Capabilities</h2>
+                            <p className="text-slate-500 text-lg max-w-2xl mx-auto">Advanced engineering meets strategic vision to deliver results that define markets.</p>
+                        </div>
+
+                        <div className="grid lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 grid sm:grid-cols-2 gap-8">
+                                {service.bentoFeatures.map((feature: any, index: number) => (
+                                    <GlassCard key={index} className="p-8 sm:p-10 bg-slate-50/50 border-slate-100 hover:border-blue-500/30 transition-all duration-500 group">
+                                        <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                            <feature.icon className="w-6 h-6" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold mb-4 text-slate-900">
+                                            {feature.title}
+                                        </h3>
+                                        <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
+                                    </GlassCard>
+                                ))}
+                                <div className="sm:col-span-1">
+                                    <ImagePlaceholder label="FEATURE_PROCESS_DIAGRAM" aspect="aspect-square" className="h-full" />
                                 </div>
                             </div>
 
-                            <div className="space-y-8">
-                                <h2 className="text-3xl font-heading font-bold">Business Benefits</h2>
-                                <div className="glass-metal rounded-2xl p-8 space-y-6">
-                                    {service.benefits.map((benefit: string, index: number) => (
-                                        <div key={index} className="flex items-center gap-4">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isBlue ? 'bg-metal-blue-500/20 text-metal-blue-400' : 'bg-metal-purple-500/20 text-metal-purple-400'}`}>
-                                                <Check className="w-4 h-4" />
-                                            </div>
-                                            <span className="text-lg font-medium">{benefit}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                            <div className="lg:col-span-1">
+                                <div className="bg-slate-900 rounded-[2.5rem] p-10 h-full text-white relative overflow-hidden shadow-2xl">
+                                    <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-blue-500/20 blur-[60px] rounded-full" />
+                                    <h3 className="text-3xl font-bold mb-10 flex items-center gap-3">
+                                        <Sparkles className="text-blue-400 w-8 h-8" />
+                                        The Impact
+                                    </h3>
+                                    <ul className="space-y-8">
+                                        {service.highlights.map((highlight: string, index: number) => (
+                                            <li key={index} className="flex items-start gap-4 group">
+                                                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-1 border border-blue-500/40 group-hover:bg-blue-500 transition-all">
+                                                    <Check className="w-3.5 h-3.5 text-blue-400 group-hover:text-white" />
+                                                </div>
+                                                <span className="text-lg font-medium text-slate-300 group-hover:text-white transition-colors leading-snug">{highlight}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
 
-                                <div className="pt-8">
-                                    <GlassCard className="p-8 text-center bg-gradient-to-br from-white/5 to-transparent">
-                                        <h3 className="text-2xl font-bold mb-4">Ready to get started?</h3>
-                                        <p className="text-muted-foreground mb-6">Let's discuss how {service.title} can transform your business.</p>
-                                        <Button size="lg" variant="hero" className="w-full">
-                                            Contact Us <ArrowRight className="ml-2 w-4 h-4" />
-                                        </Button>
-                                    </GlassCard>
+                                    <div className="mt-16 pt-10 border-t border-white/10">
+                                        <p className="text-slate-400 mb-8 italic">"UNAI TECH redefined our operational intelligence, delivering a 40% increase in autonomous workflow efficiency."</p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20" />
+                                            <div>
+                                                <p className="font-bold text-white">Institutional Lead</p>
+                                                <p className="text-sm text-slate-500">Intelligent Operations Strategy</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
+                {/* Closing Visual Section */}
+                <section className="py-24 sm:py-32 px-4 sm:px-6">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                            <ImagePlaceholder label="IMPLEMENTATION_SHOWCASE" aspect="aspect-video" />
+                            <div className="max-w-xl">
+                                <h2 className="text-3xl sm:text-5xl font-heading font-bold text-slate-900 mb-8 tracking-tight">Ready for Engineering?</h2>
+                                <p className="text-lg text-slate-500 mb-10 leading-relaxed font-light">
+                                    Whether you need a single intelligent component or a multi-year architecture roadmap, we provide the technical depth and strategic clarity required to execute.
+                                </p>
+                                <Button size="xl" variant="outline" className="h-14 px-10 rounded-2xl border-slate-200 text-slate-900 hover:bg-slate-50 font-bold transition-all">
+                                    Review Technical Specs
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* CTA Final */}
+                <section className="py-24 px-4 sm:px-6">
+                    <PremiumCTA
+                        title={<>Let's Architect Your <span className="text-blue-400">Future.</span></>}
+                        description={`Connect with our engineering team to explore how ${service.title} can be integrated into your existing infrastructure.`}
+                        primaryButton={{
+                            label: "Request Strategic Consultation",
+                            onClick: () => navigate('/contact')
+                        }}
+                    />
+                </section>
             </main>
             <Footer />
         </div>

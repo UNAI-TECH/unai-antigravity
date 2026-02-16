@@ -11,7 +11,7 @@ import { Send, Mail, MapPin, Phone, Clock } from "lucide-react";
 const contactInfo = [
   { icon: Mail, label: "Email", value: "hello@unaitech.com", href: "mailto:hello@unaitech.com" },
   { icon: Phone, label: "Phone", value: "+1 (234) 567-890", href: "tel:+1234567890" },
-  { icon: MapPin, label: "Headquarters", value: "123 Innovation Street, Tech City, TC 12345", href: "#" },
+  { icon: MapPin, label: "Headquarters", value: "Unai Tech, Chennai, Tamil Nadu", href: "#" },
   { icon: Clock, label: "Business Hours", value: "Mon - Fri: 9AM - 6PM EST", href: "#" },
 ];
 
@@ -22,7 +22,7 @@ const Contact = () => {
 
       <main className="pt-0">
         {/* Hero Section */}
-        <section className="relative pt-40 pb-20 overflow-hidden">
+        <section className="relative pt-32 pb-12 md:pb-20 overflow-hidden">
           <GlowOrb size="xl" color="blue" className="top-0 -right-32" />
           <GlowOrb size="lg" color="purple" className="bottom-0 -left-32" />
 
@@ -52,7 +52,7 @@ const Contact = () => {
         <div className="energy-line" />
 
         {/* Contact Section */}
-        <section className="relative py-24 overflow-hidden">
+        <section className="relative py-14 lg:py-24 overflow-hidden">
           <div className="container mx-auto px-6">
             <div className="grid lg:grid-cols-5 gap-12">
               {/* Contact Form */}
@@ -73,14 +73,14 @@ const Contact = () => {
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">First Name</label>
                         <Input
-                          placeholder="John"
+                          placeholder="Enter Your First Name "
                           className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">Last Name</label>
                         <Input
-                          placeholder="Doe"
+                          placeholder="Enter Your Last Name"
                           className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                         />
                       </div>
@@ -90,7 +90,7 @@ const Contact = () => {
                       <label className="text-sm font-medium text-foreground">Email</label>
                       <Input
                         type="email"
-                        placeholder="john@example.com"
+                        placeholder="Enter Your Email"
                         className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                       />
                     </div>
@@ -98,7 +98,7 @@ const Contact = () => {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">Company</label>
                       <Input
-                        placeholder="Your Company"
+                        placeholder="Enter Your Company Name"
                         className="bg-muted/50 border-border focus:border-metal-blue-500 transition-all duration-300 h-12"
                       />
                     </div>

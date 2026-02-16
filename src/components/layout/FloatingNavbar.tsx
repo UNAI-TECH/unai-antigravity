@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 export const FloatingNavbar = () => {
@@ -8,10 +8,13 @@ export const FloatingNavbar = () => {
   const location = useLocation();
 
   const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-    { name: "Services", href: "/services" },
-    { name: "Events", href: "/events" },
+    { name: "HOME", href: "/" },
+    { name: "ABOUT", href: "/about" },
+    { name: "SERVICES", href: "/services" },
+    { name: "PRODUCTS", href: "/products" },
+    { name: "EVENTS", href: "/events" },
+    { name: "GALLERY", href: "/gallery" },
+    { name: "CAREERS", href: "/careers" },
   ];
 
   const isActive = (path: string) => {
@@ -19,117 +22,144 @@ export const FloatingNavbar = () => {
     return location.pathname.startsWith(path);
   };
 
-  return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 py-4 px-4"
-    >
-      <div
-        className="mx-auto max-w-7xl transition-all duration-500 relative px-6 py-3"
-      >
+  // Lock body scroll when menu is open
+  React.useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
 
-        <div className="flex items-center justify-between relative z-10">
+  return (
+    <nav className="fixed top-6 left-0 right-0 z-50 px-4 md:px-10">
+      <div className="max-w-6xl mx-auto">
+        {/* Pill-shaped Navbar */}
+        <div className="bg-white/80 backdrop-blur-lg border border-white/20 shadow-2xl rounded-full px-6 md:px-8 h-16 flex items-center justify-between transition-all duration-300 relative z-50">
+
           {/* Logo */}
-          <Link to="/" className="flex items-center cursor-pointer group">
+          <Link to="/" className="flex items-center group">
             <img
               src="/unai-logo.png"
-              alt="UNAI"
-              className="h-10 w-auto transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(139,92,246,0.6)]"
+              alt="UNAI TECH"
+              className="h-8 md:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
 
-          {/* Desktop Navigation - Enhanced Glassmorphism */}
-          <div className="hidden lg:flex items-center gap-1 relative bg-gradient-to-r from-[#0B1221]/50 via-[#0B1221]/60 to-[#0B1221]/50 backdrop-blur-xl rounded-full px-3 py-1.5 border border-white/10 shadow-[0_0_30px_rgba(139,92,246,0.15)]">
-            {/* Lavender Glow */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 blur-md" />
-            <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-50" />
-
-            {navLinks.map((item) => (
+          {/* Desktop Navigation Links */}
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.filter(item => !["GALLERY", "CAREERS"].includes(item.name)).map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`relative px-5 py-2.5 text-sm font-semibold transition-all duration-300 rounded-full group overflow-hidden ${isActive(item.href) ? "text-white" : "text-gray-300 hover:text-white"
-                  }`}
+                className="relative group py-2"
               >
-                <span className="relative z-10">{item.name}</span>
+                <span
+                  className={`text-[13px] font-bold tracking-wide transition-all duration-300 ${isActive(item.href)
+                    ? "text-blue-600"
+                    : "text-gray-700 hover:text-blue-600"
+                    }`}
+                >
+                  {item.name}
+                </span>
 
-                {/* Hover Background with Shine */}
-                <div className={`absolute inset-0 bg-gradient-to-r from-white/5 via-white/10 to-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full ${isActive(item.href) ? "translate-y-0 from-purple-500/20 via-blue-500/20 to-purple-500/20" : ""}`} />
-
-                {/* Shimmer on Hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-full">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                </div>
-
-                {/* Active/Hover Indicator with Lavender Glow */}
-                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 transition-all duration-300 shadow-[0_0_8px_rgba(167,139,250,0.6)] ${isActive(item.href) ? "w-3/4" : "w-0 group-hover:w-3/4"}`} />
-
-                {/* Glow Effect on Active */}
-                {isActive(item.href) && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-full blur-sm" />
-                )}
+                {/* Active/Hover Dot Indicator */}
+                <span
+                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full transition-all duration-300 ${isActive(item.href)
+                    ? "opacity-100 scale-100"
+                    : "opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100"
+                    }`}
+                />
               </Link>
             ))}
           </div>
 
-          {/* CTA Button - Enhanced */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* Contact Button */}
+          <div className="hidden lg:flex items-center">
             <Link
               to="/contact"
-              className="relative px-6 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white transition-all duration-300 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] transform hover:-translate-y-0.5 active:scale-95 overflow-hidden group block text-center"
+              className="px-6 py-2 text-sm font-bold text-white bg-blue-600 rounded-full hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all duration-300 hover:scale-105 active:scale-95"
             >
-              <span className="relative z-10">Contact</span>
-              {/* Animated Shine */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              {/* Glow Border */}
-              <div className="absolute -inset-[1px] rounded-full bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
+              Contact
             </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
           <button
-            className="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="lg:hidden text-gray-700 p-2 rounded-full hover:bg-black/5 transition-colors relative z-50"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-      </div>
 
-      {/* Mobile Menu - Enhanced */}
-      {mobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="absolute top-24 left-4 right-4 bg-gradient-to-br from-[#0B1221]/95 via-[#0B1221]/98 to-[#0B1221]/95 backdrop-blur-2xl border border-purple-500/20 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(139,92,246,0.3)] z-40"
-        >
-          {/* Lavender Glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
-
-          <div className="p-6 flex flex-col gap-2 relative z-10">
-            {navLinks.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`p-3 text-lg font-medium hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-blue-500/10 rounded-xl transition-all border border-transparent hover:border-purple-500/20 ${isActive(item.href) ? "text-white bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-500/30" : "text-gray-300 hover:text-white"
-                  }`}
+        {/* Mobile Slide-in Drawer Overlay */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={() => setMobileMenuOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+              />
+
+              {/* Drawer */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 h-full w-[85%] max-w-[300px] bg-white z-50 shadow-2xl lg:hidden flex flex-col overflow-y-auto"
               >
-                {item.name}
-              </Link>
-            ))}
-            <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent my-4" />
-            <Link
-              to="/contact"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white font-bold shadow-[0_0_30px_rgba(139,92,246,0.4)] active:scale-95 transition-transform relative overflow-hidden group block text-center"
-            >
-              <span className="relative z-10">Contact</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-active:translate-x-full transition-transform duration-500" />
-            </Link>
-          </div>
-        </motion.div>
-      )}
+                <div className="p-6 pt-24 flex flex-col gap-2 h-full">
+                  {navLinks.map((item, index) => (
+                    <motion.div
+                      key={item.name}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Link
+                        to={item.href}
+                        className={`block px-6 py-4 text-lg font-bold tracking-wide rounded-xl transition-all ${isActive(item.href)
+                          ? "text-blue-600 bg-blue-50"
+                          : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.name}
+                      </Link>
+                    </motion.div>
+                  ))}
+
+                  <div className="h-px bg-gray-100 my-4 mx-4" />
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Link
+                      to="/contact"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-6 py-4 text-lg font-bold text-center text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+                    >
+                      Contact Us
+                    </Link>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
     </nav>
   );
 };

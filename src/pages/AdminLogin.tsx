@@ -18,7 +18,12 @@ const AdminLogin = () => {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (username === "Unaitech2026" && password === "Unaitech@26") {
+
+        // Get credentials from environment variables
+        const validUsername = import.meta.env.VITE_ADMIN_USERNAME;
+        const validPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+
+        if (username === validUsername && password === validPassword) {
             login();
             toast.success("Access Granted", {
                 description: "Welcome back to the command center.",
