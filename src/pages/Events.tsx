@@ -104,7 +104,7 @@ const Events = () => {
             onClick={handleCloseEvent}
             className="fixed top-24 right-6 z-50 p-3 rounded-full glass-metal hover:bg-white/10 transition-all duration-300 group"
           >
-            <X className="w-6 h-6 text-white group-hover:rotate-90 transition-transform" />
+            <X className="w-6 h-6 text-slate-900 group-hover:rotate-90 transition-transform" />
           </button>
 
           {/* Hero Banner Space */}
@@ -129,23 +129,23 @@ const Events = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <span className="px-3 py-1 rounded-full bg-metal-blue-500/20 text-metal-blue-400 text-sm font-medium mb-4 inline-block">
+                  <span className="px-3 py-1 rounded-full bg-metal-blue-500/10 text-metal-blue-700 text-sm font-bold mb-4 inline-block backdrop-blur-sm border border-metal-blue-500/20">
                     {selectedEvent.type}
                   </span>
-                  <h1 className="font-heading text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-white">
+                  <h1 className="font-heading text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-slate-900 drop-shadow-sm">
                     {selectedEvent.title}
                   </h1>
-                  <div className="flex flex-wrap gap-4 md:gap-8 text-lg text-gray-300">
+                  <div className="flex flex-wrap gap-4 md:gap-8 text-lg text-slate-700 font-bold">
                     <span className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-metal-blue-400" />
+                      <Calendar className="w-5 h-5 text-metal-blue-600" />
                       {selectedEvent.date}
                     </span>
                     <span className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-metal-purple-400" />
+                      <MapPin className="w-5 h-5 text-metal-purple-600" />
                       {selectedEvent.location}
                     </span>
                     <span className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-metal-blue-400" />
+                      <Users className="w-5 h-5 text-metal-blue-600" />
                       {selectedEvent.attendees} Attendees
                     </span>
                   </div>
@@ -160,13 +160,13 @@ const Events = () => {
               {/* Two Column Layout: About (Left) + Poster (Right) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                 {/* Left: About the Event - 14.14" container equivalent */}
-                <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col">
-                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-metal-blue-400" />
+                <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col bg-white/80 border-slate-200 shadow-xl">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 text-slate-900">
+                    <div className="w-2 h-2 rounded-full bg-metal-blue-500" />
                     About the Event
                   </h2>
                   <div className="overflow-y-auto custom-scrollbar pr-2 flex-1">
-                    <p className="text-gray-300 leading-relaxed whitespace-pre-line text-lg break-all">
+                    <p className="text-slate-600 leading-relaxed whitespace-pre-line text-lg break-all">
                       {selectedEvent.description}
                     </p>
                   </div>
@@ -174,9 +174,9 @@ const Events = () => {
 
                 {/* Right: Event Poster - Fits Image Size */}
                 {selectedEvent.posters && selectedEvent.posters.length > 0 && (
-                  <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col items-center">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 self-start">
-                      <div className="w-2 h-2 rounded-full bg-metal-purple-400" />
+                  <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col items-center bg-white/80 border-slate-200 shadow-xl">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 self-start text-slate-900">
+                      <div className="w-2 h-2 rounded-full bg-metal-purple-500" />
                       Event Poster
                     </h2>
                     {/* Container matches exact image bounds */}
@@ -194,9 +194,9 @@ const Events = () => {
 
               {/* Register Button - Centered Below */}
               <div className="flex justify-center">
-                <GlassCard className="p-8 max-w-md w-full text-center hover:border-metal-blue-500/50 transition-colors duration-300">
-                  <h3 className="text-2xl font-bold mb-4">Registration</h3>
-                  <p className="text-muted-foreground mb-6">
+                <GlassCard className="p-8 max-w-md w-full text-center hover:border-metal-blue-500/50 transition-colors duration-300 bg-white/80 border-slate-200">
+                  <h3 className="text-2xl font-bold mb-4 text-slate-900">Registration</h3>
+                  <p className="text-slate-600 mb-6">
                     Secure your spot for this exclusive event. Spaces are limited.
                   </p>
                   {selectedEvent.registration_link && (
