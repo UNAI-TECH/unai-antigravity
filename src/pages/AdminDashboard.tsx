@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 

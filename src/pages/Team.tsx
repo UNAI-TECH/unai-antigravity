@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { ParticleField } from "@/components/effects/ParticleField";
@@ -12,7 +11,7 @@ const Team = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <FloatingNavbar />
+
 
       <main className="pt-0">
         {/* Hero Section */}

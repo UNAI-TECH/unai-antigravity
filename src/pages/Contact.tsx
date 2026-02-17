@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -10,7 +9,7 @@ import { Send, Mail, MapPin, Phone, Clock } from "lucide-react";
 
 const contactInfo = [
   { icon: Mail, label: "Email", value: "hello@unaitech.com", href: "mailto:hello@unaitech.com" },
-  { icon: Phone, label: "Phone", value: "+1 (234) 567-890", href: "tel:+1234567890" },
+  { icon: Phone, label: "Phone", value: "+91 90439 88697", href: "tel:+919043988697" },
   { icon: MapPin, label: "Headquarters", value: "Unai Tech, Chennai, Tamil Nadu", href: "#" },
   { icon: Clock, label: "Business Hours", value: "Mon - Fri: 9AM - 6PM EST", href: "#" },
 ];
@@ -18,7 +17,7 @@ const contactInfo = [
 const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
-      <FloatingNavbar />
+
 
       <main className="pt-0">
         {/* Hero Section */}

@@ -272,7 +272,7 @@ export const NetworkAnimation: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5 }}
-            className="absolute bottom-0 left-0 right-0 h-96 cursor-pointer"
+            className="absolute bottom-0 left-0 right-0 h-96 cursor-pointer will-change-transform"
             style={{
                 background:
                     "linear-gradient(to top, rgba(224,242,254,1) 0%, rgba(224,242,254,0.8) 30%, transparent 100%)",

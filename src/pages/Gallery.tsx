@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { X, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -78,7 +77,7 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <FloatingNavbar />
+
 
       <main className="pt-0 min-h-screen">
         {/* Hero Section */}
@@ -215,7 +214,7 @@ const Gallery = () => {
               data-lenis-prevent
             >
               <div className="relative min-h-screen flex flex-col">
-                <FloatingNavbar />
+
 
                 {/* Back Button */}
                 <div className="absolute top-28 left-6 md:left-12 z-50">

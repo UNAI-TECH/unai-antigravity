@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 export const FloatingNavbar = () => {
@@ -8,25 +8,38 @@ export const FloatingNavbar = () => {
   const location = useLocation();
   const { scrollY } = useScroll();
 
-  // Track if we've scrolled past the hero threshold (approx 100px)
+  // Hide navbar on admin routes
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
+  // Track if we've scrolled past the hero threshold (approx 120px)
+  // Initialize to true if not on home page to ensure immediate visibility
   const [scrolledPastHero, setScrolledPastHero] = useState(location.pathname !== "/");
 
+  // Reset state when navigating between home and other pages
   useEffect(() => {
     if (location.pathname !== "/") {
       setScrolledPastHero(true);
+    } else {
+      // If we navigate back to home, check current scroll position
+      setScrolledPastHero(scrollY.get() > 120);
+    }
+  }, [location.pathname, scrollY]);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    // Only handle scroll logic on home page
+    if (location.pathname !== "/") {
+      if (!scrolledPastHero) setScrolledPastHero(true);
       return;
     }
 
-    const unsubscribe = scrollY.on("change", (latest) => {
-      if (latest > 120) {
-        setScrolledPastHero(true);
-      } else {
-        setScrolledPastHero(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [scrollY, location.pathname]);
+    if (latest > 120) {
+      if (!scrolledPastHero) setScrolledPastHero(true);
+    } else {
+      if (scrolledPastHero) setScrolledPastHero(false);
+    }
+  });
 
   const navLinks = [
     { name: "HOME", href: "/" },
@@ -67,18 +80,31 @@ export const FloatingNavbar = () => {
               {scrolledPastHero && (
                 <Link to="/" className="flex items-center group">
                   <motion.img
-                    layoutId="unai-logo"
+                    layoutId={location.pathname === "/" ? "unai-logo" : undefined}
                     src="/unai-logo.png"
                     alt="UNAI TECH"
                     className="h-8 md:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
                     transition={{
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 20,
-                      opacity: { duration: 0.2 }
+                      layout: {
+                        duration: 0.8,
+                        ease: [0.6, 0.01, -0.05, 0.9],
+                      },
+                      opacity: { duration: 0.3 },
+                      rotate: {
+                        duration: 0.8,
+                        ease: [0.6, 0.01, -0.05, 0.9],
+                      },
+                      scale: {
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25
+                      }
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    style={{
+                      rotate: 0,
+                      willChange: "transform, opacity",
+                      transform: "translateZ(0)"
                     }}
                   />
                 </Link>

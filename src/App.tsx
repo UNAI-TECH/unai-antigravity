@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { LenisSmoothScroll } from "@/components/effects/LenisSmoothScroll";
+import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import Index from "./pages/Index";
@@ -34,6 +35,7 @@ const App = () => {
         <DataProvider>
           <LenisSmoothScroll>
             <BrowserRouter>
+              <FloatingNavbar />
               <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Index />} />

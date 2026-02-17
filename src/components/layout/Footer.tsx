@@ -125,8 +125,8 @@ export const Footer = () => {
                 <div className="p-2 rounded-lg bg-purple-50 group-hover/item:bg-purple-100 transition-colors">
                   <Phone size={18} className="text-purple-600 group-hover/item:text-purple-700 transition-colors" />
                 </div>
-                <a href="tel:+1234567890" className="hover:text-purple-600 transition-colors">
-                  +1 (234) 567-890
+                <a href="tel:+919043988697" className="hover:text-purple-600 transition-colors">
+                  +91 90439 88697
                 </a>
               </li>
             </ul>

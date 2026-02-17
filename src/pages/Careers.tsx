@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -18,7 +17,7 @@ const Careers = () => {
 
     return (
         <div className="min-h-screen bg-background">
-            <FloatingNavbar />
+
 
             {/* Job Application Modal Overlay */}
             <AnimatePresence>

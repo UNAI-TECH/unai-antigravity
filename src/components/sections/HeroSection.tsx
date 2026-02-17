@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, useScroll } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { useData } from "@/context/DataContext";
 import { ArrowRight, Calendar } from "lucide-react";
 import { NetworkAnimation } from "@/components/effects/NetworkAnimation";
@@ -13,17 +12,13 @@ export const HeroSection = () => {
   const { scrollY } = useScroll();
   const [showHeroLogo, setShowHeroLogo] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = scrollY.on("change", (latest) => {
-      if (latest > 120) {
-        setShowHeroLogo(false);
-      } else {
-        setShowHeroLogo(true);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [scrollY]);
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (latest > 120) {
+      if (showHeroLogo) setShowHeroLogo(false);
+    } else {
+      if (!showHeroLogo) setShowHeroLogo(true);
+    }
+  });
 
   // Filter upcoming events
   const upcomingEvents = events.filter(e => e.status === "upcoming");
@@ -64,8 +59,7 @@ export const HeroSection = () => {
   return (
     <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100 text-foreground flex items-center justify-center shadow-2xl border border-white/10">
 
-      {/* Navbar */}
-      <FloatingNavbar />
+
 
       <div className="container relative z-10 mx-auto section-padding pt-32 sm:pt-28 md:pt-32 max-w-7xl h-full flex flex-col justify-center">
         {/* Centered Content - Responsive */}
@@ -80,14 +74,26 @@ export const HeroSection = () => {
                   src="/unai-logo.png"
                   alt="UNAI TECH"
                   className="h-10 md:h-12 w-auto"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
                   transition={{
-                    type: "spring",
-                    stiffness: 260,
-                    damping: 20,
-                    opacity: { duration: 0.2 }
+                    layout: {
+                      duration: 0.8,
+                      ease: [0.6, 0.01, -0.05, 0.9],
+                    },
+                    opacity: { duration: 0.3 },
+                    rotate: {
+                      duration: 0.8,
+                      ease: [0.6, 0.01, -0.05, 0.9],
+                    },
+                    scale: {
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 25
+                    }
+                  }}
+                  style={{
+                    rotate: 0,
+                    willChange: "transform, opacity",
+                    transform: "translateZ(0)"
                   }}
                 />
               )}
@@ -188,6 +194,9 @@ export const HeroSection = () => {
           src="/webbg.png"
           alt="Background"
           className="w-full h-auto object-cover opacity-80"
+          loading="eager"
+          fetchPriority="high"
+          style={{ contentVisibility: 'auto' }}
         />
       </div>
     </section>

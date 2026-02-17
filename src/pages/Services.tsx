@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { MagicBento, ParticleCard } from "@/components/effects/MagicBento";
 import { Button } from "@/components/ui/button";
-import { Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight, Check, ChevronDown } from "lucide-react";
+import { Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight, Check, ChevronDown, Server, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 
-const categories = ["All Services", "AI", "Automation", "Software"];
+const categories = ["All Services", "AI", "Automation", "Software", "Infrastructure", "Security"];
 
 const services = [
   {
@@ -44,6 +43,22 @@ const services = [
     features: ["AI-Ready Cloud Architecture", "Intelligent System Integration", "Secure & Compliant Infra", "Digital Transformation Strategy"],
     category: "Software",
   },
+  {
+    id: "cloud-infrastructure",
+    icon: Server,
+    title: "Cloud Infrastructure",
+    description: "Scalable, Resilient, and Engineered for Continuous Innovation. We architect cloud ecosystems that are secure, elastic, and optimized for AI-driven workloads.",
+    features: ["Public & Hybrid Cloud Architecture", "Infrastructure as Code (IaC)", "Kubernetes Orchestration", "CI/CD & Cloud Automation"],
+    category: "Infrastructure",
+  },
+  {
+    id: "cybersecurity",
+    icon: Lock,
+    title: "Cybersecurity Engineering",
+    description: "Security by Architecture, Not Afterthought. We design multi-layered security ecosystems that integrate advanced threat detection and zero-trust models.",
+    features: ["Zero-Trust Architecture", "AI-Powered Threat Detection", "Secure API & IAM Frameworks", "Compliance & Vulnerability Management"],
+    category: "Security",
+  },
 ];
 
 const Services = () => {
@@ -56,7 +71,7 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <FloatingNavbar />
+
 
       <main className="pt-24 sm:pt-36"> {/* Increased top padding for mobile to clear navbar */}
         {/* SaaS Hero Section */}
@@ -68,6 +83,7 @@ const Services = () => {
                 src="/service-bg1.jpg"
                 alt="Services Background"
                 className="w-full h-full object-cover opacity-60"
+                loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-[#3B5BDB]/40 to-[#748FFC]/20 mix-blend-multiply" />
               <div className="absolute inset-0 bg-black/20" />
@@ -142,7 +158,7 @@ const Services = () => {
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
                 >
-                  <div className="h-full flex flex-col bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 group">
+                  <div className="h-full flex flex-col bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 group transform-gpu">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-blue-50 group-hover:bg-blue-100 transition-colors">
                       <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-[#3B5BDB]" />
                     </div>

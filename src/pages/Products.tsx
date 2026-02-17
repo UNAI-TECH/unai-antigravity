@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, CheckCircle2, Layout, Users, BarChart3, ShieldCheck, Zap, Globe, ArrowRight } from "lucide-react";
@@ -56,7 +55,7 @@ const Products = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <FloatingNavbar />
+
 
       <main>
         {/* Premium Framing Hero Section */}
@@ -113,7 +112,7 @@ const Products = () => {
                 transition={{ duration: 1, delay: 0.2 }}
                 className="w-1/2 sm:w-1/3 md:w-[336px] -mr-16 sm:-mr-24 md:-mr-36"
               >
-                <img src="/6.png" alt="Mockup Left" className="w-full h-auto drop-shadow-2xl opacity-90" />
+                <img src="/6.png" alt="Mockup Left" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
               </motion.div>
 
               {/* Center Phone (Higher) */}
@@ -124,7 +123,7 @@ const Products = () => {
                 transition={{ duration: 1 }}
                 className="w-3/5 sm:w-2/5 md:w-[441px] z-10 -mb-8 sm:-mb-10 md:-mb-16"
               >
-                <img src="/5.png" alt="Mockup Center" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)]" />
+                <img src="/5.png" alt="Mockup Center" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)] transform-gpu" loading="lazy" />
               </motion.div>
 
               {/* Right Phone */}
@@ -135,7 +134,7 @@ const Products = () => {
                 transition={{ duration: 1, delay: 0.4 }}
                 className="w-1/2 sm:w-1/3 md:w-[336px] -ml-16 sm:-ml-24 md:-ml-36"
               >
-                <img src="/7.png" alt="Mockup Right" className="w-full h-auto drop-shadow-2xl opacity-90" />
+                <img src="/7.png" alt="Mockup Right" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
               </motion.div>
             </div>
 

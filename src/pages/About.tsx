@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { ParticleField } from "@/components/effects/ParticleField";
@@ -113,7 +112,7 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <FloatingNavbar />
+
 
       <main>
         {/* Hero Section */}
@@ -124,6 +123,7 @@ const About = () => {
               src="/about-hero-bg.jpg"
               alt="About Hero Background"
               className="absolute inset-0 w-full h-full object-cover"
+              loading="eager"
             />
             {/* Overlay for better text contrast */}
             <div className="absolute inset-0 bg-black/30" />
@@ -145,14 +145,14 @@ const About = () => {
               >
 
 
-                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 sm:mb-8 tracking-tight leading-[1.2]" style={{ textShadow: '0 4px 40px rgba(0,0,0,0.4), 0 2px 15px rgba(0,0,0,0.2)' }}>
+                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 sm:mb-8 tracking-tight leading-[1.2]">
                   <span className="text-white block py-1">Engineering</span>
                   <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 bg-clip-text text-transparent block py-1">
                     Intelligence at Scale
                   </span>
                 </h1>
 
-                <p className="text-base sm:text-lg md:text-xl text-white max-w-2xl mb-8 sm:mb-10 leading-relaxed font-medium drop-shadow-md tracking-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
+                <p className="text-base sm:text-lg md:text-xl text-white max-w-2xl mb-8 sm:mb-10 leading-relaxed font-medium tracking-tight">
                   UNAI TECH is an AI-native technology company operating at the intersection of artificial intelligence research, systems engineering, and intelligent automation.
                   What began as experimental work in machine learning and adaptive systems has evolved into a comprehensive technology practice delivering production-grade AI solutions.
                 </p>
@@ -305,7 +305,7 @@ const About = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.4, delay: index * 0.05 }}
-                        className="glass-premium glass-premium-hover glass-shine rounded-xl p-6 transition-all duration-300 hover:-translate-y-2"
+                        className="glass-premium glass-premium-hover glass-shine rounded-xl p-6 transition-all duration-300 hover:-translate-y-2 transform-gpu"
                         style={{ willChange: "transform" }}
                       >
                         <h3 className="font-heading text-lg font-semibold text-foreground mb-3">

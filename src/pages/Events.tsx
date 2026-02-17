@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -97,7 +96,7 @@ const Events = () => {
   if (selectedEventId && selectedEvent) {
     return (
       <div className="min-h-screen bg-background">
-        <FloatingNavbar />
+
         <main className="pt-0 min-h-screen relative">
           {/* Close Button */}
           <button
@@ -220,7 +219,7 @@ const Events = () => {
   // List View
   return (
     <div className="min-h-screen bg-background">
-      <FloatingNavbar />
+
 
       <main className="pt-0 min-h-screen">
         {/* Header */}
@@ -262,11 +261,11 @@ const Events = () => {
                   onClick={() => handleOpenEvent(event.id)}
                   className="cursor-pointer group"
                 >
-                  <GlassCard className="h-full overflow-hidden p-0 border-transparent hover:border-metal-blue-500/30 transition-all duration-300 hover:-translate-y-2">
+                  <GlassCard className="h-full overflow-hidden p-0 border-transparent hover:border-metal-blue-500/30 transition-all duration-300 hover:-translate-y-2 transform-gpu">
                     {/* Card Image */}
                     <div className="h-48 w-full bg-black/50 relative overflow-hidden">
                       {event.banner ? (
-                        <img src={event.banner} alt={event.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <img src={event.banner} alt={event.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 transform-gpu" loading="lazy" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-metal-blue-900/50 to-purple-900/50 flex items-center justify-center">
                           <Calendar className="w-12 h-12 text-white/20" />

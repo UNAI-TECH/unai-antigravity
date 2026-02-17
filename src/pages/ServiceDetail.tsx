@@ -2,12 +2,11 @@ import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { lenisScrollTo } from "@/hooks/useSmoothScroll";
 import { motion } from "framer-motion";
-import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, Cpu, Globe, Rocket, Code, ArrowRight, Sparkles, Box, Layout, Database, Image as ImageIcon, Zap, Shield, Brain } from "lucide-react";
+import { ArrowLeft, Check, Cpu, Globe, Rocket, Code, ArrowRight, Sparkles, Box, Layout, Database, Image as ImageIcon, Zap, Shield, Brain, Server, Lock } from "lucide-react";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 
 // Detailed data for each service - Synchronized with Services.tsx
@@ -155,6 +154,78 @@ const serviceDetails: Record<string, any> = {
                 icon: Cpu
             }
         ]
+    },
+    "cloud-infrastructure": {
+        title: "Cloud Infrastructure",
+        icon: Server,
+        color: "blue",
+        subtitle: "Engineered for Continuous Innovation",
+        description: "Cloud is not storage. It is strategic capability. We architect cloud ecosystems that are secure, elastic, high-performance, and optimized for AI-driven workloads.",
+        highlights: [
+            "Scalable Cloud Architecture",
+            "Infrastructure as Code (IaC)",
+            "Automated Environment Provisioning",
+            "GPU-Enabled Cloud Config"
+        ],
+        heroImage: "/illustration2.png",
+        bentoFeatures: [
+            {
+                title: "Cloud Architecture",
+                desc: "Public, private, and hybrid cloud architecture design with multi-region strategies.",
+                icon: Globe
+            },
+            {
+                title: "Containerization",
+                desc: "Docker and Kubernetes orchestration for resilient microservices deployment.",
+                icon: Box
+            },
+            {
+                title: "DevOps Automation",
+                desc: "CI/CD integration, infrastructure automation, and automated performance monitoring.",
+                icon: Zap
+            },
+            {
+                title: "AI Enablement",
+                desc: "Data lake deployment and AI workload performance tuning at the infrastructure level.",
+                icon: Brain
+            }
+        ]
+    },
+    "cybersecurity": {
+        title: "Cybersecurity Engineering",
+        icon: Lock,
+        color: "purple",
+        subtitle: "Security by Architecture",
+        description: "In the age of AI and automation, cybersecurity must be intelligent, proactive, and adaptive. We design multi-layered security ecosystems that protect data and identity.",
+        highlights: [
+            "Zero-Trust Security Models",
+            "AI-Driven Threat Monitoring",
+            "Secure System Hardening",
+            "Real-Time Anomaly Detection"
+        ],
+        heroImage: "/6246137-removebg-preview.png",
+        bentoFeatures: [
+            {
+                title: "Security Architecture",
+                desc: "Threat modeling, risk analysis, and secure system design from the ground up.",
+                icon: Shield
+            },
+            {
+                title: "Network Security",
+                desc: "Zero-trust network implementation and automated vulnerability management.",
+                icon: Globe
+            },
+            {
+                title: "App Security",
+                desc: "API security, gateway protection, and secure SDLC implementation across your stack.",
+                icon: Code
+            },
+            {
+                title: "Threat Intelligence",
+                desc: "Behavioral analysis and automated incident response powered by AI.",
+                icon: Zap
+            }
+        ]
     }
 };
 
@@ -212,7 +283,7 @@ const ServiceDetail = () => {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
-            <FloatingNavbar />
+
 
             <main className="pt-0">
                 {/* Premium Glassmorphic Hero */}
@@ -254,7 +325,11 @@ const ServiceDetail = () => {
                                 </p>
 
                                 <div className="flex flex-wrap gap-4">
-                                    <Button size="xl" className="h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xl shadow-blue-500/20 transition-all font-bold">
+                                    <Button
+                                        size="xl"
+                                        className="h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xl shadow-blue-500/20 transition-all font-bold"
+                                        onClick={() => navigate('/contact')}
+                                    >
                                         Discuss Solution
                                         <ArrowRight className="ml-2 w-5 h-5" />
                                     </Button>
@@ -356,7 +431,12 @@ const ServiceDetail = () => {
                                 <p className="text-lg text-slate-500 mb-10 leading-relaxed font-light">
                                     Whether you need a single intelligent component or a multi-year architecture roadmap, we provide the technical depth and strategic clarity required to execute.
                                 </p>
-                                <Button size="xl" variant="outline" className="h-14 px-10 rounded-2xl border-slate-200 text-slate-900 hover:bg-slate-50 font-bold transition-all">
+                                <Button
+                                    size="xl"
+                                    variant="outline"
+                                    className="h-14 px-10 rounded-2xl border-slate-200 text-slate-900 hover:bg-slate-50 font-bold transition-all"
+                                    onClick={() => navigate('/contact')}
+                                >
                                     Review Technical Specs
                                 </Button>
                             </div>
