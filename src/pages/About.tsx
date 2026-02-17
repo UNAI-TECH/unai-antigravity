@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import { FoundersNote } from "@/components/sections/FoundersNote";
-import { Floating3DSphere } from "@/components/effects/Floating3DSphere";
-import "@/utils/removeSplineLogo";
+import { CognitiveForge } from "@/components/effects/CognitiveForge";
+
 
 const timelineItems = [
   {
@@ -117,7 +117,7 @@ const About = () => {
 
       <main>
         {/* Hero Section */}
-        <section id="hero-section" className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden flex items-center shadow-2xl border border-white/10">
+        <section id="hero-section" className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] h-[calc(100dvh-2rem)] min-h-[650px] overflow-hidden flex items-center shadow-2xl border border-white/10">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <img
@@ -133,7 +133,7 @@ const About = () => {
           <ParticleField count={10} />
 
           {/* Content Container - Two Column Layout */}
-          <div className="container mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-12 sm:pb-20 relative z-10">
+          <div className="container mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-8 sm:pb-16 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
               {/* Left: Text Content */}
@@ -196,8 +196,8 @@ const About = () => {
                 transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
                 className="relative z-10 flex items-center justify-center"
               >
-                <div className="w-full h-[500px] md:h-[650px] lg:h-[750px] relative flex items-center justify-center scale-110 lg:scale-125 transition-transform duration-1000">
-                  <Floating3DSphere />
+                <div className="w-full h-full relative flex items-center justify-center">
+                  <CognitiveForge />
                 </div>
               </motion.div>
 
