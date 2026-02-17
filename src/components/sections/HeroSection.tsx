@@ -1,15 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
 import { useData } from "@/context/DataContext";
 import { ArrowRight, Calendar } from "lucide-react";
-import Grainient from "@/components/effects/Grainient";
+import { NetworkAnimation } from "@/components/effects/NetworkAnimation";
 
 // --- Main Hero Section ---
 export const HeroSection = () => {
   const { events } = useData();
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const { scrollY } = useScroll();
+  const [showHeroLogo, setShowHeroLogo] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = scrollY.on("change", (latest) => {
+      if (latest > 120) {
+        setShowHeroLogo(false);
+      } else {
+        setShowHeroLogo(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [scrollY]);
 
   // Filter upcoming events
   const upcomingEvents = events.filter(e => e.status === "upcoming");
@@ -48,34 +62,7 @@ export const HeroSection = () => {
   const currentSlide = slides[currentSlideIndex];
 
   return (
-    <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-background text-foreground flex items-center justify-center shadow-2xl border border-white/10">
-      {/* Grainient Background */}
-      <div className="absolute inset-0 z-0 opacity-50">
-        <Grainient
-          color1="#666edb"
-          color2="#ffffff"
-          color3="#3d19b3"
-          timeSpeed={0.25}
-          colorBalance={0}
-          warpStrength={1}
-          warpFrequency={5}
-          warpSpeed={2}
-          warpAmplitude={50}
-          blendAngle={0}
-          blendSoftness={0.05}
-          rotationAmount={500}
-          noiseScale={2}
-          grainAmount={0.1}
-          grainScale={2}
-          grainAnimated={false}
-          contrast={1.5}
-          gamma={1}
-          saturation={1}
-          centerX={0}
-          centerY={0}
-          zoom={0.9}
-        />
-      </div>
+    <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100 text-foreground flex items-center justify-center shadow-2xl border border-white/10">
 
       {/* Navbar */}
       <FloatingNavbar />
@@ -83,6 +70,29 @@ export const HeroSection = () => {
       <div className="container relative z-10 mx-auto section-padding pt-32 sm:pt-28 md:pt-32 max-w-7xl h-full flex flex-col justify-center">
         {/* Centered Content - Responsive */}
         <div className="flex flex-col items-center justify-center text-center w-full min-h-[50vh]">
+
+          {/* Centered Hero Logo (Flying to Navbar) */}
+          <div className="h-20 mb-4 flex items-center justify-center">
+            <AnimatePresence>
+              {showHeroLogo && (
+                <motion.img
+                  layoutId="unai-logo"
+                  src="/unai-logo.png"
+                  alt="UNAI TECH"
+                  className="h-10 md:h-12 w-auto"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    opacity: { duration: 0.2 }
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -107,7 +117,7 @@ export const HeroSection = () => {
 
               {/* Headline Group */}
               <div className="relative mb-6 md:mb-8 lg:mb-12">
-                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.1] sm:leading-[1.2] tracking-tight font-heading" style={{ textShadow: '0 4px 40px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.2)' }}>
+                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.1] sm:leading-[1.2] tracking-tight font-heading">
                   {currentSlide.titleLines.map((line, index) => (
                     <span
                       key={index}
@@ -125,7 +135,7 @@ export const HeroSection = () => {
               </div>
 
               {/* Supporting Paragraph */}
-              <p className="text-base sm:text-lg md:text-xl text-gray-800 max-w-3xl mb-6 md:mb-10 lg:mb-12 leading-relaxed font-medium px-4 md:px-0 tracking-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.2)' }}>
+              <p className="text-base sm:text-lg md:text-xl text-gray-800 max-w-3xl mb-6 md:mb-10 lg:mb-12 leading-relaxed font-medium px-4 md:px-0 tracking-tight">
                 {currentSlide.description}
               </p>
 
@@ -171,6 +181,16 @@ export const HeroSection = () => {
 
         </div>
       </div>
+
+      {/* Background Image at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 w-full pointer-events-none">
+        <img
+          src="/webbg.png"
+          alt="Background"
+          className="w-full h-auto object-cover opacity-80"
+        />
+      </div>
     </section>
   );
 };
+export default HeroSection;

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import { FoundersNote } from "@/components/sections/FoundersNote";
+import { Floating3DSphere } from "@/components/effects/Floating3DSphere";
 import "@/utils/removeSplineLogo";
 
 const timelineItems = [
@@ -195,11 +196,9 @@ const About = () => {
                 transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
                 className="relative z-10 flex items-center justify-center"
               >
-                <img
-                  src="/illustration-1.png"
-                  alt="AI Education Illustration"
-                  className="w-full h-auto max-w-2xl drop-shadow-2xl"
-                />
+                <div className="w-full h-[500px] md:h-[650px] lg:h-[750px] relative flex items-center justify-center scale-110 lg:scale-125 transition-transform duration-1000">
+                  <Floating3DSphere />
+                </div>
               </motion.div>
 
             </div>

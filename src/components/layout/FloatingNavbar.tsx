@@ -1,11 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 export const FloatingNavbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { scrollY } = useScroll();
+
+  // Track if we've scrolled past the hero threshold (approx 100px)
+  const [scrolledPastHero, setScrolledPastHero] = useState(location.pathname !== "/");
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setScrolledPastHero(true);
+      return;
+    }
+
+    const unsubscribe = scrollY.on("change", (latest) => {
+      if (latest > 120) {
+        setScrolledPastHero(true);
+      } else {
+        setScrolledPastHero(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [scrollY, location.pathname]);
 
   const navLinks = [
     { name: "HOME", href: "/" },
@@ -23,7 +44,7 @@ export const FloatingNavbar = () => {
   };
 
   // Lock body scroll when menu is open
-  React.useEffect(() => {
+  useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -40,14 +61,30 @@ export const FloatingNavbar = () => {
         {/* Pill-shaped Navbar */}
         <div className="bg-white/80 backdrop-blur-lg border border-white/20 shadow-2xl rounded-full px-6 md:px-8 h-16 flex items-center justify-between transition-all duration-300 relative z-50">
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <img
-              src="/unai-logo.png"
-              alt="UNAI TECH"
-              className="h-8 md:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
-            />
-          </Link>
+          {/* Logo Container with fixed width to prevent layout shift */}
+          <div className="w-32 flex items-center">
+            <AnimatePresence>
+              {scrolledPastHero && (
+                <Link to="/" className="flex items-center group">
+                  <motion.img
+                    layoutId="unai-logo"
+                    src="/unai-logo.png"
+                    alt="UNAI TECH"
+                    className="h-8 md:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      opacity: { duration: 0.2 }
+                    }}
+                  />
+                </Link>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-8">
