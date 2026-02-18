@@ -57,7 +57,7 @@ export const HeroSection = () => {
   const currentSlide = slides[currentSlideIndex];
 
   return (
-    <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100 text-foreground flex items-center justify-center shadow-2xl border border-white/10">
+    <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] overflow-hidden bg-transparent text-foreground flex items-center justify-center shadow-2xl border border-white/10">
 
 
 

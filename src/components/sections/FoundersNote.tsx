@@ -22,12 +22,12 @@ export const FoundersNote = () => {
                         transition={{ duration: 0.6 }}
                         className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden flex flex-col md:flex-row"
                     >
-                        {/* Image Column - Reduced height/width ratio */}
-                        <div className="md:w-1/3 relative min-h-[300px] md:min-h-full">
+                        {/* Image Column - Improved mobile responsiveness */}
+                        <div className="md:w-1/3 relative bg-slate-100 overflow-hidden">
                             <img
                                 src="/Nehemiah_Nesanathan_M.jpg"
                                 alt="Nehemiah Nesanathan, Founder"
-                                className="absolute inset-0 w-full h-full object-cover"
+                                className="w-full h-auto md:absolute md:inset-0 md:h-full object-cover object-[center_20%]"
                             />
                             <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply" />
                         </div>

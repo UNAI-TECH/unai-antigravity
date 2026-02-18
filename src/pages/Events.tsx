@@ -4,9 +4,11 @@ import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, ArrowRight, Clock, X, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowRight, Clock, X, ExternalLink, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
+import { Magnetic } from "@/components/effects/Magnetic";
+import SEO from "@/components/SEO";
 
 
 const PosterCarousel = ({ posters }: { posters: string[] }) => {
@@ -19,16 +21,16 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
 
   return (
     <div className="relative group w-full max-w-2xl mx-auto">
-      <div className="relative overflow-hidden rounded-xl aspect-video bg-black/50 border border-white/10 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl aspect-video bg-black/50 border border-white/10 shadow-2xl">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
             src={posters[currentIndex]}
             alt={`Poster ${currentIndex + 1}`}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
             className="w-full h-full object-contain bg-black/80"
           />
         </AnimatePresence>
@@ -38,24 +40,24 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
           <>
             <button
               onClick={(e) => { e.stopPropagation(); prev(); }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-metal-purple-500 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10 hover:border-white/30"
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-xl transition-all opacity-0 group-hover:opacity-100 border border-white/20 hover:border-white/40"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); next(); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-metal-purple-500 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10 hover:border-white/30"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-xl transition-all opacity-0 group-hover:opacity-100 border border-white/20 hover:border-white/40"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
 
             {/* Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-2 bg-black/30 backdrop-blur-sm rounded-full">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-2.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
               {posters.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentIndex(idx)}
-                  className={`h-2 rounded-full transition-all duration-300 ${idx === currentIndex ? "bg-metal-purple-400 w-6" : "bg-white/40 w-2 hover:bg-white/70"}`}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentIndex ? "bg-white w-8" : "bg-white/30 w-1.5 hover:bg-white/60"}`}
                 />
               ))}
             </div>
@@ -95,118 +97,205 @@ const Events = () => {
   // Render Detailed Logic
   if (selectedEventId && selectedEvent) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-white">
+        <SEO
+          title={selectedEvent.title}
+          description={selectedEvent.description}
+        />
 
         <main className="pt-0 min-h-screen relative">
-          {/* Close Button */}
-          <button
+          {/* Close Button - Premium Glass Style */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
             onClick={handleCloseEvent}
-            className="fixed top-24 right-6 z-50 p-3 rounded-full glass-metal hover:bg-white/10 transition-all duration-300 group"
+            className="fixed top-24 right-8 z-50 p-5 rounded-3xl bg-white/60 backdrop-blur-2xl border border-white/40 shadow-premium-deep hover:bg-white/80 transition-all duration-500 group"
           >
-            <X className="w-6 h-6 text-slate-900 group-hover:rotate-90 transition-transform" />
-          </button>
+            <X className="w-6 h-6 text-slate-900 group-hover:rotate-90 transition-transform duration-500" />
+          </motion.button>
 
-          {/* Hero Banner Space */}
-          <div className="relative h-[60vh] w-full overflow-hidden">
-            {selectedEvent.banner ? (
-              <img
-                src={selectedEvent.banner}
-                alt={selectedEvent.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-metal-blue-900 to-black-deep flex items-center justify-center">
-                <GlowOrb size="xl" color="blue" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          {/* Cinematic Event Header */}
+          <section className="relative h-[65vh] min-h-[500px] w-full overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedEvent.id}
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
+                className="absolute inset-0"
+              >
+                {selectedEvent.banner ? (
+                  <img
+                    src={selectedEvent.banner}
+                    alt={selectedEvent.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white" />
+              </motion.div>
+            </AnimatePresence>
 
-            <div className="absolute bottom-0 left-0 w-full p-6 md:p-12">
+            <div className="absolute inset-0 flex items-end pb-20 px-8">
               <div className="container mx-auto">
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 60 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
+                  transition={{ duration: 1, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                  className="max-w-5xl"
                 >
-                  <span className="px-3 py-1 rounded-full bg-metal-blue-500/10 text-metal-blue-700 text-sm font-bold mb-4 inline-block backdrop-blur-sm border border-metal-blue-500/20">
-                    {selectedEvent.type}
-                  </span>
-                  <h1 className="font-heading text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-slate-900 drop-shadow-sm">
-                    {selectedEvent.title}
-                  </h1>
-                  <div className="flex flex-wrap gap-4 md:gap-8 text-lg text-slate-700 font-bold">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-metal-blue-600" />
-                      {selectedEvent.date}
+                  <div className="flex items-center gap-4 mb-8">
+                    <span className="px-6 py-2 rounded-full bg-purple-600/90 backdrop-blur-md text-white text-xs font-black tracking-[0.2em] uppercase shadow-2xl">
+                      {selectedEvent.type}
                     </span>
-                    <span className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-metal-purple-600" />
-                      {selectedEvent.location}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-metal-blue-600" />
-                      {selectedEvent.attendees} Attendees
+                    <div className="h-[1px] w-16 bg-slate-200/50" />
+                    <span className="text-slate-600 font-bold text-base tracking-wide flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-purple-600" /> {selectedEvent.date}
                     </span>
                   </div>
+                  <h1 className="font-heading text-5xl sm:text-7xl md:text-8xl font-black mb-6 text-slate-950 leading-[0.9] tracking-tighter">
+                    {selectedEvent.title}
+                  </h1>
                 </motion.div>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Content Section */}
-          <section className="py-14 md:py-20 relative">
-            <div className="container mx-auto px-6">
-              {/* Two Column Layout: About (Left) + Poster (Right) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                {/* Left: About the Event - 14.14" container equivalent */}
-                <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col bg-white/80 border-slate-200 shadow-xl">
-                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 text-slate-900">
-                    <div className="w-2 h-2 rounded-full bg-metal-blue-500" />
-                    About the Event
-                  </h2>
-                  <div className="overflow-y-auto custom-scrollbar pr-2 flex-1">
-                    <p className="text-slate-600 leading-relaxed whitespace-pre-line text-lg break-all">
-                      {selectedEvent.description}
-                    </p>
-                  </div>
-                </GlassCard>
+          {/* Premium Bento Content Grid */}
+          <section className="py-20 md:py-32 relative px-8 bg-white">
+            <div className="container mx-auto max-w-[1500px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-[minmax(350px,auto)]">
 
-                {/* Right: Event Poster - Fits Image Size */}
-                {selectedEvent.posters && selectedEvent.posters.length > 0 && (
-                  <GlassCard className="p-6 md:p-8 h-auto lg:h-[600px] flex flex-col items-center bg-white/80 border-slate-200 shadow-xl">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 shrink-0 self-start text-slate-900">
-                      <div className="w-2 h-2 rounded-full bg-metal-purple-500" />
-                      Event Poster
-                    </h2>
-                    {/* Container matches exact image bounds */}
-                    <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
-                      <img
-                        src={selectedEvent.posters[0]}
-                        alt="Event Poster"
-                        className="h-auto max-h-[400px] lg:h-full w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
-                        style={{ aspectRatio: '3/4' }}
-                      />
+                {/* 1. Main Info Bento (Span 2x2) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.1 }}
+                  className="md:col-span-2 row-span-2"
+                >
+                  <div className="h-full bg-slate-50/50 rounded-[3.5rem] p-12 md:p-16 border border-slate-100/80 shadow-sm flex flex-col relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                      <Sparkles className="w-64 h-64 text-purple-600" />
                     </div>
-                  </GlassCard>
-                )}
-              </div>
 
-              {/* Register Button - Centered Below */}
-              <div className="flex justify-center">
-                <GlassCard className="p-8 max-w-md w-full text-center hover:border-metal-blue-500/50 transition-colors duration-300 bg-white/80 border-slate-200">
-                  <h3 className="text-2xl font-bold mb-4 text-slate-900">Registration</h3>
-                  <p className="text-slate-600 mb-6">
-                    Secure your spot for this exclusive event. Spaces are limited.
-                  </p>
-                  {selectedEvent.registration_link && (
-                    <Button
-                      className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 hover:from-metal-blue-600 hover:to-metal-purple-600 text-lg py-6 font-semibold shadow-glow-blue hover:shadow-glow-purple transition-all duration-300"
-                      onClick={() => window.open(selectedEvent.registration_link, '_blank')}
-                    >
-                      Register Now <ExternalLink className="ml-2 w-5 h-5" />
-                    </Button>
-                  )}
-                </GlassCard>
+                    <h2 className="text-3xl font-black mb-10 text-slate-950 flex items-center gap-5">
+                      <div className="w-1.5 h-10 bg-purple-600 rounded-full" />
+                      About the Event
+                    </h2>
+                    <div className="prose prose-slate max-w-none flex-1">
+                      <p className="text-slate-600 leading-relaxed text-xl md:text-2xl font-medium whitespace-pre-line">
+                        {selectedEvent.description}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* 2. Poster Bento */}
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="lg:col-span-1"
+                >
+                  <div className="h-full bg-slate-950 rounded-[3.5rem] p-10 shadow-premium-deep relative overflow-hidden group">
+                    {/* Background Glow */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
+
+                    <h2 className="text-2xl font-black mb-8 text-white flex items-center gap-5 relative z-10">
+                      <div className="w-3 h-3 rounded-full bg-purple-500 shadow-glow-purple" />
+                      Media Gallery
+                    </h2>
+                    <div className="relative h-[calc(100%-5rem)] rounded-[2rem] overflow-hidden bg-white/5 border border-white/10">
+                      {selectedEvent.posters && selectedEvent.posters.length > 0 ? (
+                        <div className="h-full w-full">
+                          <PosterCarousel posters={selectedEvent.posters} />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Calendar className="w-16 h-16 text-white/5" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* 3. Stats & Details Bento */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                >
+                  <div className="h-full bg-purple-50/30 rounded-[3.5rem] p-12 border border-purple-100/50 flex flex-col justify-center space-y-10">
+                    <div className="group">
+                      <div className="flex items-center gap-4 text-purple-600/50 text-xs font-black tracking-[0.2em] uppercase mb-3">
+                        <MapPin className="w-4 h-4 text-purple-600" /> Venue
+                      </div>
+                      <div className="text-2xl font-black text-slate-900 group-hover:text-purple-600 transition-colors duration-300">{selectedEvent.location}</div>
+                    </div>
+
+                    <div className="group">
+                      <div className="flex items-center gap-4 text-purple-600/50 text-xs font-black tracking-[0.2em] uppercase mb-3">
+                        <Calendar className="w-4 h-4 text-purple-600" /> Schedule
+                      </div>
+                      <div className="text-2xl font-black text-slate-900 group-hover:text-purple-600 transition-colors duration-300">{selectedEvent.date}</div>
+                    </div>
+
+                    <div className="group">
+                      <div className="flex items-center gap-4 text-purple-600/50 text-xs font-black tracking-[0.2em] uppercase mb-3">
+                        <Users className="w-4 h-4 text-purple-600" /> Capacity
+                      </div>
+                      <div className="text-4xl font-black text-slate-900 flex items-baseline gap-2 group-hover:text-purple-600 transition-colors duration-300">
+                        {selectedEvent.attendees} <span className="text-sm font-bold text-slate-400">Registered</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* 4. Action Bento (Full width) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                  className="lg:col-span-3 h-auto"
+                >
+                  {/* Magnetic Wrapper for the whole CTA section */}
+                  <div className="bg-slate-950 rounded-[4rem] p-12 md:p-20 shadow-premium-deep relative overflow-hidden group">
+                    {/* Background Visuals */}
+                    <div className="absolute top-0 right-0 w-[50%] h-full bg-gradient-to-l from-purple-600/20 to-transparent pointer-events-none" />
+                    <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
+
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                      <div className="max-w-3xl text-center md:text-left">
+                        <h3 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tighter">
+                          Join the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Collaborative</span> <br className="hidden md:block" /> Engineering Frontier
+                        </h3>
+                        <p className="text-slate-400 text-lg md:text-xl font-medium max-w-xl">
+                          Witness the next evolution of intelligent systems. Limited seats available for the technical deep-dive tracks.
+                        </p>
+                      </div>
+
+                      {selectedEvent.registration_link && (
+                        <Magnetic strength={0.2}>
+                          <Button
+                            onClick={() => window.open(selectedEvent.registration_link, '_blank')}
+                            className="h-24 px-16 rounded-full bg-white text-slate-950 hover:bg-white/90 text-2xl font-black shadow-2xl transition-all duration-500 group overflow-hidden"
+                          >
+                            <span className="relative z-10 flex items-center gap-4">
+                              Secure Access <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform duration-500" />
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-white scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500" />
+                          </Button>
+                        </Magnetic>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+
               </div>
             </div>
           </section>
@@ -218,88 +307,138 @@ const Events = () => {
 
   // List View
   return (
-    <div className="min-h-screen bg-background">
-
+    <div className="min-h-screen bg-white">
+      <SEO
+        title="Events"
+        description="Stay updated with UNAI TECH's global events, conferences, and workshops on AI and engineering."
+      />
 
       <main className="pt-0 min-h-screen">
-        {/* Header */}
-        <section className="relative pt-32 pb-12 md:pb-20 overflow-hidden">
-          <GlowOrb size="xl" color="blue" className="top-0 right-0" />
-          <div className="container mx-auto px-6 relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <span className="inline-block px-4 py-2 rounded-full glass-metal text-sm text-metal-blue-300 mb-6">
-                Energy Timeline
-              </span>
-              <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-6">
-                <span className="text-foreground">Global </span>
-                <span className="text-gradient-metal">Events</span>
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Join our community at conferences, workshops, and exclusive gatherings.
-              </p>
-            </motion.div>
+        {/* Unique Modern Premium Hero */}
+        <section className="relative pt-60 pb-40 overflow-hidden bg-slate-950">
+          {/* Advanced Background Design */}
+          <div className="absolute inset-0 z-0">
+            {/* Dark Base */}
+            <div className="absolute inset-0 bg-[#020205]" />
+
+            {/* Dynamic Mesh & Glows */}
+            <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[120%] bg-purple-600/10 blur-[180px] rounded-full animate-optimized opacity-60" style={{ animation: 'pulse-glow 12s ease-in-out infinite' }} />
+            <div className="absolute bottom-[-10%] left-[-5%] w-[60%] h-[80%] bg-blue-600/10 blur-[160px] rounded-full animate-optimized opacity-40" />
+
+            {/* subtle grid overlay */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay pointer-events-none" />
           </div>
+
+          <div className="container mx-auto px-8 relative z-10">
+            <div className="max-w-6xl mx-auto text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <Magnetic strength={0.1}>
+                  <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/5 backdrop-blur-2xl border border-white/10 text-white text-xs font-black tracking-[0.3em] uppercase mb-12 shadow-2xl">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    Engineering Communities
+                  </div>
+                </Magnetic>
+
+                <h1 className="font-heading text-6xl md:text-9xl font-black mb-10 text-white tracking-[-0.05em] leading-[0.85]">
+                  Global <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 animate-gradient-x">Collective</span>
+                </h1>
+
+                <p className="text-xl md:text-3xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed opacity-80">
+                  Forging the future through technical summits, <br className="hidden md:block" />
+                  collaborative labs, and high-impact engineering workshops.
+                </p>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Hero Bottom Decor */}
+          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent" />
         </section>
 
-        <div className="energy-line" />
-
-        {/* Events Grid */}
-        <section className="pt-16 pb-16 lg:pt-24 lg:pb-32 px-6">
+        {/* Overlapping Content Area */}
+        <section className="relative z-20 -mt-24 px-8 pb-40 bg-white">
           <div className="container mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {events.map((event, index) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => handleOpenEvent(event.id)}
-                  className="cursor-pointer group"
-                >
-                  <GlassCard className="h-full overflow-hidden p-0 border-transparent hover:border-metal-blue-500/30 transition-all duration-300 hover:-translate-y-2 transform-gpu">
-                    {/* Card Image */}
-                    <div className="h-48 w-full bg-black/50 relative overflow-hidden">
-                      {event.banner ? (
-                        <img src={event.banner} alt={event.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 transform-gpu" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-metal-blue-900/50 to-purple-900/50 flex items-center justify-center">
-                          <Calendar className="w-12 h-12 text-white/20" />
-                        </div>
-                      )}
-                      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-white border border-white/10">
-                        {event.type}
-                      </div>
-                    </div>
+                <Magnetic key={event.id} strength={0.05}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 60 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ duration: 0.8, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
+                    onClick={() => handleOpenEvent(event.id)}
+                    className="group cursor-pointer transform-gpu h-full"
+                  >
+                    <div className="h-full bg-white rounded-[3.5rem] overflow-hidden border border-slate-100 glass-premium glass-premium-hover glass-inner-glow flex flex-col">
+                      {/* Visual Card Header */}
+                      <div className="h-72 relative overflow-hidden bg-slate-950">
+                        {event.banner ? (
+                          <motion.img
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
+                            src={event.banner}
+                            alt={event.title}
+                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-slate-900 to-purple-900 flex items-center justify-center">
+                            <Calendar className="w-16 h-16 text-white/5" />
+                          </div>
+                        )}
 
-                    {/* Card Content */}
-                    <div className="p-6">
-                      <div className="text-xs font-medium text-metal-blue-400 mb-2">{event.date}</div>
-                      <h3 className="font-heading text-xl font-bold mb-3 group-hover:text-metal-blue-300 transition-colors">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {event.description}
-                      </p>
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                          <MapPin className="w-3 h-3" /> {event.location}
+                        {/* Floating Glass Badge */}
+                        <div className="absolute top-8 left-8 bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full text-[11px] font-black tracking-widest uppercase text-white border border-white/20 shadow-2xl">
+                          {event.type}
                         </div>
-                        <span className="text-xs font-semibold flex items-center text-white group-hover:translate-x-1 transition-transform">
-                          Details <ArrowRight className="w-3 h-3 ml-1" />
-                        </span>
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-10 flex flex-col flex-1 relative">
+                        <div className="flex items-center gap-3 mb-6 text-purple-600 font-black text-xs uppercase tracking-[0.2em]">
+                          <Clock className="w-4 h-4" />
+                          {event.date}
+                        </div>
+
+                        <h3 className="font-heading text-3xl font-black mb-5 text-slate-950 group-hover:text-purple-600 transition-colors duration-500 leading-[1.1] tracking-tight">
+                          {event.title}
+                        </h3>
+
+                        <p className="text-slate-500 text-lg line-clamp-2 md:line-clamp-3 mb-10 leading-relaxed font-semibold opacity-70 group-hover:opacity-100 transition-opacity duration-500">
+                          {event.description}
+                        </p>
+
+                        <div className="mt-auto flex items-center justify-between pt-10 border-t border-slate-50">
+                          <div className="flex items-center gap-3 text-slate-400 font-bold text-sm">
+                            <MapPin className="w-4 h-4 text-purple-600" />
+                            {event.location}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-950 font-black text-sm uppercase tracking-wider group-hover:translate-x-2 transition-transform duration-500">
+                            Details <ArrowRight className="w-5 h-5 text-purple-600" />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </GlassCard>
-                </motion.div>
+                  </motion.div>
+                </Magnetic>
               ))}
             </div>
 
             {events.length === 0 && (
-              <div className="text-center py-20">
-                <p className="text-2xl text-muted-foreground font-light">No events scheduled at the moment.</p>
+              <div className="text-center py-60">
+                <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shrink-0 border border-slate-100">
+                  <Calendar className="w-10 h-10 text-slate-200" />
+                </div>
+                <h3 className="text-3xl font-black text-slate-900 mb-4">The Forge is Cooling</h3>
+                <p className="text-xl text-slate-400 font-medium tracking-wide">New high-impact events are currently in technical planning.</p>
               </div>
             )}
           </div>
@@ -312,5 +451,3 @@ const Events = () => {
 };
 
 export default Events;
-
-

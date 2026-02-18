@@ -286,7 +286,7 @@ export const ParticleCard = ({
     return (
         <div
             ref={cardRef}
-            className={`particle-container magic-bento-card ${borderGlowClass} ${className}`}
+            className={`particle-container magic-bento-card gpu-accelerated will-change-transform ${borderGlowClass} ${className}`}
             style={{
                 ...style,
                 position: 'relative',
@@ -337,8 +337,9 @@ export const GlobalSpotlight = ({
       );
       z-index: 200;
       opacity: 0;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%) translateZ(0);
       mix-blend-mode: screen;
+      will-change: transform, opacity;
     `;
         document.body.appendChild(spotlight);
         spotlightRef.current = spotlight;

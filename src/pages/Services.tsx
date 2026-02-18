@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight, Check, ChevronDown, Server, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
+import SEO from "@/components/SEO";
 
 const categories = ["All Services", "AI", "Automation", "Software", "Infrastructure", "Security"];
 
@@ -71,6 +72,10 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <SEO
+        title="Services"
+        description="Explore our elite services in Cognitive AI, Intelligent Software, Autonomous Operations, Cloud Infrastructure, and Cybersecurity."
+      />
 
 
       <main className="pt-24 sm:pt-36"> {/* Increased top padding for mobile to clear navbar */}

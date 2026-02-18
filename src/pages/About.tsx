@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import { FoundersNote } from "@/components/sections/FoundersNote";
 import { CognitiveForge } from "@/components/effects/CognitiveForge";
+import SEO from "@/components/SEO";
 
 
 const timelineItems = [
@@ -112,6 +113,10 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About Us"
+        description="Learn about UNAI TECH's mission to engineer intelligence at scale and our intelligence-first principles."
+      />
 
 
       <main>

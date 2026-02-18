@@ -3,22 +3,12 @@ import { GlowOrb } from "@/components/effects/GlowOrb";
 
 export const VisionBlock = () => {
     return (
-        <section className="relative mx-4 my-4 py-12 lg:py-20 overflow-hidden rounded-[2.5rem] md:rounded-[4rem] shadow-2xl border border-white/10">
-            {/* Background Image */}
-            <div className="absolute inset-0 z-0">
-                <img
-                    src="/Gradient Wallpaper.jpg"
-                    alt="Background"
-                    className="w-full h-full object-cover"
-                />
-                {/* Dark Overlay for Readability */}
-                <div className="absolute inset-0 bg-slate-950/60" />
-            </div>
-
-            {/* Background Effects */}
-            <div className="absolute inset-0 opacity-30 z-0">
-                <GlowOrb size="xl" color="blue" className="-top-1/2 -left-1/4" />
-                <GlowOrb size="xl" color="plasma" className="-bottom-1/2 -right-1/4" />
+        <section className="relative mx-4 my-8 py-10 lg:py-16 overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-white border border-blue-100 shadow-[0_20px_50px_rgba(73,84,250,0.05)]">
+            {/* Soft Light Background Effects */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent" />
+                <div className="absolute -top-[20%] -right-[10%] w-[400px] h-[400px] bg-blue-100/30 rounded-full blur-[100px]" />
+                <div className="absolute -bottom-[20%] -left-[10%] w-[400px] h-[400px] bg-purple-100/20 rounded-full blur-[100px]" />
             </div>
 
             <div className="container mx-auto px-6 relative z-10 text-center">
@@ -26,33 +16,36 @@ export const VisionBlock = () => {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                    className="max-w-3xl mx-auto will-change-transform"
+                    transition={{ duration: 0.7, ease: "easeOut" }}
+                    className="max-w-2xl mx-auto"
                 >
-                    <span className="inline-block px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-semibold mb-6 uppercase tracking-widest">
+                    <span className="inline-block px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-600 text-xs md:text-sm font-bold mb-6 uppercase tracking-wider">
                         The Vision
                     </span>
 
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-8 leading-[1.1] tracking-tight font-heading">
+                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-6 leading-tight tracking-tight font-heading">
                         Building the <span className="text-blue-500">Intelligent Layer</span> of Tomorrow's Economy
                     </h2>
 
-                    <div className="space-y-6 text-lg md:text-xl text-slate-400 font-light leading-relaxed">
+                    <div className="space-y-5 text-base md:text-lg text-slate-600 font-normal leading-relaxed">
                         <p>
-                            The future doesn't need more software. It needs systems that <span className="text-white font-medium">understand, anticipate, and evolve.</span>
+                            The future doesn't need more software. It needs systems that <span className="text-blue-600 font-semibold underline decoration-blue-200 decoration-2 underline-offset-4">understand, anticipate, and evolve.</span>
                         </p>
                         <p>
-                            UNAI TECH is engineering the foundational intelligence layer where AI becomes infrastructure — <span className="text-white font-medium">invisible, reliable, and essential.</span> Where businesses don't just use AI, they operate within intelligent ecosystems that make complexity manageable and innovation inevitable.
+                            UNAI TECH is engineering the foundational intelligence layer where AI becomes infrastructure — <span className="text-slate-900 font-medium">invisible, reliable, and essential.</span> Systems that make complexity manageable and innovation inevitable.
                         </p>
-                        <p className="text-blue-400 italic">
-                            "We're not building for what technology can do today. We're architecting for what intelligence will enable tomorrow."
-                        </p>
+
+                        <div className="pt-4 border-t border-slate-100">
+                            <p className="text-blue-600 font-handwriting text-xl md:text-2xl opacity-90">
+                                "Architecting for what intelligence will enable tomorrow."
+                            </p>
+                        </div>
                     </div>
                 </motion.div>
             </div>
 
-            {/* Visual Accent */}
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+            {/* Subtle Visual Accent */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
         </section>
     );
 };

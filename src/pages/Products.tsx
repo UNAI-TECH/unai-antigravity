@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, CheckCircle2, Layout, Users, BarChart3, ShieldCheck, Zap, Globe, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
+import SEO from "@/components/SEO";
 
 import Grainient from "@/components/effects/Grainient";
 import ColumnGridBackground from "@/components/effects/ColumnGridBackground";
@@ -55,6 +56,10 @@ const Products = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <SEO
+        title="Products"
+        description="Experience the next generation of intelligent systems with UNAI TECH's specialized product ecosystems."
+      />
 
 
       <main>

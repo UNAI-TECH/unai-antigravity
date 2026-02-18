@@ -8,6 +8,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check, Cpu, Globe, Rocket, Code, ArrowRight, Sparkles, Box, Layout, Database, Image as ImageIcon, Zap, Shield, Brain, Server, Lock } from "lucide-react";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
+import SEO from "@/components/SEO";
 
 // Detailed data for each service - Synchronized with Services.tsx
 const serviceDetails: Record<string, any> = {
@@ -283,6 +284,10 @@ const ServiceDetail = () => {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
+            <SEO
+                title={service.title}
+                description={service.description}
+            />
 
 
             <main className="pt-0">
@@ -401,7 +406,9 @@ const ServiceDetail = () => {
                                     <div className="mt-16 pt-10 border-t border-white/10">
                                         <p className="text-slate-400 mb-8 italic">"UNAI TECH redefined our operational intelligence, delivering a 40% increase in autonomous workflow efficiency."</p>
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20" />
+                                            <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center p-2">
+                                                <img src="/unai-logo.png" alt="Unai Logo" className="w-full h-full object-contain" />
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-white">Institutional Lead</p>
                                                 <p className="text-sm text-slate-500">Intelligent Operations Strategy</p>

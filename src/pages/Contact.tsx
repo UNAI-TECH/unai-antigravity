@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Mail, MapPin, Phone, Clock } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const contactInfo = [
   { icon: Mail, label: "Email", value: "hello@unaitech.com", href: "mailto:hello@unaitech.com" },
@@ -17,6 +18,10 @@ const contactInfo = [
 const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Contact Us"
+        description="Connect with UNAI TECH to discuss your AI engineering and intelligent systems transformation projects."
+      />
 
 
       <main className="pt-0">

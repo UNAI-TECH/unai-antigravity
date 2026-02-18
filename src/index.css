@@ -93,12 +93,15 @@
   }
 
   html {
-    /* Smooth scrolling */
-    scroll-behavior: smooth;
     /* Performance optimization */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    height: 100%;
+  }
+
+  html.lenis {
+    height: auto;
   }
 
   body {
@@ -106,6 +109,24 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     /* Prevent horizontal scroll */
     overflow-x: hidden;
+    min-height: 100%;
+    position: relative;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  .lenis.lenis-scrolling iframe {
+    pointer-events: none;
   }
 
   /* Performance optimizations for animations */
