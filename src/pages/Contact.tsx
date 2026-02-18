@@ -11,7 +11,7 @@ import SEO from "@/components/SEO";
 const contactInfo = [
   { icon: Mail, label: "Email", value: "hello@unaitech.com", href: "mailto:hello@unaitech.com" },
   { icon: Phone, label: "Phone", value: "+91 90439 88697", href: "tel:+919043988697" },
-  { icon: MapPin, label: "Headquarters", value: "Unai Tech, Chennai, Tamil Nadu", href: "#" },
+  { icon: MapPin, label: "Headquarters", value: "UNAI TECH, Chennai, Tamil Nadu", href: "#" },
   { icon: Clock, label: "Business Hours", value: "Mon - Fri: 9AM - 6PM EST", href: "#" },
 ];
 

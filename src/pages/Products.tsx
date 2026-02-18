@@ -117,7 +117,7 @@ const Products = () => {
                 transition={{ duration: 1, delay: 0.2 }}
                 className="w-1/2 sm:w-1/3 md:w-[336px] -mr-16 sm:-mr-24 md:-mr-36"
               >
-                <img src="/6.png" alt="Mockup Left" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
+                <img src="/6.png" alt="Mockup Left" width="336" height="728" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
               </motion.div>
 
               {/* Center Phone (Higher) */}
@@ -128,7 +128,7 @@ const Products = () => {
                 transition={{ duration: 1 }}
                 className="w-3/5 sm:w-2/5 md:w-[441px] z-10 -mb-8 sm:-mb-10 md:-mb-16"
               >
-                <img src="/5.png" alt="Mockup Center" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)] transform-gpu" loading="lazy" />
+                <img src="/5.png" alt="Mockup Center" width="441" height="956" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)] transform-gpu" loading="lazy" />
               </motion.div>
 
               {/* Right Phone */}
@@ -139,7 +139,7 @@ const Products = () => {
                 transition={{ duration: 1, delay: 0.4 }}
                 className="w-1/2 sm:w-1/3 md:w-[336px] -ml-16 sm:-ml-24 md:-ml-36"
               >
-                <img src="/7.png" alt="Mockup Right" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
+                <img src="/7.png" alt="Mockup Right" width="336" height="728" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
               </motion.div>
             </div>
 
@@ -158,6 +158,8 @@ const Products = () => {
                     <img
                       src="/illustration2.png"
                       alt="Vidyon ERP Illustration"
+                      width="600"
+                      height="500"
                       className="w-full h-auto rounded-3xl" />
                   </div>
 

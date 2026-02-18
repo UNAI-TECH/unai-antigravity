@@ -46,6 +46,8 @@ export const Footer = () => {
               <img
                 src="/unai-logo.png"
                 alt="UNAI TECH"
+                width="160"
+                height="48"
                 className="h-12 w-auto group-hover/brand:opacity-80 transition-all group-hover/brand:drop-shadow-[0_0_10px_rgba(139,92,246,0.4)]"
               />
             </Link>
@@ -71,7 +73,7 @@ export const Footer = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-heading font-semibold mb-6 text-foreground tracking-wide">Company</h4>
+            <h3 className="font-heading font-semibold mb-6 text-foreground tracking-wide">Company</h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -88,7 +90,7 @@ export const Footer = () => {
 
           {/* Resources Links */}
           <div>
-            <h4 className="font-heading font-semibold mb-6 text-foreground tracking-wide">Resources</h4>
+            <h3 className="font-heading font-semibold mb-6 text-foreground tracking-wide">Resources</h3>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
@@ -105,7 +107,7 @@ export const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-heading font-semibold mb-6 text-foreground tracking-wide">Contact</h4>
+            <h3 className="font-heading font-semibold mb-6 text-foreground tracking-wide">Contact</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-gray-600 group/item">
                 <div className="p-2 rounded-lg bg-purple-50 group-hover/item:bg-purple-100 transition-colors mt-[-4px]">

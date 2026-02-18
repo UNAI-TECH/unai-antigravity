@@ -352,6 +352,8 @@ const ServiceDetail = () => {
                                     <img
                                         src={service.heroImage}
                                         alt={service.title}
+                                        width="500"
+                                        height="500"
                                         className="relative z-10 w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
@@ -407,7 +409,7 @@ const ServiceDetail = () => {
                                         <p className="text-slate-400 mb-8 italic">"UNAI TECH redefined our operational intelligence, delivering a 40% increase in autonomous workflow efficiency."</p>
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center p-2">
-                                                <img src="/unai-logo.png" alt="Unai Logo" className="w-full h-full object-contain" />
+                                                <img src="/unai-logo.png" alt="UNAI TECH" width="48" height="48" className="w-full h-full object-contain" />
                                             </div>
                                             <div>
                                                 <p className="font-bold text-white">Institutional Lead</p>
@@ -430,6 +432,8 @@ const ServiceDetail = () => {
                                 <img
                                     src="/illustration-1.png"
                                     alt="Implementation Showcase"
+                                    width="800"
+                                    height="600"
                                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                 />
                             </div>

@@ -1,64 +1,49 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
-import { GlowOrb } from "@/components/effects/GlowOrb";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, ArrowRight, Clock, X, ExternalLink, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowRight, Clock, X, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
 import { Magnetic } from "@/components/effects/Magnetic";
 import SEO from "@/components/SEO";
 
-
+// ─── Poster Carousel ───────────────────────────────────────────────────────────
 const PosterCarousel = ({ posters }: { posters: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
   if (!posters || posters.length === 0) return null;
-
-  const next = () => setCurrentIndex((prev) => (prev + 1) % posters.length);
-  const prev = () => setCurrentIndex((prev) => (prev - 1 + posters.length) % posters.length);
+  const next = () => setCurrentIndex((p) => (p + 1) % posters.length);
+  const prev = () => setCurrentIndex((p) => (p - 1 + posters.length) % posters.length);
 
   return (
-    <div className="relative group w-full max-w-2xl mx-auto">
-      <div className="relative overflow-hidden rounded-3xl aspect-video bg-black/50 border border-white/10 shadow-2xl">
+    <div className="relative group w-full h-full">
+      <div className="relative overflow-hidden rounded-2xl h-full bg-black">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
             src={posters[currentIndex]}
             alt={`Poster ${currentIndex + 1}`}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-            className="w-full h-full object-contain bg-black/80"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            className="w-full h-full object-contain"
           />
         </AnimatePresence>
-
-        {/* Navigation Overlays */}
         {posters.length > 1 && (
           <>
-            <button
-              onClick={(e) => { e.stopPropagation(); prev(); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-xl transition-all opacity-0 group-hover:opacity-100 border border-white/20 hover:border-white/40"
-            >
-              <ChevronLeft className="w-6 h-6" />
+            <button onClick={(e) => { e.stopPropagation(); prev(); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/90 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10">
+              <ChevronLeft className="w-4 h-4" />
             </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); next(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-xl transition-all opacity-0 group-hover:opacity-100 border border-white/20 hover:border-white/40"
-            >
-              <ChevronRight className="w-6 h-6" />
+            <button onClick={(e) => { e.stopPropagation(); next(); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/90 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10">
+              <ChevronRight className="w-4 h-4" />
             </button>
-
-            {/* Dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-2.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {posters.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentIndex ? "bg-white w-8" : "bg-white/30 w-1.5 hover:bg-white/60"}`}
-                />
+                <button key={idx} onClick={() => setCurrentIndex(idx)}
+                  className={`h-1 rounded-full transition-all duration-500 ${idx === currentIndex ? "bg-white w-6" : "bg-white/30 w-1"}`} />
               ))}
             </div>
           </>
@@ -68,19 +53,145 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
   );
 };
 
+// ─── Countdown Timer ──────────────────────────────────────────────────────────
+const Countdown = ({ targetDate }: { targetDate?: string }) => {
+  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
+
+  useEffect(() => {
+    const target = targetDate ? new Date(targetDate).getTime() : Date.now() + 7 * 24 * 60 * 60 * 1000;
+    const tick = () => {
+      const diff = Math.max(0, target - Date.now());
+      setTime({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+
+  const units = [
+    { val: String(time.d).padStart(2, "0"), label: "Days" },
+    { val: String(time.h).padStart(2, "0"), label: "Hrs" },
+    { val: String(time.m).padStart(2, "0"), label: "Min" },
+    { val: String(time.s).padStart(2, "0"), label: "Sec" },
+  ];
+
+  return (
+    <div className="flex items-center gap-1">
+      {units.map((u, i) => (
+        <div key={u.label} className="flex items-center gap-1">
+          <div className="text-center">
+            <div className="font-mono text-xs font-black text-slate-900 tabular-nums leading-none">{u.val}</div>
+            <div className="text-[8px] uppercase tracking-widest text-slate-400 font-semibold mt-0.5">{u.label}</div>
+          </div>
+          {i < units.length - 1 && <span className="text-slate-300 text-xs font-light mb-2">:</span>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Event Card ───────────────────────────────────────────────────────────────
+const EventCard = ({ event, index, onClick }: { event: any; index: number; onClick: () => void }) => {
+  const isFeature = index === 0;
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.7, delay: index * 0.08, ease: [0.23, 1, 0.32, 1] }}
+      onClick={onClick}
+      className={`group relative cursor-pointer ${isFeature ? "md:col-span-2 md:row-span-2" : ""}`}
+    >
+      {/* Card Shell */}
+      <div className="relative h-full overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-700 flex flex-col">
+
+        {/* Image Area */}
+        <div className={`relative overflow-hidden flex-shrink-0 ${isFeature ? "h-80" : "h-52"}`}>
+          {event.banner ? (
+            <img src={event.banner} alt={event.title}
+              width="800" height="400"
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+              <Calendar className="w-10 h-10 text-slate-300" />
+            </div>
+          )}
+
+          {/* Type Badge */}
+          <div className="absolute top-4 left-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm border border-white/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              {event.type || "Event"}
+            </span>
+          </div>
+
+          {/* Arrow Icon */}
+          <div className="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-500">
+            <ArrowUpRight className="w-4 h-4" />
+          </div>
+
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        </div>
+
+        {/* Body */}
+        <div className="p-7 flex flex-col flex-1">
+          <h3 className={`font-black text-slate-900 mb-2.5 leading-tight group-hover:text-slate-600 transition-colors duration-300 ${isFeature ? "text-2xl md:text-3xl" : "text-lg"}`}>
+            {event.title}
+          </h3>
+
+          <p className="text-sm text-slate-500 leading-relaxed mb-6 flex-1 line-clamp-2">
+            {event.description}
+          </p>
+
+          {/* Meta Row */}
+          <div className="flex items-center gap-4 text-[11px] text-slate-400 font-semibold mb-5">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3 h-3 text-slate-300" /> {event.location || "TBA"}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-slate-300" /> {event.date || "Upcoming"}
+            </span>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-slate-100 mb-5" />
+
+          {/* Footer */}
+          <div className="flex items-center justify-between">
+            <Countdown targetDate={event.date} />
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <Users className="w-3 h-3" /> {event.attendees ?? "—"}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom accent line */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-slate-900 via-slate-600 to-slate-900 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
+      </div>
+    </motion.article>
+  );
+};
+
+// ─── Events Page ──────────────────────────────────────────────────────────────
 const Events = () => {
   const { events } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("id");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(eventId);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
-  // Sync state with URL
   useEffect(() => {
-    if (eventId) {
-      setSelectedEventId(eventId);
-    } else {
-      setSelectedEventId(null);
-    }
+    setSelectedEventId(eventId || null);
   }, [eventId]);
 
   const handleOpenEvent = (id: string) => {
@@ -88,215 +199,139 @@ const Events = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleCloseEvent = () => {
-    setSearchParams({});
-  };
+  const handleCloseEvent = () => setSearchParams({});
+  const selectedEvent = events.find((e) => e.id === selectedEventId);
 
-  const selectedEvent = events.find(e => e.id === selectedEventId);
-
-  // Render Detailed Logic
+  // ── Detail View ─────────────────────────────────────────────────────────────
   if (selectedEventId && selectedEvent) {
     return (
-      <div className="min-h-screen bg-white">
-        <SEO
-          title={selectedEvent.title}
-          description={selectedEvent.description}
-        />
+      <div className="min-h-screen bg-[#F7F6F2]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;0,9..40,900;1,9..40,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap');`}</style>
+        <SEO title={selectedEvent.title} description={selectedEvent.description} />
 
-        <main className="pt-0 min-h-screen relative">
-          {/* Close Button - Premium Glass Style */}
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={handleCloseEvent}
-            className="fixed top-24 right-8 z-50 p-5 rounded-3xl bg-white/60 backdrop-blur-2xl border border-white/40 shadow-premium-deep hover:bg-white/80 transition-all duration-500 group"
-          >
-            <X className="w-6 h-6 text-slate-900 group-hover:rotate-90 transition-transform duration-500" />
-          </motion.button>
+        {/* Close Button */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={handleCloseEvent}
+          className="fixed top-8 right-8 z-50 flex items-center gap-2 px-5 py-3 rounded-full bg-white shadow-xl border border-slate-100 text-sm font-black text-slate-700 hover:bg-slate-900 hover:text-white transition-all duration-300 group"
+        >
+          <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+          Back to Events
+        </motion.button>
 
-          {/* Cinematic Event Header */}
-          <section className="relative h-[65vh] min-h-[500px] w-full overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedEvent.id}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
-                className="absolute inset-0"
-              >
-                {selectedEvent.banner ? (
-                  <img
-                    src={selectedEvent.banner}
-                    alt={selectedEvent.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white" />
+        <main>
+          {/* Hero */}
+          <section className="relative h-[70vh] min-h-[540px] overflow-hidden">
+            {selectedEvent.banner ? (
+              <img src={selectedEvent.banner} alt={selectedEvent.title} width="1200" height="700" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-slate-900" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#F7F6F2]" />
+
+            <div className="absolute inset-0 flex flex-col justify-end px-8 md:px-16 pb-16">
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}>
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-[0.2em] mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {selectedEvent.type || "Event"}
+                </span>
+                <h1 style={{ fontFamily: "'Playfair Display', serif" }}
+                  className="text-5xl sm:text-6xl md:text-8xl font-black text-white leading-[0.9] mb-4 max-w-4xl">
+                  {selectedEvent.title}
+                </h1>
               </motion.div>
-            </AnimatePresence>
-
-            <div className="absolute inset-0 flex items-end pb-20 px-8">
-              <div className="container mx-auto">
-                <motion.div
-                  initial={{ opacity: 0, y: 60 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
-                  className="max-w-5xl"
-                >
-                  <div className="flex items-center gap-4 mb-8">
-                    <span className="px-6 py-2 rounded-full bg-purple-600/90 backdrop-blur-md text-white text-xs font-black tracking-[0.2em] uppercase shadow-2xl">
-                      {selectedEvent.type}
-                    </span>
-                    <div className="h-[1px] w-16 bg-slate-200/50" />
-                    <span className="text-slate-600 font-bold text-base tracking-wide flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-purple-600" /> {selectedEvent.date}
-                    </span>
-                  </div>
-                  <h1 className="font-heading text-5xl sm:text-7xl md:text-8xl font-black mb-6 text-slate-950 leading-[0.9] tracking-tighter">
-                    {selectedEvent.title}
-                  </h1>
-                </motion.div>
-              </div>
             </div>
           </section>
 
-          {/* Premium Bento Content Grid */}
-          <section className="py-20 md:py-32 relative px-8 bg-white">
-            <div className="container mx-auto max-w-[1500px]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-[minmax(350px,auto)]">
+          {/* Content */}
+          <section className="px-8 md:px-16 py-20 max-w-[1400px] mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                {/* 1. Main Info Bento (Span 2x2) */}
+              {/* Description */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="lg:col-span-2 bg-white rounded-[2.5rem] p-10 md:p-14 border border-slate-100"
+              >
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-8 h-0.5 bg-slate-900" />
+                  <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">About</span>
+                </div>
+                <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-line">
+                  {selectedEvent.description}
+                </p>
+              </motion.div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Quick Stats */}
                 <motion.div
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                   transition={{ duration: 0.8, delay: 0.1 }}
-                  className="md:col-span-2 row-span-2"
+                  className="bg-slate-900 rounded-[2.5rem] p-8 text-white"
                 >
-                  <div className="h-full bg-slate-50/50 rounded-[3.5rem] p-12 md:p-16 border border-slate-100/80 shadow-sm flex flex-col relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
-                      <Sparkles className="w-64 h-64 text-purple-600" />
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-6 h-0.5 bg-white/30" />
+                    <span className="text-xs font-black uppercase tracking-[0.3em] text-white/40">Details</span>
+                  </div>
+                  <div className="space-y-7">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
+                        <MapPin className="w-3 h-3" /> Venue
+                      </div>
+                      <div className="text-lg font-black">{selectedEvent.location || "TBA"}</div>
                     </div>
-
-                    <h2 className="text-3xl font-black mb-10 text-slate-950 flex items-center gap-5">
-                      <div className="w-1.5 h-10 bg-purple-600 rounded-full" />
-                      About the Event
-                    </h2>
-                    <div className="prose prose-slate max-w-none flex-1">
-                      <p className="text-slate-600 leading-relaxed text-xl md:text-2xl font-medium whitespace-pre-line">
-                        {selectedEvent.description}
-                      </p>
+                    <div className="h-px bg-white/10" />
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
+                        <Calendar className="w-3 h-3" /> Date
+                      </div>
+                      <div className="text-lg font-black">{selectedEvent.date || "TBA"}</div>
+                    </div>
+                    <div className="h-px bg-white/10" />
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
+                        <Users className="w-3 h-3" /> Attendees
+                      </div>
+                      <div className="text-3xl font-black">{selectedEvent.attendees ?? "—"}</div>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* 2. Poster Bento */}
-                <motion.div
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="lg:col-span-1"
-                >
-                  <div className="h-full bg-slate-950 rounded-[3.5rem] p-10 shadow-premium-deep relative overflow-hidden group">
-                    {/* Background Glow */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
-
-                    <h2 className="text-2xl font-black mb-8 text-white flex items-center gap-5 relative z-10">
-                      <div className="w-3 h-3 rounded-full bg-purple-500 shadow-glow-purple" />
-                      Media Gallery
-                    </h2>
-                    <div className="relative h-[calc(100%-5rem)] rounded-[2rem] overflow-hidden bg-white/5 border border-white/10">
-                      {selectedEvent.posters && selectedEvent.posters.length > 0 ? (
-                        <div className="h-full w-full">
-                          <PosterCarousel posters={selectedEvent.posters} />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Calendar className="w-16 h-16 text-white/5" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* 3. Stats & Details Bento */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                >
-                  <div className="h-full bg-purple-50/30 rounded-[3.5rem] p-12 border border-purple-100/50 flex flex-col justify-center space-y-10">
-                    <div className="group">
-                      <div className="flex items-center gap-4 text-purple-600/50 text-xs font-black tracking-[0.2em] uppercase mb-3">
-                        <MapPin className="w-4 h-4 text-purple-600" /> Venue
-                      </div>
-                      <div className="text-2xl font-black text-slate-900 group-hover:text-purple-600 transition-colors duration-300">{selectedEvent.location}</div>
-                    </div>
-
-                    <div className="group">
-                      <div className="flex items-center gap-4 text-purple-600/50 text-xs font-black tracking-[0.2em] uppercase mb-3">
-                        <Calendar className="w-4 h-4 text-purple-600" /> Schedule
-                      </div>
-                      <div className="text-2xl font-black text-slate-900 group-hover:text-purple-600 transition-colors duration-300">{selectedEvent.date}</div>
-                    </div>
-
-                    <div className="group">
-                      <div className="flex items-center gap-4 text-purple-600/50 text-xs font-black tracking-[0.2em] uppercase mb-3">
-                        <Users className="w-4 h-4 text-purple-600" /> Capacity
-                      </div>
-                      <div className="text-4xl font-black text-slate-900 flex items-baseline gap-2 group-hover:text-purple-600 transition-colors duration-300">
-                        {selectedEvent.attendees} <span className="text-sm font-bold text-slate-400">Registered</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* 4. Action Bento (Full width) */}
-                <motion.div
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                  className="lg:col-span-3 h-auto"
-                >
-                  {/* Magnetic Wrapper for the whole CTA section */}
-                  <div className="bg-slate-950 rounded-[4rem] p-12 md:p-20 shadow-premium-deep relative overflow-hidden group">
-                    {/* Background Visuals */}
-                    <div className="absolute top-0 right-0 w-[50%] h-full bg-gradient-to-l from-purple-600/20 to-transparent pointer-events-none" />
-                    <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
-
-                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-                      <div className="max-w-3xl text-center md:text-left">
-                        <h3 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tighter">
-                          Join the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Collaborative</span> <br className="hidden md:block" /> Engineering Frontier
-                        </h3>
-                        <p className="text-slate-400 text-lg md:text-xl font-medium max-w-xl">
-                          Witness the next evolution of intelligent systems. Limited seats available for the technical deep-dive tracks.
-                        </p>
-                      </div>
-
-                      {selectedEvent.registration_link && (
-                        <Magnetic strength={0.2}>
-                          <Button
-                            onClick={() => window.open(selectedEvent.registration_link, '_blank')}
-                            className="h-24 px-16 rounded-full bg-white text-slate-950 hover:bg-white/90 text-2xl font-black shadow-2xl transition-all duration-500 group overflow-hidden"
-                          >
-                            <span className="relative z-10 flex items-center gap-4">
-                              Secure Access <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform duration-500" />
-                            </span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-white scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500" />
-                          </Button>
-                        </Magnetic>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-
+                {/* CTA */}
+                {selectedEvent.registration_link && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                  >
+                    <button
+                      onClick={() => window.open(selectedEvent.registration_link, "_blank")}
+                      className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group"
+                    >
+                      Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </motion.div>
+                )}
               </div>
+
+              {/* Gallery */}
+              {selectedEvent.posters && selectedEvent.posters.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                  className="lg:col-span-3 bg-slate-950 rounded-[2.5rem] p-8 md:p-12"
+                >
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-6 h-0.5 bg-white/20" />
+                    <span className="text-xs font-black uppercase tracking-[0.3em] text-white/30">Gallery</span>
+                  </div>
+                  <div className="h-96">
+                    <PosterCarousel posters={selectedEvent.posters} />
+                  </div>
+                </motion.div>
+              )}
+
             </div>
           </section>
         </main>
@@ -305,146 +340,230 @@ const Events = () => {
     );
   }
 
-  // List View
+  // ── List View ─────────────────────────────────────────────────────────────
+  const filters = ["All", "Conference", "Workshop", "Hackathon", "Meetup"];
+
   return (
-    <div className="min-h-screen bg-white">
-      <SEO
-        title="Events"
-        description="Stay updated with UNAI TECH's global events, conferences, and workshops on AI and engineering."
-      />
+    <div className="min-h-screen bg-[#F7F6F2]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap');
+
+        .event-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        @media (max-width: 1024px) { .event-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px)  { .event-grid { grid-template-columns: 1fr; } }
+
+        .marquee-track {
+          display: flex;
+          gap: 3rem;
+          animation: marquee 28s linear infinite;
+          white-space: nowrap;
+        }
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+      `}</style>
+
+      <SEO title="Events" description="Stay updated with UNAI TECH's global events, conferences, and workshops on AI and engineering." />
 
       <main className="pt-0 min-h-screen">
-        {/* Unique Modern Premium Hero */}
-        <section className="relative pt-60 pb-40 overflow-hidden bg-slate-950">
-          {/* Advanced Background Design */}
-          <div className="absolute inset-0 z-0">
-            {/* Dark Base */}
-            <div className="absolute inset-0 bg-[#020205]" />
 
-            {/* Dynamic Mesh & Glows */}
-            <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[120%] bg-purple-600/10 blur-[180px] rounded-full animate-optimized opacity-60" style={{ animation: 'pulse-glow 12s ease-in-out infinite' }} />
-            <div className="absolute bottom-[-10%] left-[-5%] w-[60%] h-[80%] bg-blue-600/10 blur-[160px] rounded-full animate-optimized opacity-40" />
+        {/* ── Hero Section ──────────────────────────────────────────────────── */}
+        <section ref={heroRef} className="relative overflow-hidden pt-36 pb-28 px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
 
-            {/* subtle grid overlay */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay pointer-events-none" />
+          {/* Animated grid overlay */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: `linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px)`,
+            backgroundSize: "80px 80px"
+          }} />
+
+          {/* Blue radial glow — top left */}
+          <div className="absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)" }} />
+
+          {/* Accent glow — bottom right */}
+          <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)" }} />
+
+          {/* Decorative year watermark */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[28vw] font-black pointer-events-none select-none leading-none" style={{ fontFamily: "'Playfair Display', serif", color: "rgba(59,130,246,0.04)" }}>
+            UNAI
           </div>
 
-          <div className="container mx-auto px-8 relative z-10">
-            <div className="max-w-6xl mx-auto text-center">
+          <div className="relative max-w-[1400px] mx-auto">
+
+            {/* Top label row */}
+            <motion.div
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+              className="flex items-center gap-4 mb-12"
+            >
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-[0.3em]">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                UNAI TECH — Live Events
+              </span>
+              <div className="flex-1 h-px bg-gradient-to-r from-blue-500/20 to-transparent" />
+            </motion.div>
+
+            {/* Main content split */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-end">
+
+              {/* Left — Title */}
               <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
               >
-                <Magnetic strength={0.1}>
-                  <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/5 backdrop-blur-2xl border border-white/10 text-white text-xs font-black tracking-[0.3em] uppercase mb-12 shadow-2xl">
-                    <Sparkles className="w-4 h-4 text-purple-400" />
-                    Engineering Communities
-                  </div>
-                </Magnetic>
-
-                <h1 className="font-heading text-6xl md:text-9xl font-black mb-10 text-white tracking-[-0.05em] leading-[0.85]">
-                  Global <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 animate-gradient-x">Collective</span>
+                <h1 className="font-black leading-[0.88] tracking-tight mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <span className="block text-white" style={{ fontSize: "clamp(3rem, 8vw, 7rem)" }}>Upcoming</span>
+                  <span className="block italic" style={{ fontSize: "clamp(3rem, 8vw, 7rem)", background: "linear-gradient(90deg, #60a5fa, #818cf8, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    Events
+                  </span>
                 </h1>
 
-                <p className="text-xl md:text-3xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed opacity-80">
-                  Forging the future through technical summits, <br className="hidden md:block" />
-                  collaborative labs, and high-impact engineering workshops.
+                {/* Stat row */}
+                <div className="flex flex-wrap items-center gap-3 mt-8">
+                  {[
+                    { val: `${events.length || "10"}+`, label: "Events" },
+                    { val: `${events.length > 0 ? events.reduce((s, e) => s + Number(e.attendees || 0), 0).toLocaleString() : "1,200"}+`, label: "Registered" },
+                    { val: "2025", label: "Season" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                      <span className="text-lg font-black text-white tabular-nums">{stat.val}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30">{stat.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Right — Description + avatars */}
+              <motion.div
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 1, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                className="lg:pb-2"
+              >
+                {/* Decorative quote mark */}
+                <div className="text-6xl font-black text-blue-500/20 leading-none mb-2" style={{ fontFamily: "Georgia, serif" }}>"</div>
+                <p className="text-slate-300 text-lg leading-relaxed mb-8 max-w-md">
+                  Where engineers, researchers, and visionaries converge to shape the intelligent future.
                 </p>
+
+                {/* Avatar cluster */}
+                <div className="flex items-center gap-4">
+                  <div className="flex -space-x-3">
+                    {["#3b82f6", "#6366f1", "#8b5cf6", "#06b6d4"].map((color, i) => (
+                      <div key={i} className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-[11px] font-black text-white" style={{ borderColor: "#0a0f1e", background: `linear-gradient(135deg, ${color}80, ${color}40)` }}>
+                        {String.fromCharCode(65 + i)}
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-white">Join the community</div>
+                    <div className="text-xs text-slate-500 font-medium">Innovators worldwide</div>
+                  </div>
+                </div>
               </motion.div>
             </div>
-          </div>
 
-          {/* Hero Bottom Decor */}
-          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent" />
+            {/* Divider */}
+            <div className="h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent mt-14 mb-8" />
+
+            {/* Filter Pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex flex-wrap gap-2.5"
+            >
+              {filters.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 ${activeFilter === f
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30"
+                    : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70 border border-white/10"
+                    }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </motion.div>
+
+          </div>
         </section>
 
-        {/* Overlapping Content Area */}
-        <section className="relative z-20 -mt-24 px-8 pb-40 bg-white">
-          <div className="container mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {events.map((event, index) => (
-                <Magnetic key={event.id} strength={0.05}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 60 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.8, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
-                    onClick={() => handleOpenEvent(event.id)}
-                    className="group cursor-pointer transform-gpu h-full"
-                  >
-                    <div className="h-full bg-white rounded-[3.5rem] overflow-hidden border border-slate-100 glass-premium glass-premium-hover glass-inner-glow flex flex-col">
-                      {/* Visual Card Header */}
-                      <div className="h-72 relative overflow-hidden bg-slate-950">
-                        {event.banner ? (
-                          <motion.img
-                            whileHover={{ scale: 1.05 }}
-                            transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
-                            src={event.banner}
-                            alt={event.title}
-                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-slate-900 to-purple-900 flex items-center justify-center">
-                            <Calendar className="w-16 h-16 text-white/5" />
-                          </div>
-                        )}
+        {/* ── Marquee ticker ──────────────────────────────────────────────── */}
+        <div className="bg-slate-900 border-y border-white/5 py-3 overflow-hidden">
+          <div className="marquee-track">
+            {[...Array(2)].map((_, i) =>
+              ["Conference", "Workshop", "Hackathon", "Symposium", "Demo Day", "Roundtable", "Keynote", "Summit"].map((t, j) => (
+                <span key={`${i}-${j}`} className="text-xs font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
+                  {t} <span className="text-white/10">✦</span>
+                </span>
+              ))
+            )}
+          </div>
+        </div>
 
-                        {/* Floating Glass Badge */}
-                        <div className="absolute top-8 left-8 bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full text-[11px] font-black tracking-widest uppercase text-white border border-white/20 shadow-2xl">
-                          {event.type}
-                        </div>
+        {/* ── Event Grid ─────────────────────────────────────────────────── */}
+        <section className="px-8 md:px-16 py-16 md:py-24">
+          <div className="max-w-[1400px] mx-auto">
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
-                      </div>
-
-                      {/* Card Body */}
-                      <div className="p-10 flex flex-col flex-1 relative">
-                        <div className="flex items-center gap-3 mb-6 text-purple-600 font-black text-xs uppercase tracking-[0.2em]">
-                          <Clock className="w-4 h-4" />
-                          {event.date}
-                        </div>
-
-                        <h3 className="font-heading text-3xl font-black mb-5 text-slate-950 group-hover:text-purple-600 transition-colors duration-500 leading-[1.1] tracking-tight">
-                          {event.title}
-                        </h3>
-
-                        <p className="text-slate-500 text-lg line-clamp-2 md:line-clamp-3 mb-10 leading-relaxed font-semibold opacity-70 group-hover:opacity-100 transition-opacity duration-500">
-                          {event.description}
-                        </p>
-
-                        <div className="mt-auto flex items-center justify-between pt-10 border-t border-slate-50">
-                          <div className="flex items-center gap-3 text-slate-400 font-bold text-sm">
-                            <MapPin className="w-4 h-4 text-purple-600" />
-                            {event.location}
-                          </div>
-
-                          <div className="flex items-center gap-3 text-slate-950 font-black text-sm uppercase tracking-wider group-hover:translate-x-2 transition-transform duration-500">
-                            Details <ArrowRight className="w-5 h-5 text-purple-600" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Magnetic>
-              ))}
-            </div>
-
-            {events.length === 0 && (
-              <div className="text-center py-60">
-                <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shrink-0 border border-slate-100">
-                  <Calendar className="w-10 h-10 text-slate-200" />
-                </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-4">The Forge is Cooling</h3>
-                <p className="text-xl text-slate-400 font-medium tracking-wide">New high-impact events are currently in technical planning.</p>
+            {events.length > 0 ? (
+              <div className="event-grid">
+                {events.map((event, i) => (
+                  <EventCard key={event.id} event={event} index={i} onClick={() => handleOpenEvent(event.id)} />
+                ))}
               </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                className="text-center py-40"
+              >
+                <div className="w-20 h-20 rounded-[1.5rem] bg-white border border-slate-100 flex items-center justify-center mx-auto mb-8 shadow-sm">
+                  <Calendar className="w-8 h-8 text-slate-200" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">No Upcoming Events</h3>
+                <p className="text-slate-400 text-sm">Stay tuned for more updates soon.</p>
+              </motion.div>
             )}
           </div>
         </section>
-      </main>
 
+        {/* ── Newsletter Strip ─────────────────────────────────────────────── */}
+        <section className="px-8 md:px-16 pb-24">
+          <div className="max-w-[1400px] mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.8 }}
+              className="relative overflow-hidden rounded-[3rem] bg-slate-900 px-10 md:px-16 py-14 flex flex-col md:flex-row items-center justify-between gap-8"
+            >
+              <div className="absolute inset-0 opacity-[0.04]" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+                backgroundSize: "256px 256px"
+              }} />
+              <div className="relative">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-white/30 mb-3">Never miss an event</p>
+                <h2 style={{ fontFamily: "'Playfair Display', serif" }}
+                  className="text-3xl md:text-4xl font-black text-white leading-tight">
+                  Get early access &<br />exclusive invites
+                </h2>
+              </div>
+              <div className="relative flex gap-3 w-full md:w-auto">
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="flex-1 md:w-72 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm font-medium focus:outline-none focus:border-white/30 transition-colors"
+                />
+                <button className="px-6 py-4 rounded-2xl bg-white text-slate-900 font-black text-sm whitespace-nowrap hover:bg-slate-100 transition-colors">
+                  Subscribe
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+      </main>
       <Footer />
     </div>
   );

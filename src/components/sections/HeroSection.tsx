@@ -73,6 +73,8 @@ export const HeroSection = () => {
                   layoutId="unai-logo"
                   src="/unai-logo.png"
                   alt="UNAI TECH"
+                  width="160"
+                  height="48"
                   className="h-10 md:h-12 w-auto"
                   transition={{
                     layout: {
@@ -192,7 +194,10 @@ export const HeroSection = () => {
       <div className="absolute bottom-0 left-0 right-0 w-full pointer-events-none">
         <img
           src="/webbg.png"
-          alt="Background"
+          alt=""
+          aria-hidden="true"
+          width="1920"
+          height="600"
           className="w-full h-auto object-cover opacity-80"
           loading="eager"
           fetchPriority="high"
