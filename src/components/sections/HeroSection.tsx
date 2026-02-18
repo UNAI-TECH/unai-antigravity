@@ -193,7 +193,7 @@ export const HeroSection = () => {
       {/* Background Image at bottom */}
       <div className="absolute bottom-0 left-0 right-0 w-full pointer-events-none">
         <img
-          src="/webbg.png"
+          src="/webbg.webp"
           alt=""
           aria-hidden="true"
           width="1920"
