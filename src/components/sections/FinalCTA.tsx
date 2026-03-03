@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export const FinalCTA = () => {
     return (
-        <section className="relative py-32 overflow-hidden">
+        <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
             <div className="container mx-auto px-6 relative z-10 text-center">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -12,12 +12,12 @@ export const FinalCTA = () => {
                     viewport={{ once: true }}
                     className="max-w-3xl mx-auto"
                 >
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-8 tracking-tight font-heading">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 sm:mb-8 tracking-tight font-heading">
                         Ready to Evolve Beyond <br />
                         <span className="text-gradient-metal">Traditional IT?</span>
                     </h2>
 
-                    <p className="text-xl text-muted-foreground mb-12 leading-relaxed">
+                    <p className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-12 leading-relaxed">
                         Whether you're launching an AI-first venture, transforming legacy operations, or building the next generation of intelligent products — UNAI TECH brings the architecture, expertise, and vision to make it reality.
                     </p>
 

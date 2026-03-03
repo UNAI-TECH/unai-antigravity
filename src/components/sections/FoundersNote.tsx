@@ -3,8 +3,8 @@ import { Quote } from "lucide-react";
 
 export const FoundersNote = () => {
     return (
-        <section className="relative py-16 lg:py-24 bg-gray-50/50 overflow-hidden">
-            <div className="container mx-auto px-6 relative z-10">
+        <section className="relative py-12 sm:py-16 lg:py-24 bg-gray-50/50 overflow-hidden">
+            <div className="container mx-auto px-4 sm:px-6 relative z-10">
 
                 {/* Section Heading - Moved Outside */}
                 <div className="text-center mb-10">
@@ -23,7 +23,7 @@ export const FoundersNote = () => {
                         className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden flex flex-col md:flex-row"
                     >
                         {/* Image Column - Improved mobile responsiveness */}
-                        <div className="md:w-1/3 relative bg-slate-100 overflow-hidden">
+                        <div className="md:w-1/3 relative bg-slate-100 overflow-hidden min-h-[220px] sm:min-h-[280px] md:min-h-0">
                             <img
                                 src="/Nehemiah_Nesanathan_M.jpg"
                                 alt="Nehemiah Nesanathan, Founder"

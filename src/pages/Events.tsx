@@ -112,7 +112,7 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
       <div className="relative h-full overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-700 flex flex-col">
 
         {/* Image Area */}
-        <div className={`relative overflow-hidden flex-shrink-0 ${isFeature ? "h-80" : "h-52"}`}>
+        <div className={`relative overflow-hidden flex-shrink-0 ${isFeature ? "h-52 sm:h-80" : "h-40 sm:h-52"}`}>
           {event.banner ? (
             <img src={event.banner} alt={event.title}
               width="800" height="400"
@@ -141,7 +141,7 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
         </div>
 
         {/* Body */}
-        <div className="p-7 flex flex-col flex-1">
+        <div className="p-4 sm:p-7 flex flex-col flex-1">
           <h3 className={`font-black text-slate-900 mb-2.5 leading-tight group-hover:text-slate-600 transition-colors duration-300 ${isFeature ? "text-2xl md:text-3xl" : "text-lg"}`}>
             {event.title}
           </h3>
@@ -214,7 +214,7 @@ const Events = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           onClick={handleCloseEvent}
-          className="fixed top-8 right-8 z-50 flex items-center gap-2 px-5 py-3 rounded-full bg-white shadow-xl border border-slate-100 text-sm font-black text-slate-700 hover:bg-slate-900 hover:text-white transition-all duration-300 group"
+          className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50 flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full bg-white shadow-xl border border-slate-100 text-sm font-black text-slate-700 hover:bg-slate-900 hover:text-white transition-all duration-300 group"
         >
           <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
           Back to Events
@@ -237,7 +237,7 @@ const Events = () => {
                   {selectedEvent.type || "Event"}
                 </span>
                 <h1 style={{ fontFamily: "'Playfair Display', serif" }}
-                  className="text-5xl sm:text-6xl md:text-8xl font-black text-white leading-[0.9] mb-4 max-w-4xl">
+                  className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-white leading-[0.9] mb-4 max-w-4xl">
                   {selectedEvent.title}
                 </h1>
               </motion.div>
@@ -245,7 +245,7 @@ const Events = () => {
           </section>
 
           {/* Content */}
-          <section className="px-8 md:px-16 py-20 max-w-[1400px] mx-auto">
+          <section className="px-4 sm:px-8 md:px-16 py-12 sm:py-20 max-w-[1400px] mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
               {/* Description */}
@@ -369,7 +369,7 @@ const Events = () => {
       <main className="pt-0 min-h-screen">
 
         {/* ── Hero Section ──────────────────────────────────────────────────── */}
-        <section ref={heroRef} className="relative overflow-hidden pt-36 pb-28 px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
+        <section ref={heroRef} className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-28 px-4 sm:px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
 
           {/* Animated grid overlay */}
           <div className="absolute inset-0 pointer-events-none" style={{
@@ -506,7 +506,7 @@ const Events = () => {
         </div>
 
         {/* ── Event Grid ─────────────────────────────────────────────────── */}
-        <section className="px-8 md:px-16 py-16 md:py-24">
+        <section className="px-4 sm:px-8 md:px-16 py-12 sm:py-16 md:py-24">
           <div className="max-w-[1400px] mx-auto">
 
             {events.length > 0 ? (
@@ -531,7 +531,7 @@ const Events = () => {
         </section>
 
         {/* ── Newsletter Strip ─────────────────────────────────────────────── */}
-        <section className="px-8 md:px-16 pb-24">
+        <section className="px-4 sm:px-8 md:px-16 pb-16 sm:pb-24">
           <div className="max-w-[1400px] mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}

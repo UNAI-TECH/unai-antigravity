@@ -78,7 +78,7 @@ const Services = () => {
       />
 
 
-      <main className="pt-24 sm:pt-36"> {/* Increased top padding for mobile to clear navbar */}
+      <main className="pt-24 sm:pt-32"> {/* Increased top padding for mobile to clear navbar */}
         {/* SaaS Hero Section */}
         <section className="relative pb-12 px-4 sm:px-6 lg:px-10">
           <div className="max-w-[1920px] mx-auto relative overflow-hidden lg:overflow-visible rounded-[2.5rem] bg-slate-900 shadow-2xl">
@@ -99,16 +99,16 @@ const Services = () => {
               <div className="absolute top-[10%] right-[-5%] w-[40%] h-[50%] bg-white/5 blur-[90px] rounded-full pointer-events-none z-1" />
             </div>
 
-            <div className="relative z-10 pt-24 pb-44 px-6 text-center max-w-5xl mx-auto"> {/* Reduced pt from 32 to 24 and pb from 56 to 44 to remove empty space */}
+            <div className="relative z-10 pt-16 sm:pt-24 pb-24 sm:pb-44 px-4 sm:px-6 text-center max-w-5xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 tracking-tight">
                   Comprehensive AI & Intelligent Systems Engineering
                 </h1>
-                <p className="text-lg sm:text-xl text-white/85 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
+                <p className="text-base sm:text-lg md:text-xl text-white/85 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed font-light">
                   UNAI TECH provides end-to-end technology solutions across artificial intelligence, software architecture, intelligent automation, and next-generation IT infrastructure.
                 </p>
 
@@ -152,9 +152,9 @@ const Services = () => {
         </section>
 
         {/* Overlapping Services Grid - Adjusted overlap to match the reduced padding area */}
-        <section className="relative pb-16 lg:pb-32 px-6 -mt-32 z-20"> {/* Changed -mt-40 to -mt-32 to match reduced pb-44 */}
+        <section className="relative pb-12 sm:pb-16 lg:pb-32 px-4 sm:px-6 -mt-16 sm:-mt-24 lg:-mt-32 z-20">
           <div className="container mx-auto max-w-[1400px]"> {/* Widened grid container to match hero better */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:items-stretch">
               {filteredServices.map((service, index) => (
                 <motion.div
                   key={service.title}
@@ -162,21 +162,22 @@ const Services = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
+                  className="md:h-full"
                 >
-                  <div className="h-full flex flex-col bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 group transform-gpu">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                  <div className="flex flex-col h-full bg-white rounded-[1.5rem] p-5 sm:p-8 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 group transform-gpu">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 bg-blue-50 group-hover:bg-blue-100 transition-colors">
                       <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-[#3B5BDB]" />
                     </div>
 
-                    <h3 className="font-heading text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-[#1F2937]">
+                    <h3 className="font-heading text-lg sm:text-2xl font-bold mb-2 sm:mb-4 text-[#1F2937]">
                       {service.title}
                     </h3>
 
-                    <p className="text-gray-500 text-sm sm:text-base mb-6 sm:mb-8 flex-grow leading-relaxed">
+                    <p className="text-gray-500 text-sm sm:text-base mb-4 sm:mb-6 leading-relaxed flex-grow">
                       {service.description}
                     </p>
 
-                    <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10">
+                    <ul className="space-y-2 sm:space-y-3 mb-5 sm:mb-8">
                       {service.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 font-medium">
                           <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-50 flex items-center justify-center">
@@ -268,7 +269,7 @@ const Services = () => {
       </main>
 
       <Footer />
-    </div>
+    </div >
   );
 };
 
