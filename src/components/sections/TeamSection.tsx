@@ -56,7 +56,7 @@ const teamMembers: Array<{
             name: "Iniyan",
             role: "Marketing Head",
             image: "/IMG_20260214_133258.jpg.jpeg",
-            imageClass: "object-cover object-top scale-[1.06] group-hover:scale-[1.5]",
+            imageClass: "object-cover object-top scale-[1.06] group-hover:scale-[1.25]",
             shortNote: "Dynamic marketing lead expertise in digital growth, community engagement, and strategic positioning of AI-native solutions.",
             bio: "Iniyan focuses on the intersection of community and technology. He ensures that our AI solutions resonate with users and build lasting value through strategic digital positioning."
         }
