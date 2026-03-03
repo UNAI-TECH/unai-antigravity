@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import { FoundersNote } from "@/components/sections/FoundersNote";
+import { TeamSection } from "@/components/sections/TeamSection";
 import SEO from "@/components/SEO";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -465,6 +466,9 @@ const About = () => {
         <div className="bg-[#f8faff]">
           <FoundersNote />
         </div>
+
+        {/* Team Section */}
+        <TeamSection />
 
         {/* Closing CTA */}
         <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-white">
