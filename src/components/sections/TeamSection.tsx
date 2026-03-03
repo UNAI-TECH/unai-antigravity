@@ -24,7 +24,7 @@ const teamMembers: Array<{
             name: "Anjali Patel",
             role: "HRM",
             image: "/Anjali_M.JPG.jpeg",
-            imageClass: "object-cover object-top scale-[1.06] group-hover:scale-[1.15]",
+            imageClass: "object-cover object-top scale-[1.06] group-hover:scale-[1.5]",
             shortNote: "Strategic human resource leader dedicated to building high-performing teams and fostering a culture of innovation and inclusivity.",
             bio: "Anjali brings over a decade of experience in talent acquisition and organizational development. She is passionate about creating environments where engineers and visionaries can thrive together to build the next generation of technology."
         },
@@ -56,7 +56,7 @@ const teamMembers: Array<{
             name: "Iniyan",
             role: "Marketing Head",
             image: "/iniyan.jpeg",
-            imageClass: "object-cover object-top scale-[1.06] group-hover:scale-[1.25]",
+            imageClass: "object-cover object-top scale-[1.05] group-hover:scale-[1.1]",
             shortNote: "Dynamic marketing lead expertise in digital growth, community engagement, and strategic positioning of AI-native solutions.",
             bio: "Iniyan focuses on the intersection of community and technology. He ensures that our AI solutions resonate with users and build lasting value through strategic digital positioning."
         }
