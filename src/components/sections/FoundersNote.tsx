@@ -19,7 +19,7 @@ const founders = [
     {
         name: "Vetha Gokul",
         role: "MANAGING DIRECTOR",
-        image: "/placeholder.svg", // Using placeholder for now as requested
+        image: "/Vetha_Gokul_SR.jpg.jpeg",
         title: "Leading with <span class='text-blue-600'>Vision</span> and Purpose.",
         content: [
             "At UNAI TECH, our mission is to empower teams with tools that don't just process data, but provide meaningful insights. We are committed to excellence in every line of code and every strategic decision.",
