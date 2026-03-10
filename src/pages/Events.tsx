@@ -156,7 +156,7 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
               <MapPin className="w-3 h-3 text-slate-300" /> {event.location || "TBA"}
             </span>
             <span className="flex items-center gap-1.5">
-              <Clock className="w-3 h-3 text-slate-300" /> {event.date || "Upcoming"}
+              <Clock className="w-3 h-3 text-slate-300" /> {event.date ? event.date.split('T')[0] : "Upcoming"}
             </span>
           </div>
 
@@ -209,16 +209,6 @@ const Events = () => {
         <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;0,9..40,900;1,9..40,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap');`}</style>
         <SEO title={selectedEvent.title} description={selectedEvent.description} />
 
-        {/* Close Button */}
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={handleCloseEvent}
-          className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50 flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full bg-white shadow-xl border border-slate-100 text-sm font-black text-slate-700 hover:bg-slate-900 hover:text-white transition-all duration-300 group"
-        >
-          <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-          Back to Events
-        </motion.button>
 
         <main>
           {/* Hero */}
@@ -254,6 +244,15 @@ const Events = () => {
                 transition={{ duration: 0.8 }}
                 className="lg:col-span-2 bg-white rounded-[2.5rem] p-10 md:p-14 border border-slate-100"
               >
+                {/* Back Button */}
+                <button
+                  onClick={handleCloseEvent}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-slate-900 transition-all duration-300 mb-8 group"
+                >
+                  <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  Back to Events
+                </button>
+
                 <div className="flex items-center gap-3 mb-8">
                   <div className="w-8 h-0.5 bg-slate-900" />
                   <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">About</span>
@@ -287,7 +286,7 @@ const Events = () => {
                       <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
                         <Calendar className="w-3 h-3" /> Date
                       </div>
-                      <div className="text-lg font-black">{selectedEvent.date || "TBA"}</div>
+                      <div className="text-lg font-black">{selectedEvent.date ? selectedEvent.date.split('T')[0] : "TBA"}</div>
                     </div>
                     <div className="h-px bg-white/10" />
                     <div>
@@ -414,10 +413,8 @@ const Events = () => {
                 transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
               >
                 <h1 className="font-black leading-[0.88] tracking-tight mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  <span className="block text-white" style={{ fontSize: "clamp(3rem, 8vw, 7rem)" }}>Upcoming</span>
-                  <span className="block italic" style={{ fontSize: "clamp(3rem, 8vw, 7rem)", background: "linear-gradient(90deg, #60a5fa, #818cf8, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                    Events
-                  </span>
+                  <span className="block text-white" style={{ fontSize: "clamp(3rem, 8vw, 7rem)" }}>EVENTS</span>
+
                 </h1>
 
                 {/* Stat row */}
@@ -425,7 +422,7 @@ const Events = () => {
                   {[
                     { val: `${events.length || "10"}+`, label: "Events" },
                     { val: `${events.length > 0 ? events.reduce((s, e) => s + Number(e.attendees || 0), 0).toLocaleString() : "1,200"}+`, label: "Registered" },
-                    { val: "2025", label: "Season" },
+                    { val: "2026", label: "Season" },
                   ].map((stat) => (
                     <div key={stat.label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
                       <span className="text-lg font-black text-white tabular-nums">{stat.val}</span>
@@ -449,16 +446,27 @@ const Events = () => {
                 </p>
 
                 {/* Avatar cluster */}
-                <div className="flex items-center gap-4">
+                <div
+                  className="flex items-center gap-4 cursor-pointer group/join"
+                  onClick={() => window.open("https://whatsapp.com/channel/0029VbCQWlU3LdQU6jeDnS11", "_blank")}
+                >
                   <div className="flex -space-x-3">
-                    {["#3b82f6", "#6366f1", "#8b5cf6", "#06b6d4"].map((color, i) => (
-                      <div key={i} className="w-10 h-10 rounded-full border-2 flex items-center justify-center text-[11px] font-black text-white" style={{ borderColor: "#0a0f1e", background: `linear-gradient(135deg, ${color}80, ${color}40)` }}>
-                        {String.fromCharCode(65 + i)}
+                    {[
+                      "/Madhan_Kumar_P.JPG.jpeg",
+                      "/Kamalesh_S.JPG.jpeg",
+                      "/WhatsApp Image 2026-03-03 at 2.13.21 PM.jpeg",
+                      "/Anjali_M.JPG.jpeg"
+                    ].map((img, i) => (
+                      <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0f1e] overflow-hidden bg-slate-800">
+                        <img src={img} alt="Team" className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>
                   <div>
-                    <div className="text-sm font-black text-white">Join the community</div>
+                    <div className="text-sm font-black text-white group-hover/join:text-blue-400 transition-colors flex items-center gap-1.5">
+                      Join the community
+                      <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-2 group-hover/join:opacity-100 group-hover/join:translate-x-0 transition-all" />
+                    </div>
                     <div className="text-xs text-slate-500 font-medium">Innovators worldwide</div>
                   </div>
                 </div>
