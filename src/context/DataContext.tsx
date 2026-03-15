@@ -109,27 +109,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Fetch Initial Data
     useEffect(() => {
         const fetchData = async () => {
+            console.log("Fetching data from Supabase...");
             // Events
-            try {
-                const { data: eventsData, error: eventsError } = await supabase
-                    .from('events')
-                    .select('*');
-                
-                if (eventsError) throw eventsError;
-
-                if (eventsData) {
-                    const sortedEvents = (eventsData as Event[]).sort((a, b) => {
-                        const dateA = new Date(a.date).getTime();
-                        const dateB = new Date(b.date).getTime();
-                        if (isNaN(dateA)) return 1;
-                        if (isNaN(dateB)) return -1;
-                        return dateA - dateB; // Closest first
-                    });
-                    setEvents(sortedEvents);
-                }
-            } catch (error) {
-                console.error("Error fetching events:", error);
-            }
+            const { data: eventsData, error: eventsError } = await supabase
+                .from('events')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (eventsData) setEvents(eventsData as Event[]);
+            if (eventsError) console.error("Error fetching events:", eventsError);
 
             // Jobs
             const { data: jobsData, error: jobsError } = await supabase
