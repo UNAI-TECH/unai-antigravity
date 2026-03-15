@@ -43,10 +43,10 @@ export const PremiumCTA = ({
                 </div>
 
                 {/* Content Container - Flex Col on Mobile, Row on Desktop */}
-                <div className="relative z-10 flex flex-col md:flex-row min-h-[400px] md:min-h-[550px]">
+                <div className="relative z-10 flex flex-col md:flex-row min-h-[auto] md:min-h-[550px]">
 
                     {/* Left Side: Text and Buttons */}
-                    <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 md:px-24 py-16 md:py-24 text-center md:text-left items-center md:items-start">
+                    <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 md:px-24 py-10 md:py-24 text-center md:text-left items-center md:items-start">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -92,7 +92,7 @@ export const PremiumCTA = ({
                         <div className="absolute bottom-0 right-0 w-full h-24 bg-[#F8FAFC] z-0 sm:hidden" />
 
                         {/* Illustration Container */}
-                        <div className="relative z-10 mb-6 md:mb-16 md:mr-16 px-6">
+                        <div className="relative z-10 mb-2 md:mb-16 md:mr-16 px-6">
                             <div className="scale-[0.8] sm:scale-100 md:scale-[1.3] origin-bottom sm:origin-bottom-right">
                                 {illustration ? (
                                     illustration
@@ -101,7 +101,7 @@ export const PremiumCTA = ({
                                         <img
                                             src="/freepik__minimal-flat-vector-of-whiteandblack-megaphone-cha__8710.png"
                                             alt="Megaphone Illustration"
-                                            className="w-40 h-40 sm:w-56 md:w-72 object-contain drop-shadow-2xl"
+                                            className="w-56 h-56 sm:w-72 sm:h-72 md:w-96 md:h-96 object-contain drop-shadow-2xl"
                                         />
                                     </div>
                                 )}

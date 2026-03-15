@@ -473,7 +473,7 @@ const About = () => {
         {/* Closing CTA */}
         <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-white">
           <PremiumCTA
-            title={<>Understand What{" "}<span className="text-blue-500">Intelligence-First</span>{" "}Engineering Means</>}
+            title={<>Understand What{" "}<span className="text-blue-1000">Intelligence-First</span>{" "}Engineering Means</>}
             description="UNAI TECH offers strategic consultations to help you assess AI readiness, identify high-impact opportunities, and design roadmaps for intelligent transformation."
             primaryButton={{
               label: "Schedule Strategic Session",

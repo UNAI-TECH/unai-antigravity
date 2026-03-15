@@ -75,7 +75,7 @@ export const FoundersNote = () => {
                                         transition={{ duration: 0.6 }}
                                         className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden flex flex-col md:flex-row h-full"
                                     >
-                                        <div className="md:w-1/3 relative bg-slate-100 overflow-hidden min-h-[280px] md:min-h-0">
+                                        <div className="md:w-1/3 relative bg-slate-100 overflow-hidden min-h-[180px] md:min-h-0">
                                             <img
                                                 src={founder.image}
                                                 alt={founder.name}
@@ -84,19 +84,19 @@ export const FoundersNote = () => {
                                             <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply" />
                                         </div>
 
-                                        <div className="md:w-2/3 p-8 md:p-10 flex flex-col justify-center relative">
+                                        <div className="md:w-2/3 p-5 md:p-10 flex flex-col justify-center relative">
                                             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-50/50 rounded-full blur-3xl pointer-events-none" />
                                             <div className="relative z-10">
                                                 <h3
-                                                    className="font-heading text-2xl md:text-3xl font-bold text-slate-900 leading-tight mb-6"
+                                                    className="font-heading text-xl md:text-3xl font-bold text-slate-900 leading-tight mb-3 md:mb-6"
                                                     dangerouslySetInnerHTML={{ __html: founder.title }}
                                                 />
 
-                                                <div className="space-y-5 text-slate-600 leading-relaxed text-sm md:text-base">
+                                                <div className="space-y-3 md:space-y-5 text-slate-600 leading-relaxed text-sm md:text-base">
                                                     {founder.content.map((paragraph, pIndex) => (
                                                         paragraph.startsWith('"') ? (
-                                                            <div key={pIndex} className="relative pl-5 border-l-4 border-blue-500 my-6 py-1 bg-slate-50/50 rounded-r-lg">
-                                                                <p className="text-lg md:text-xl font-serif italic text-slate-800 leading-relaxed py-2 pr-4">
+                                                            <div key={pIndex} className="relative pl-4 border-l-4 border-blue-500 my-3 md:my-6 py-0.5 bg-slate-50/50 rounded-r-lg">
+                                                                <p className="text-sm md:text-xl font-serif italic text-slate-800 leading-relaxed py-1 md:py-2 pr-3 md:pr-4">
                                                                     {paragraph}
                                                                 </p>
                                                             </div>
@@ -106,7 +106,7 @@ export const FoundersNote = () => {
                                                     ))}
                                                 </div>
 
-                                                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
+                                                <div className="mt-4 md:mt-8 pt-4 md:pt-6 border-t border-slate-100 flex items-center justify-between">
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-slate-900 text-base">{founder.name}</span>
                                                         <span className="text-slate-500 text-xs uppercase tracking-wider font-medium">{founder.role}</span>

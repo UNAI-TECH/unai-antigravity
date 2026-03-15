@@ -64,58 +64,61 @@ const Products = () => {
 
       <main>
         {/* Premium Framing Hero Section */}
-        <section className="relative mx-4 my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] flex items-center justify-center overflow-hidden pt-20 shadow-2xl bg-white">
+        <section className="relative mx-4 mt-2 mb-4 md:my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] flex flex-col items-center justify-center overflow-hidden pt-0 md:pt-0 pb-40 md:pb-72 shadow-2xl bg-white">
           {/* New Framing Background Component */}
-          <ColumnGridBackground />
+          <ColumnGridBackground className="opacity-40 md:opacity-100" />
 
-          <div className="container relative z-10 mx-auto px-6 h-full flex flex-col items-center justify-center py-20 text-center">
+          <div className="container relative z-10 mx-auto px-6 flex flex-col items-center justify-center text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-4xl relative -top-12 sm:-top-24 md:-top-48"
+              className="max-w-4xl"
             >
-              <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-7xl font-bold text-[#0D2872] mb-8 leading-tight tracking-tight">
-                My Vidyon
-                <span className="text-blue-500"> - ERP Solution</span>
+              <h1 className="text-[34px] sm:text-5xl md:text-6xl lg:text-6xl font-bold text-[#0D2872] mb-3 md:mb-6 leading-[1.2] md:leading-tight tracking-tight">
+                My Vidyon <br className="md:hidden" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                  ERP Solution
+                </span>
               </h1>
 
-              <p className="text-xl md:text-2xl text-slate-500 mb-12 font-medium tracking-wide">
+              <p className="text-[16px] sm:text-xl md:text-xl text-slate-500 mb-5 md:mb-10 font-medium tracking-wide">
                 Organize <span className="mx-2 opacity-30">|</span> Educate <span className="mx-2 opacity-30">|</span> Elevate
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full px-6 sm:px-0">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 w-full px-6 sm:px-0 max-w-[400px] sm:max-w-none mx-auto">
                 <Button
-                  className="w-full sm:w-auto rounded-full bg-[#0D2872] text-white hover:bg-blue-900 px-12 h-16 text-lg font-bold shadow-2xl transition-all hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 shadow-glow-blue hover:shadow-glow-blue-strong py-2 w-full sm:w-auto rounded-full bg-gradient-to-r from-[#0D2872] to-[#1e40af] text-white hover:opacity-90 px-8 sm:px-10 h-[48px] sm:h-[54px] text-base sm:text-lg font-bold shadow-2xl transition-all hover:scale-105"
                   onClick={() => navigate("/contact")}
                 >
                   Schedule Demo
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto rounded-full border-2 border-slate-200 bg-white/30 backdrop-blur-md text-[#0D2872] hover:bg-slate-50 px-12 h-16 text-lg font-bold transition-all hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:border-metal-blue-500/50 hover:shadow-glow-blue py-2 w-full sm:w-auto rounded-full border-2 border-[#0D2872] bg-white text-[#0D2872] hover:bg-slate-50 px-8 sm:px-10 h-[48px] sm:h-[54px] text-base sm:text-lg font-bold transition-all hover:scale-105"
                   onClick={handleExploreNow}
                 >
                   Explore <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
+
             </motion.div>
           </div>
         </section>
 
         {/* Side-by-Side ERP Solution Section with Triple Mockup PEeking */}
-        <section className="relative z-20 -mt-12 sm:-mt-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-transparent to-white">
+        <section className="relative z-20 -mt-48 sm:-mt-24 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-transparent to-white">
           <div className="container mx-auto relative">
 
-            {/* Triple Mobile Mockup Peek Layout (Behind Card) */}
-            <div className="absolute -top-20 sm:-top-48 md:-top-72 left-1/2 -translate-x-1/2 w-full max-w-[850px] md:max-w-[1100px] flex items-end justify-center pointer-events-none z-0 px-4 sm:px-10">
+            {/* Triple Mobile Mockup Peek Layout (Behind Card) - Hidden on mobile, shown on md+ */}
+            <div className="hidden md:flex absolute -top-20 sm:-top-48 md:-top-72 left-1/2 -translate-x-1/2 w-full max-w-[850px] md:max-w-[1100px] items-end justify-center pointer-events-none z-0 px-4 sm:px-10">
               {/* Left Phone */}
               <motion.div
                 initial={{ opacity: 0, y: 100, x: 20 }}
                 whileInView={{ opacity: 1, y: 0, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, delay: 0.2 }}
-                className="w-1/2 sm:w-1/3 md:w-[336px] -mr-16 sm:-mr-24 md:-mr-36"
+                className="w-[40%] sm:w-[20%] md:w-[300px] -mr-20 sm:-mr-10 md:-mr-36"
               >
                 <img src="/6.png" alt="Mockup Left" width="336" height="728" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
               </motion.div>
@@ -126,7 +129,7 @@ const Products = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                className="w-3/5 sm:w-2/5 md:w-[441px] z-10 -mb-8 sm:-mb-10 md:-mb-16"
+                className="w-3/5 sm:w-2/5 md:w-[400px] z-10 -mb-8 sm:-mb-10 md:-mb-16"
               >
                 <img src="/5.png" alt="Mockup Center" width="441" height="956" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)] transform-gpu" loading="lazy" />
               </motion.div>
@@ -143,8 +146,8 @@ const Products = () => {
               </motion.div>
             </div>
 
-            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
-              <div className="flex flex-col lg:flex-row items-center gap-16 relative z-10">
+            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] px-4 py-5 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
+              <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-16 relative z-10">
                 {/* Left Column: Illustration with Glows */}
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
@@ -176,20 +179,20 @@ const Products = () => {
                   transition={{ duration: 0.8 }}
                   className="flex-1"
                 >
-                  <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-6 text-[#1F2937] leading-tight">
+                  <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-2 text-[#1F2937] leading-tight">
                     My Vidyon <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                       ERP Solution
                     </span>
                   </h1>
 
-                  <p className="text-lg text-gray-700/80 mb-8 leading-relaxed">
+                  <p className="text-base sm:text-lg text-gray-700/80 mb-3 leading-relaxed">
                     Transform your educational institution with our comprehensive ERP ecosystem.
                     Bridge communication, automate administration, and empower learning with
                     a system designed for excellence and scale.
                   </p>
 
-                  <div className="grid grid-cols-2 gap-6 mb-10">
+                  <div className="grid grid-cols-2 gap-4 lg:gap-6 mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
                         <CheckCircle2 size={20} />

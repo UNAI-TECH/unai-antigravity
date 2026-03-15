@@ -544,7 +544,7 @@ const Events = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.8 }}
-              className="relative overflow-hidden rounded-[3rem] bg-slate-900 px-10 md:px-16 py-14 flex flex-col md:flex-row items-center justify-between gap-8"
+              className="relative overflow-hidden rounded-[3rem] bg-slate-900 px-6 sm:px-10 md:px-16 py-10 sm:py-14 flex flex-col md:flex-row items-center justify-between gap-8"
             >
               <div className="absolute inset-0 opacity-[0.04]" style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
@@ -557,7 +557,7 @@ const Events = () => {
                   Get early access &<br />exclusive invites
                 </h2>
               </div>
-              <div className="relative flex gap-3 w-full md:w-auto">
+              <div className="relative flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 <input
                   type="email"
                   placeholder="your@email.com"

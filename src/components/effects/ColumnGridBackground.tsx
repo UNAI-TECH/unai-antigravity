@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 
-const ColumnGridBackground = () => {
+const ColumnGridBackground = ({ className = "" }: { className?: string }) => {
   // 12 columns total
   // Edge columns (0, 11) are tallest
   // Center columns (5, 6) are shortest
@@ -14,7 +14,7 @@ const ColumnGridBackground = () => {
   };
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden bg-white pointer-events-none">
+    <div className={`absolute inset-0 w-full h-full overflow-hidden bg-white pointer-events-none ${className}`}>
       {/* The Framing Grid */}
       <div className="flex items-end w-full h-full px-0">
         {[...Array(12)].map((_, i) => (
