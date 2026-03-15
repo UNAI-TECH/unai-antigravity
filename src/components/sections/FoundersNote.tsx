@@ -5,18 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 
 const founders = [
     {
-        name: "Nehemiah Nesanathan",
-        role: "CEO AND DIRECTOR",
-        image: "/Nehemiah_Nesanathan_M.jpg",
-        title: "Architecting the <span class='text-blue-600'>Next Era</span> of Intelligence.",
-        content: [
-            "UNAI TECH emerged from a conviction that we're living through a fundamental shift in how technology works. For decades, software has been deterministic. Intelligence changes everything.",
-            "\"Most organizations use AI like a calculator. We're building systems that think.\"",
-            "We founded UNAI TECH to help organizations think differently. To build from an intelligence-first foundation. We're not building for today's problems. <span class='font-medium text-slate-900'>We're architecting for tomorrow's possibilities.</span>"
-        ],
-        signature: "Nehemiah Nesanathan"
-    },
-    {
         name: "Vetha Gokul",
         role: "MANAGING DIRECTOR",
         image: "/Vetha_Gokul_SR.jpg.jpeg",
@@ -27,6 +15,18 @@ const founders = [
             "We are building a culture of continuous learning and growth. Together, we are shaping a future where AI is accessible, ethical, and transformative for everyone."
         ],
         signature: "Vetha Gokul"
+    },
+    {
+        name: "Nehemiah Nesanathan",
+        role: "CEO AND DIRECTOR",
+        image: "/Nehemiah_Nesanathan_M.jpg",
+        title: "Architecting the <span class='text-blue-600'>Next Era</span> of Intelligence.",
+        content: [
+            "UNAI TECH emerged from a conviction that we're living through a fundamental shift in how technology works. For decades, software has been deterministic. Intelligence changes everything.",
+            "\"Most organizations use AI like a calculator. We're building systems that think.\"",
+            "We founded UNAI TECH to help organizations think differently. To build from an intelligence-first foundation. We're not building for today's problems. <span class='font-medium text-slate-900'>We're architecting for tomorrow's possibilities.</span>"
+        ],
+        signature: "Nehemiah Nesanathan"
     }
 ];
 

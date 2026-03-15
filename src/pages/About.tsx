@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import { FoundersNote } from "@/components/sections/FoundersNote";
+import { AdvisorNote } from "@/components/sections/AdvisorNote";
 import { TeamSection } from "@/components/sections/TeamSection";
 import SEO from "@/components/SEO";
 
@@ -461,6 +462,9 @@ const About = () => {
             </div>
           </div>
         </ScrollSection>
+
+        {/* Advisor Note */}
+        <AdvisorNote />
 
         {/* Founder's Note */}
         <div className="bg-[#f8faff]">
