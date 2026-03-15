@@ -58,7 +58,11 @@ const Countdown = ({ targetDate }: { targetDate?: string }) => {
   const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
 
   useEffect(() => {
-    const target = targetDate ? new Date(targetDate).getTime() : Date.now() + 7 * 24 * 60 * 60 * 1000;
+    const target = targetDate ? new Date(targetDate).getTime() : NaN;
+    if (isNaN(target)) {
+        setTime({ d: 0, h: 0, m: 0, s: 0 });
+        return;
+    }
     const tick = () => {
       const diff = Math.max(0, target - Date.now());
       setTime({
@@ -340,7 +344,21 @@ const Events = () => {
   }
 
   // ── List View ─────────────────────────────────────────────────────────────
-  const filters = ["All", "Conference", "Workshop", "Hackathon", "Meetup"];
+  const filters = ["All", "Workshop", "AI Event", "Conference", "Webinar", "Meetup"];
+
+  const filteredEvents = events
+    .filter(event => {
+      if (activeFilter === "All") return true;
+      return event.type === activeFilter;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      // Sort by date - closest first
+      if (isNaN(dateA)) return 1;
+      if (isNaN(dateB)) return -1;
+      return dateA - dateB;
+    });
 
   return (
     <div className="min-h-screen bg-[#F7F6F2]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -517,9 +535,9 @@ const Events = () => {
         <section className="px-4 sm:px-8 md:px-16 py-12 sm:py-16 md:py-24">
           <div className="max-w-[1400px] mx-auto">
 
-            {events.length > 0 ? (
+            {filteredEvents.length > 0 ? (
               <div className="event-grid">
-                {events.map((event, i) => (
+                {filteredEvents.map((event, i) => (
                   <EventCard key={event.id} event={event} index={i} onClick={() => handleOpenEvent(event.id)} />
                 ))}
               </div>
