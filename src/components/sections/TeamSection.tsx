@@ -24,7 +24,7 @@ const teamMembers: Array<{
             name: "Anjali Patel",
             role: "HRM",
             image: "/Anjali_M.JPG.jpeg",
-            imageClass: "object-cover object-top scale-[1.06]",
+            imageClass: "object-cover object-top",
             shortNote: "Strategic human resource leader dedicated to building high-performing teams and fostering a culture of innovation and inclusivity.",
             bio: "Anjali brings over a decade of experience in talent acquisition and organizational development. She is passionate about creating environments where engineers and visionaries can thrive together to build the next generation of technology."
         },
@@ -32,7 +32,7 @@ const teamMembers: Array<{
             name: "Madhan Kumar",
             role: "Senior Full stack Developer",
             image: "/Madhan_Kumar_P.JPG.jpeg",
-            imageClass: "object-cover object-top scale-[1.06]",
+            imageClass: "object-cover object-top",
             shortNote: "Expert in building scalable, intelligence-first applications with a focus on seamless user experiences and robust backend architecture.",
             bio: "With a background in high-performance computing, Madhan leads our full-stack engineering efforts. He ensures that our sophisticated AI capabilities are delivered through intuitive and lightning-fast interfaces."
         },
@@ -40,23 +40,23 @@ const teamMembers: Array<{
             name: "Kamalesh",
             role: "AI Engineer",
             image: "/Kamalesh_S.JPG.jpeg",
-            imageClass: "object-cover object-top scale-[1.06]",
+            imageClass: "object-cover object-top",
             shortNote: "Specializing in frontier AI research and implementing sophisticated neural architectures that drive the core intelligence of our systems.",
             bio: "Kamalesh is at the forefront of our AI research. He translates complex mathematical models into production-ready intelligence, ensuring UNAI TECH remains at the cutting edge of what's possible."
         },
         {
             name: "Muthasir",
             role: "Marketing Head",
-            image: "/WhatsApp Image 2026-03-03 at 2.13.21 PM.jpeg",
-            imageClass: "object-cover object-top scale-[1.06]",
+            image: "/WhatsApp Image 2026-03-03 at 2.13.21 PM.jpg",
+            imageClass: "object-cover object-top",
             shortNote: "Visionary marketing strategist focused on communicating the transformative power of AI and building strong global brand presence.",
             bio: "Muthasir combines data-driven insights with creative storytelling to bridge the gap between complex engineering and market needs. He drives our global growth and brand recognition."
         },
         {
             name: "Iniyan",
             role: "Marketing Head",
-            image: "/iniyan.jpeg",
-            imageClass: "object-cover object-top scale-[1.05]",
+            image: "/iniyan.jpg",
+            imageClass: "object-cover object-top",
             shortNote: "Dynamic marketing lead expertise in digital growth, community engagement, and strategic positioning of AI-native solutions.",
             bio: "Iniyan focuses on the intersection of community and technology. He ensures that our AI solutions resonate with users and build lasting value through strategic digital positioning."
         }
@@ -128,7 +128,7 @@ export const TeamSection = () => {
                                             <img
                                                 src={member.image}
                                                 alt={member.name}
-                                                className={`w-full h-full object-cover transition-all duration-700 ${isActiveOnMobile ? 'grayscale-0' : 'grayscale group-hover:grayscale-0'} ${member.imageClass || 'object-[50%_20%] scale-[1.15] group-hover:scale-[1.1]'}`}
+                                                className={`w-full h-full object-cover transition-all duration-700 ${isActiveOnMobile ? 'grayscale-0' : 'grayscale group-hover:grayscale-0'} ${member.imageClass || 'object-[50%_20%]'}`}
                                             />
                                             <div className={`absolute inset-0 bg-gradient-to-t from-blue-900/80 via-transparent to-transparent transition-opacity duration-500 ${isActiveOnMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
 
