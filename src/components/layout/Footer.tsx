@@ -112,7 +112,7 @@ export const Footer = () => {
                 <div className="p-2 rounded-lg bg-purple-50 group-hover/item:bg-purple-100 transition-colors mt-[-4px]">
                   <MapPin size={18} className="text-purple-600 group-hover/item:text-purple-700 transition-colors" />
                 </div>
-                <span className="group-hover/item:text-purple-600 transition-colors">UNAI TECH, chennai, Tamil nadu</span>
+                <span className="group-hover/item:text-purple-600 transition-colors">UNAI TECH, Chennai, Tamil Nadu</span>
               </li>
               <li className="flex items-center gap-3 text-gray-600 group/item">
                 <div className="p-2 rounded-lg bg-purple-50 group-hover/item:bg-purple-100 transition-colors">
