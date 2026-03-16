@@ -47,7 +47,6 @@ export const FloatingNavbar = () => {
     { name: "SERVICES", href: "/services" },
     { name: "PRODUCTS", href: "/products" },
     { name: "EVENTS", href: "/events" },
-    { name: "GALLERY", href: "/gallery" },
     { name: "CAREERS", href: "/careers" },
   ];
 
@@ -114,7 +113,7 @@ export const FloatingNavbar = () => {
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.filter(item => !["GALLERY", "CAREERS"].includes(item.name)).map((item) => (
+            {navLinks.filter(item => !["CAREERS"].includes(item.name)).map((item) => (
               <Link
                 key={item.name}
                 to={item.href}

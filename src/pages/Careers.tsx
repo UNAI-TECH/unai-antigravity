@@ -182,9 +182,12 @@ const Careers = () => {
                             <p className="text-muted-foreground mb-4">
                                 Don't see a role that fits?
                             </p>
-                            <Button variant="link" className="text-metal-blue-400 hover:text-metal-blue-300">
+                            <a 
+                                href="mailto:unai.technology@gmail.com"
+                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-300 underline-offset-4 hover:underline h-10 px-4 py-2 text-metal-blue-400 hover:text-metal-blue-300"
+                            >
                                 Send us your resume anyway <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
+                            </a>
                         </motion.div>
                     </div>
                 </section>
@@ -290,7 +293,8 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
     const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const totalSteps = 4;
+    const hasQuestions = job.questions && job.questions.length > 0;
+    const totalSteps = hasQuestions ? 4 : 3;
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -410,7 +414,7 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                                 <Input
                                     value={formData.applicant_name}
                                     onChange={(e) => setFormData({ ...formData, applicant_name: e.target.value })}
-                                    className="bg-white/5 border-white/10"
+                                    className="bg-white/5 border-white/10 text-white"
                                     placeholder="John Doe"
                                 />
                             </div>
@@ -420,7 +424,7 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="bg-white/5 border-white/10"
+                                    className="bg-white/5 border-white/10 text-white"
                                     placeholder="john@example.com"
                                 />
                             </div>
@@ -429,7 +433,7 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                                 <Input
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    className="bg-white/5 border-white/10"
+                                    className="bg-white/5 border-white/10 text-white"
                                     placeholder="+1 (555) 000-0000"
                                 />
                             </div>
@@ -437,44 +441,38 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                     </div>
                 )}
 
-                {step === 3 && (
+                {(step === 3 && hasQuestions) && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <h3 className="text-2xl font-bold text-white">Additional Questions</h3>
-                        {(!job.questions || job.questions.length === 0) ? (
-                            <div className="text-center py-12 text-muted-foreground italic">
-                                No additional questions for this role. You can proceed.
-                            </div>
-                        ) : (
-                            <div className="space-y-8">
-                                {job.questions.map((q) => (
-                                    <div key={q.id} className="space-y-3">
-                                        <p className="font-medium text-white">{q.question}</p>
-                                        <div className="space-y-2">
-                                            {q.options.map((opt, idx) => (
-                                                <label key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:border-metal-blue-500/50 cursor-pointer transition-all">
-                                                    <input
-                                                        type="radio"
-                                                        name={q.id}
-                                                        value={opt}
-                                                        checked={formData.answers[q.question] === opt}
-                                                        onChange={() => setFormData(prev => ({
-                                                            ...prev,
-                                                            answers: { ...prev.answers, [q.question]: opt }
-                                                        }))}
-                                                        className="w-4 h-4 text-metal-blue-500 focus:ring-metal-blue-500 bg-transparent border-white/30"
-                                                    />
-                                                    <span className="text-sm text-gray-300">{opt}</span>
-                                                </label>
-                                            ))}
-                                        </div>
+                        <div className="space-y-8">
+                            {job.questions.map((q) => (
+                                <div key={q.id} className="space-y-3">
+                                    <p className="font-medium text-white">{q.question}</p>
+                                    <div className="space-y-2">
+                                        {q.options.map((opt, idx) => (
+                                            <label key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:border-metal-blue-500/50 cursor-pointer transition-all">
+                                                <input
+                                                    type="radio"
+                                                    name={q.id}
+                                                    value={opt}
+                                                    checked={formData.answers[q.question] === opt}
+                                                    onChange={() => setFormData(prev => ({
+                                                        ...prev,
+                                                        answers: { ...prev.answers, [q.question]: opt }
+                                                    }))}
+                                                    className="w-4 h-4 text-metal-blue-500 focus:ring-metal-blue-500 bg-transparent border-white/30"
+                                                />
+                                                <span className="text-sm text-gray-300">{opt}</span>
+                                            </label>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
-                {step === 4 && (
+                {(step === totalSteps && (step === 4 || (step === 3 && !hasQuestions))) && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <h3 className="text-2xl font-bold text-white">Review & Submit</h3>
                         <div className="bg-white/5 rounded-xl p-6 space-y-4 border border-white/10">

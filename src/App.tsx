@@ -15,7 +15,7 @@ import ServiceDetail from "./pages/ServiceDetail";
 import Products from "./pages/Products";
 import Events from "./pages/Events";
 import Gallery from "./pages/Gallery";
-import Team from "./pages/Team";
+
 import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import AdminLogin from "./pages/AdminLogin";
@@ -45,7 +45,7 @@ const App = () => {
                 <Route path="/products" element={<Products />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/gallery" element={<Gallery />} />
-                <Route path="/team" element={<Team />} />
+
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/admin" element={<AdminLogin />} />

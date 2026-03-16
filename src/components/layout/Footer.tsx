@@ -7,11 +7,10 @@ const footerLinks = {
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
     { name: "Careers", path: "/careers" },
-    { name: "Team", path: "/team" },
+    { name: "Team", path: "/about#meet-team" },
   ],
   resources: [
     { name: "Events", path: "/events" },
-    { name: "Gallery", path: "/gallery" },
     { name: "Contact", path: "/contact" },
   ],
 };

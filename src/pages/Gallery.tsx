@@ -5,7 +5,7 @@ import { GlowOrb } from "@/components/effects/GlowOrb";
 import { X, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useData } from "@/context/DataContext";
 
-const categories = ["All", "Events", "Team", "Products", "Spaces"];
+
 
 const PosterCarousel = ({ posters }: { posters: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,12 +66,8 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
 
 const Gallery = () => {
   const { galleryItems } = useData();
-  const [activeCategory, setActiveCategory] = useState("All");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-
-  const filteredItems = activeCategory === "All"
-    ? galleryItems
-    : galleryItems.filter(item => item.category === activeCategory);
+  const filteredItems = galleryItems;
 
   const selectedItem = galleryItems.find(item => item.id === selectedItemId);
 
@@ -91,9 +87,7 @@ const Gallery = () => {
               transition={{ duration: 0.8 }}
               className="text-center max-w-4xl mx-auto"
             >
-              <span className="inline-block px-4 py-2 rounded-full glass-metal text-sm text-metal-purple-300 mb-6">
-                Visual Void
-              </span>
+
               <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8">
                 <span className="text-foreground">Our </span>
                 <span className="text-gradient-metal">Gallery</span>
@@ -108,27 +102,7 @@ const Gallery = () => {
 
         <div className="energy-line" />
 
-        {/* Filter Tabs */}
-        <section className="py-8 md:py-12">
-          <div className="container mx-auto px-6">
-            <div className="flex overflow-x-auto no-scrollbar justify-start sm:justify-center gap-3 px-4 sm:px-0">
-              {categories.map((category) => (
-                <motion.button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-6 py-3 rounded-xl whitespace-nowrap transition-all duration-300 ${activeCategory === category
-                    ? "bg-gradient-metal text-white shadow-glow-blue"
-                    : "glass-metal text-muted-foreground hover:text-foreground"
-                    }`}
-                >
-                  {category}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        </section>
+
 
         {/* Gallery Grid */}
         <section className="relative py-8 md:py-12 pb-16 lg:pb-32 overflow-hidden">
@@ -139,7 +113,7 @@ const Gallery = () => {
             {galleryItems.length === 0 ? (
               <div className="text-center py-20 glass-metal rounded-2xl border border-dashed border-white/10">
                 <p className="text-muted-foreground text-xl">No gallery items found.</p>
-                <p className="text-sm text-muted-foreground mt-2">Add items from the Admin Dashboard.</p>
+
               </div>
             ) : (
               <motion.div

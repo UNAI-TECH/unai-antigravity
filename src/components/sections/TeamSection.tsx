@@ -66,7 +66,7 @@ export const TeamSection = () => {
     const [selectedMember, setSelectedMember] = useState<typeof teamMembers[0] | null>(null);
 
     return (
-        <section className="py-20 lg:py-32 bg-white overflow-hidden">
+        <section id="meet-team" className="py-20 lg:py-32 bg-white overflow-hidden">
             <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 xl:px-24">
                 {/* Section Header */}
                 <div className="text-center mb-16 lg:mb-24">
