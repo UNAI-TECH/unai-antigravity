@@ -21,6 +21,7 @@ import Careers from "./pages/Careers";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import ResponsiveTest from "./pages/ResponsiveTest";
+import UnaiPac from "./pages/UnaiPac";
 import NotFound from "./pages/NotFound";
 import { DataProvider } from "@/context/DataContext";
 
@@ -51,6 +52,7 @@ const App = () => {
                 <Route path="/admin" element={<AdminLogin />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/responsive-test" element={<ResponsiveTest />} />
+                <Route path="/unai-pac" element={<UnaiPac />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
