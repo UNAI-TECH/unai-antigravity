@@ -214,12 +214,13 @@ const JobApplicationOverlay = ({ job, onClose, isApplying, onStartApply, onSubmi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-4 bg-black/80 backdrop-blur-sm"
         >
             <motion.div
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
+                data-lenis-prevent
                 className="w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar bg-[#0B1221] border border-white/10 rounded-2xl shadow-2xl relative"
             >
                 <Button
@@ -232,7 +233,7 @@ const JobApplicationOverlay = ({ job, onClose, isApplying, onStartApply, onSubmi
                 </Button>
 
                 {!isApplying ? (
-                    <div className="p-8 md:p-12">
+                    <div className="p-5 md:p-12">
                         <div className="mb-8 border-b border-white/10 pb-8">
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="px-3 py-1 rounded-full bg-metal-blue-500/20 text-metal-blue-400 text-sm font-medium">
@@ -358,9 +359,9 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
     };
 
     return (
-        <div className="p-8 md:p-12 h-full flex flex-col">
+        <div className="p-5 md:p-12 h-full flex flex-col">
             {/* Progress Bar */}
-            <div className="mb-8">
+            <div className="mb-8 pr-12">
                 <div className="flex justify-between text-sm font-medium mb-2 text-muted-foreground">
                     <span>Step {step} of {totalSteps}</span>
                     <span>{Math.round((step / totalSteps) * 100)}% Complete</span>
