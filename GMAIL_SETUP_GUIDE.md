@@ -18,7 +18,7 @@
 ## Step 3: Update .env File
 Add these lines to your `.env` file:
 ```
-VITE_GMAIL_USER=nobitawellboy@gmail.com
+VITE_GMAIL_USER=unai.technology@gmail.com
 VITE_GMAIL_APP_PASSWORD=your_16_character_password_here
 ```
 

@@ -36,7 +36,7 @@ I can see you already have:
 2. Click "Add New Service"
 3. Select "Gmail"
 4. Click "Connect Account"
-5. Sign in with **nobitawellboy@gmail.com**
+5. Sign in with **unai.technology@gmail.com**
 6. Allow EmailJS to send emails on your behalf
 7. Your Service ID should be `service_p0r693b`
 
@@ -61,7 +61,7 @@ Open browser console (F12) and look for:
 - **Admin approves** → Sends "Approved" email  
 - **Admin rejects** → Sends "Rejected" email
 
-All emails come from your Gmail (nobitawellboy@gmail.com) and can be sent to ANY email address!
+All emails come from your Gmail (unai.technology@gmail.com) and can be sent to ANY email address!
 
 ## 🎉 Benefits
 

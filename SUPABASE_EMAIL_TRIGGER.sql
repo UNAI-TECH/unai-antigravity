@@ -68,7 +68,7 @@ begin
             'to', to_email,
             'subject', email_subject,
             'html', email_body,
-            'reply_to', 'nobitawellboy@gmail.com'
+            'reply_to', 'unai.technology@gmail.com'
         )
     );
 

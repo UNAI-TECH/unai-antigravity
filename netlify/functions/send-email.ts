@@ -45,7 +45,7 @@ export const handler: Handler = async (event) => {
             <p>We have received your application and it is currently being processed by our team. We will review your qualifications and get back to you shortly.</p>
             <p>Best regards,<br><strong>UNAI Team</strong></p>
             <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 12px;">This email was sent from nobitawellboy@gmail.com</p>
+            <p style="color: #6b7280; font-size: 12px;">This email was sent from unai.technology@gmail.com</p>
           </div>
         `;
                 break;
@@ -60,7 +60,7 @@ export const handler: Handler = async (event) => {
             <p>Congratulations and we look forward to speaking with you soon!</p>
             <p>Best regards,<br><strong>UNAI Team</strong></p>
             <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 12px;">This email was sent from nobitawellboy@gmail.com</p>
+            <p style="color: #6b7280; font-size: 12px;">This email was sent from unai.technology@gmail.com</p>
           </div>
         `;
                 break;
@@ -75,7 +75,7 @@ export const handler: Handler = async (event) => {
             <p>We appreciate your time and effort in applying, and we wish you the best in your future endeavors.</p>
             <p>Best regards,<br><strong>UNAI Team</strong></p>
             <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 12px;">This email was sent from nobitawellboy@gmail.com</p>
+            <p style="color: #6b7280; font-size: 12px;">This email was sent from unai.technology@gmail.com</p>
           </div>
         `;
                 break;
@@ -92,7 +92,7 @@ export const handler: Handler = async (event) => {
             to: toEmail,
             subject: subject,
             html: htmlContent,
-            replyTo: 'nobitawellboy@gmail.com',
+            replyTo: 'unai.technology@gmail.com',
         });
 
         console.log('Email sent:', info.messageId);

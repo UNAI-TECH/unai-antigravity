@@ -24,7 +24,7 @@
 Open your `.env` file and replace `your_app_password_here` with the password from Step 1:
 
 ```
-VITE_GMAIL_USER=nobitawellboy@gmail.com
+VITE_GMAIL_USER=unai.technology@gmail.com
 VITE_GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx  (paste your 16-char password)
 ```
 
@@ -54,7 +54,7 @@ When you deploy to Netlify:
 1. Go to your Netlify dashboard
 2. Site settings → Environment variables
 3. Add these two variables:
-   - `GMAIL_USER` = nobitawellboy@gmail.com
+   - `GMAIL_USER` = unai.technology@gmail.com
    - `GMAIL_APP_PASSWORD` = (your 16-char password)
 
 ## 🔍 Troubleshooting
@@ -84,7 +84,7 @@ Check the browser console - it will show detailed error messages from the email 
 ## ✨ Benefits
 
 - ✅ Works with ANY email address (not just yours)
-- ✅ Sends from your actual Gmail (nobitawellboy@gmail.com)
+- ✅ Sends from your actual Gmail (unai.technology@gmail.com)
 - ✅ Secure (credentials never exposed to frontend)
 - ✅ Free (Gmail allows 500 emails/day)
 - ✅ Reliable delivery
