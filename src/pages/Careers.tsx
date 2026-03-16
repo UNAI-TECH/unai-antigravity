@@ -5,7 +5,7 @@ import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, MapPin, Clock, DollarSign, Briefcase, X, Upload, CheckCircle, ChevronLeft, ChevronRight, FileText, Loader2 } from "lucide-react";
+import { ArrowRight, MapPin, Clock, IndianRupee, Briefcase, X, Upload, CheckCircle, ChevronLeft, ChevronRight, FileText, Loader2 } from "lucide-react";
 import { useData, Job } from "@/context/DataContext";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -147,7 +147,7 @@ const Careers = () => {
                                                             {job.location}
                                                         </span>
                                                         <span className="flex items-center gap-2">
-                                                            <DollarSign className="w-4 h-4 text-green-400" />
+                                                            <IndianRupee className="w-4 h-4 text-green-400" />
                                                             {job.salary}
                                                         </span>
                                                         {job.experience && (
@@ -250,7 +250,7 @@ const JobApplicationOverlay = ({ job, onClose, isApplying, onStartApply, onSubmi
                                     {job.location}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4 text-green-400" />
+                                    <IndianRupee className="w-4 h-4 text-green-400" />
                                     {job.salary}
                                 </span>
                                 {job.experience && (
