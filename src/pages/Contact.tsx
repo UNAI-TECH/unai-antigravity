@@ -160,20 +160,7 @@ const Contact = () => {
                   </motion.a>
                 ))}
 
-                {/* Map placeholder */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.7 }}
-                >
-                  <GlassCard className="p-6 h-48 flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <MapPin className="w-8 h-8 mx-auto mb-2 text-metal-blue-400" />
-                      <p className="text-sm">Interactive map coming soon</p>
-                    </div>
-                  </GlassCard>
-                </motion.div>
+
               </motion.div>
             </div>
           </div>
