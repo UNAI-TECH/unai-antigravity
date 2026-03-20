@@ -4,12 +4,12 @@ import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { MagicBento, ParticleCard } from "@/components/effects/MagicBento";
 import { Button } from "@/components/ui/button";
-import { Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight, Check, ChevronDown, Server, Lock } from "lucide-react";
+import { Zap, Shield, Cpu, Globe, Rocket, Code, ArrowRight, Check, ChevronDown, Server, Lock, Vote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import SEO from "@/components/SEO";
 
-const categories = ["All Services", "AI", "Automation", "Software", "Infrastructure", "Security"];
+const categories = ["All Services", "AI", "Automation", "Software", "Infrastructure", "Security", "Political"];
 
 const services = [
   {
@@ -59,6 +59,14 @@ const services = [
     description: "Security by Architecture, Not Afterthought. We design multi-layered security ecosystems that integrate advanced threat detection and zero-trust models.",
     features: ["Zero-Trust Architecture", "AI-Powered Threat Detection", "Secure API & IAM Frameworks", "Compliance & Vulnerability Management"],
     category: "Security",
+  },
+  {
+    id: "unai-pac",
+    icon: Vote,
+    title: "UNAI-PAC: Political Strategy",
+    description: "Professionalizing Democracy through Data. A 360-degree political consultancy combining data science, campaign tech, and grassroots mobilisation.",
+    features: ["Predictive Modeling & Analytics", "Digital & Media War Rooms", "Booth-Level Ground Operations", "Candidate Dashboard & Campaign Tech"],
+    category: "Political",
   },
 ];
 
@@ -190,7 +198,7 @@ const Services = () => {
 
                     <Button
                       className="w-full h-12 rounded-xl bg-[#3B5BDB] hover:bg-[#2F49B0] text-white shadow-lg shadow-blue-200 transition-all duration-300 hover:-translate-y-1"
-                      onClick={() => navigate(`/services/${service.id}`)}
+                      onClick={() => navigate(service.id === 'unai-pac' ? '/unai-pac' : `/services/${service.id}`)}
                     >
                       Learn More
                       <ArrowRight className="ml-2 w-4 h-4" />
