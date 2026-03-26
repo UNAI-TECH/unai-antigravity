@@ -116,17 +116,6 @@ const VidyoAI = () => {
                             style={{ y: yText, opacity: opacityHero }}
                             className="text-center"
                         >
-                            {/* Eyebrow */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm mb-8"
-                            >
-                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                                <span className="text-xs font-bold text-slate-900 tracking-widest uppercase">The New Standard</span>
-                            </motion.div>
-
                             {/* Headline */}
                             <motion.h1
                                 initial={{ opacity: 0, y: 30 }}
@@ -159,7 +148,7 @@ const VidyoAI = () => {
                             >
                                 <div className="h-px w-24 bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
                                 <p className="text-lg font-semibold text-blue-600 tracking-wide uppercase">
-                                    The new global standard for intelligent, entertaining education.
+                                    Intelligent, Immersive, and Entertaining Education.
                                 </p>
 
                                 <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
