@@ -346,17 +346,6 @@ const Products = () => {
               {/* Decorative background glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl -z-10" />
 
-              <button
-                onClick={() => setShowComingSoon(false)}
-                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
-              >
-                <X size={24} />
-              </button>
-
-              <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-8 text-blue-600">
-                <Zap size={40} className="fill-blue-600/10" />
-              </div>
-
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
                 Coming Soon...
               </h2>
