@@ -3,7 +3,6 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, CheckCircle2, Layout, Users, BarChart3, ShieldCheck, Zap, Globe, ArrowRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import SEO from "@/components/SEO";
 
@@ -51,7 +50,6 @@ const features = [
 
 const Products = () => {
   const navigate = useNavigate();
-  const [showComingSoon, setShowComingSoon] = useState(false);
   const handleExploreNow = () => {
     window.open("https://www.myvidyon.com/", "_blank", "noopener,noreferrer");
   };
@@ -291,7 +289,7 @@ const Products = () => {
 
                   <div className="flex flex-wrap gap-4">
                     <Button
-                      onClick={() => setShowComingSoon(true)}
+                      onClick={() => navigate("/vidyo-ai")}
                       size="xl"
                       className="h-14 px-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
                     >
@@ -316,56 +314,6 @@ const Products = () => {
         </section>
       </main>
       <Footer />
-
-      {/* Coming Soon Overlay */}
-      <AnimatePresence>
-        {showComingSoon && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          >
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowComingSoon(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-
-            {/* Modal Content */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl text-center overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Decorative background glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl -z-10" />
-
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
-                Coming Soon...
-              </h2>
-
-              <p className="text-lg text-slate-600 mb-10 leading-relaxed">
-                We're putting the finishing touches on our next-generation AI technology.
-                Stay tuned for something truly revolutionary.
-              </p>
-
-              <Button
-                onClick={() => setShowComingSoon(false)}
-                size="lg"
-                className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-lg font-bold"
-              >
-                Got it
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
