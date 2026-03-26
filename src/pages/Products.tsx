@@ -221,6 +221,86 @@ const Products = () => {
               </div>
             </div>
           </div>
+
+          {/* New AI Platform Section */}
+          <div className="container mx-auto relative mt-16 sm:mt-24">
+            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] px-4 py-5 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
+              <div className="flex flex-col lg:flex-row-reverse items-center gap-4 lg:gap-16 relative z-10">
+                {/* Right Column: Illustration with Glows (Illustration on right this time) */}
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="flex-1 relative"
+                >
+                  <div className="relative p-2 md:p-4">
+                    {/* The Illustration */}
+                    <img
+                      src="/ai_platform_illustration.png"
+                      alt="Vidyo Ai platform"
+                      width="600"
+                      height="500"
+                      className="w-full h-auto rounded-3xl" />
+                  </div>
+
+                  {/* Background decorative elements */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-100/50 rounded-full blur-3xl -z-10" />
+                  <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-indigo-100/30 rounded-full blur-3xl -z-10" />
+                </motion.div>
+
+                {/* Left Column: Text Content */}
+                <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="flex-1"
+                >
+                  <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-2 text-[#1F2937] leading-tight">
+                    Vidyo <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                      Ai platform
+                    </span>
+                  </h1>
+
+                  <p className="text-lg sm:text-xl font-medium text-blue-600/80 mb-2">
+                    Reimagine the way you work with next-generation AI technology.
+                  </p>
+
+                  <p className="text-base sm:text-lg text-gray-700/80 mb-6 leading-relaxed">
+                    Automate operations, unlock insights, and accelerate growth with a solution designed for modern organizations.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                        <CheckCircle2 size={20} />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">Faster Execution</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                        <CheckCircle2 size={20} />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">Seamless Integration</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    <Button
+                      onClick={() => navigate("/contact")}
+                      size="xl"
+                      className="h-14 px-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
+                    >
+                      Get Started with AI
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </div>
           {/* PremiumCTA Merged Here */}
           <div className="mt-16 sm:mt-24">
             <PremiumCTA
