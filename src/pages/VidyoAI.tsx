@@ -207,8 +207,8 @@ const VidyoAI = () => {
                                 >
                                     {/* Icon */}
                                     <div className={`w-16 h-16 rounded-2xl mb-8 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${feature.color === 'blue' ? 'bg-blue-100 text-blue-600' :
-                                            feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' :
-                                                'bg-purple-100 text-purple-600'
+                                        feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' :
+                                            'bg-purple-100 text-purple-600'
                                         }`}>
                                         <feature.icon size={32} />
                                     </div>
@@ -220,10 +220,6 @@ const VidyoAI = () => {
                                         {feature.description}
                                     </p>
 
-                                    {/* Decorative background number */}
-                                    <span className="absolute -bottom-6 -right-6 text-[10rem] font-black text-slate-100 group-hover:text-blue-50/50 transition-colors pointer-events-none select-none">
-                                        0{idx + 1}
-                                    </span>
                                 </motion.div>
                             ))}
                         </div>
