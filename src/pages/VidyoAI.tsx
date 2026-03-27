@@ -146,34 +146,83 @@ const VidyoAI = () => {
                     </div>
 
                     <div className="container relative z-10 max-w-6xl mx-auto">
-                        <motion.div style={{ y: yText, opacity: opacityHero }} className="text-center">
+                        <motion.div style={{ y: yText, opacity: opacityHero }} className="text-center relative">
+                            {/* Background Design Blobs (Figma Inspired) */}
+                            <div className="absolute inset-0 -z-10 pointer-events-none overflow-visible">
+                                <motion.div
+                                    animate={{
+                                        scale: [1, 1.2, 1],
+                                        opacity: [0.3, 0.5, 0.3],
+                                        x: [-20, 20, -20],
+                                        y: [-10, 10, -10],
+                                    }}
+                                    transition={{
+                                        duration: 8,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                    }}
+                                    className="absolute -left-20 top-0 w-96 h-96 bg-blue-400/20 blur-[100px] rounded-full"
+                                />
+                                <motion.div
+                                    animate={{
+                                        scale: [1, 1.1, 1],
+                                        opacity: [0.2, 0.4, 0.2],
+                                        x: [20, -20, 20],
+                                        y: [10, -10, 10],
+                                    }}
+                                    transition={{
+                                        duration: 10,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                    }}
+                                    className="absolute -right-20 top-20 w-[500px] h-[500px] bg-indigo-400/20 blur-[120px] rounded-full"
+                                />
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-radial from-white/30 to-transparent" />
+                            </div>
 
-                            {/* Headline */}
+                            {/* Large Headline: Education 3.0 with Typing Effect */}
                             <motion.h1
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 0.1 }}
-                                className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-slate-900 mb-8 leading-[0.95]"
+                                className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter text-slate-900 mb-4 leading-[0.85]"
                             >
-                                Where Education Meets <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                                    Intelligent Entertainment.
-                                </span>
+                                {"Education 3.0".split("").map((char, index) => (
+                                    <motion.span
+                                        key={index}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{
+                                            duration: 0.1,
+                                            delay: index * 0.1,
+                                            ease: "easeIn"
+                                        }}
+                                    >
+                                        {char}
+                                    </motion.span>
+                                ))}
                             </motion.h1>
 
-                            {/* Sub-headline */}
+                            {/* Smaller Sub-title: Education meets Entertainment */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, delay: 1.4 }}
+                                className="text-xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 mb-10 tracking-tight"
+                            >
+                                Education meets Entertainment.
+                            </motion.div>
+
+                            {/* Description */}
                             <motion.p
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
+                                transition={{ duration: 0.8, delay: 1.8 }}
                                 className="text-lg sm:text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-6 leading-relaxed font-medium"
                             >
-                                Vidyo AI is redefining how college students learn — merging AI-driven content, agentic learning systems, and immersive entertainment to deliver Education 3.0.
+                                Vidyo AI is redefining how college students learn — merging AI-driven content, agentic learning systems, and immersive entertainment.
                             </motion.p>
                             <motion.p
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 0.3 }}
+                                transition={{ duration: 0.8, delay: 2.0 }}
                                 className="text-lg sm:text-xl md:text-2xl text-slate-900 max-w-2xl mx-auto mb-10 leading-relaxed font-bold"
                             >
                                 Stop studying harder. Start learning smarter.
