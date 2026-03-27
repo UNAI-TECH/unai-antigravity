@@ -287,16 +287,14 @@ const Products = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-4">
-                    <Button
-                      onClick={() => navigate("/vidyo-ai")}
-                      size="xl"
-                      className="h-14 px-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
-                    >
-                      Coming Soon
-                      <ArrowRight className="ml-2 w-5 h-5" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => navigate("/vidyo-ai")}
+                    size="xl"
+                    className="h-14 px-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
+                  >
+                    Explore more
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
                 </motion.div>
               </div>
             </div>

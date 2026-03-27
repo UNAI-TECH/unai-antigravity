@@ -1,44 +1,86 @@
 import { useRef, useEffect } from "react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import {
-    Check, ArrowRight, Brain, Zap,
-    PlayCircle, Monitor, BarChart3, Quote
+    ArrowRight, Brain, Zap, PlayCircle,
+    Route, Sparkles, BarChart3, Target,
+    BookOpen, Cpu, Rocket, Quote, Check
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import SEO from "@/components/SEO";
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Features Data ─────────────────────────────────────────────────────────────
 
 const features = [
     {
-        icon: Brain,
-        title: "AI-Powered Adaptive Learning",
-        description: "Our platform dynamically adjusts content difficulty based on real-time user engagement and performance metrics. Students receive a personalized journey that perfectly balances challenge with achievement.",
+        icon: Route,
+        title: "Personalized Learning Paths",
+        description: "AI maps your goals, gaps, and pace to craft a dynamic curriculum that evolves as you grow — no two paths are alike.",
         color: "blue"
     },
     {
         icon: PlayCircle,
-        title: "Immersive Narrative Experiences",
-        description: "We leverage cinematic storytelling to anchor complex educational concepts in memorable, emotionally resonant video narratives. Educators can now deliver curriculum-aligned content that students actually want to watch.",
+        title: "AI Content Generation",
+        description: "Subject matter transformed into short-form videos, interactive explainers, and narrative-driven lessons — powered by cutting-edge AI models.",
         color: "indigo"
     },
     {
-        icon: Monitor,
-        title: "Seamless Multi-Platform Integration",
-        description: "Vidyo AI operates across all devices, providing a consistent and high-performance learning environment from mobile to desktop. Institutions can scale their educational reach without compromising on quality or accessibility.",
+        icon: Brain,
+        title: "Agentic Study Agents",
+        description: "Autonomous AI agents that proactively schedule sessions, retrieve resources, quiz you, and adjust your plan — all without being asked.",
         color: "purple"
     },
     {
-        icon: BarChart3,
-        title: "Advanced Performance Analytics",
-        description: "Deep-dive into granular data to understand learning patterns, retention rates, and engagement levels across your entire student body. Make data-driven decisions that optimize both pedagogical strategy and student outcomes.",
+        icon: Rocket,
+        title: "Real-Time Tech Updates",
+        description: "Curated feeds of emerging technology breakthroughs — from AI research to industry innovations — delivered in digestible, structured formats.",
         color: "blue"
+    },
+    {
+        icon: Target,
+        title: "Adaptive Assessment Engine",
+        description: "Smart evaluations that measure deep understanding — not memorization — and feed results directly back into your personalized learning loop.",
+        color: "indigo"
+    },
+    {
+        icon: BarChart3,
+        title: "Progress Intelligence",
+        description: "A live dashboard that tracks mastery, flags blind spots, and projects your learning trajectory — transparent, data-driven, and actionable.",
+        color: "purple"
     }
 ];
 
-// ─── Scroll Section Component ──────────────────────────────────────────────────
+// ─── Vision Pillars ────────────────────────────────────────────────────────────
+
+const pillars = [
+    {
+        icon: BookOpen,
+        title: "Education via Entertainment",
+        description: "AI-generated content that teaches through stories, visuals, and immersive formats students actually enjoy."
+    },
+    {
+        icon: Cpu,
+        title: "Agentic Learning Systems",
+        description: "Autonomous AI agents that plan, adapt, and orchestrate your unique learning journey in real time."
+    },
+    {
+        icon: Sparkles,
+        title: "Emerging Tech Advancement",
+        description: "Continuously updated with the latest breakthroughs — keeping students ahead of every curve."
+    }
+];
+
+// ─── Hero Stats ────────────────────────────────────────────────────────────────
+
+const stats = [
+    { value: "3.0", label: "Education generation" },
+    { value: "AI-First", label: "Fully agentic platform" },
+    { value: "∞", label: "Personalized learning paths" }
+];
+
+// ─── Scroll Section ────────────────────────────────────────────────────────────
+
 interface SectionProps { id?: string; children: React.ReactNode; className?: string }
 const ScrollSection = ({ id, children, className = "" }: SectionProps) => (
     <motion.section
@@ -53,11 +95,12 @@ const ScrollSection = ({ id, children, className = "" }: SectionProps) => (
     </motion.section>
 );
 
+// ─── Component ─────────────────────────────────────────────────────────────────
+
 const VidyoAI = () => {
     const navigate = useNavigate();
     const heroRef = useRef<HTMLElement>(null);
 
-    // Parallax effects
     const { scrollYProgress } = useScroll({
         target: heroRef,
         offset: ["start start", "end start"]
@@ -66,7 +109,6 @@ const VidyoAI = () => {
     const yText = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
     const opacityHero = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-    // Ensure scroll to top on mount
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
@@ -74,224 +116,281 @@ const VidyoAI = () => {
     return (
         <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
             <SEO
-                title="Vidyo AI | Immersive Edutainment Platform"
-                description="Education reimagined through the power of immersive entertainment. Vidyo AI delivers education through cinematic video experiences and adaptive AI learning."
+                title="Vidyo AI | Education Through Entertainment"
+                description="Vidyo AI is redefining how college students learn — merging AI-driven content, agentic learning systems, and immersive entertainment to deliver Education 3.0."
             />
 
             <main className="overflow-x-hidden">
 
-                {/* HERO SECTION */}
+                {/* ═══════════════════════════════════════════
+            HERO
+        ═══════════════════════════════════════════ */}
                 <section
                     ref={heroRef}
                     className="relative min-h-[100svh] flex items-center justify-center pt-24 pb-16 px-4 overflow-hidden bg-slate-50"
                 >
-                    {/* Background Elements */}
+                    {/* Background */}
                     <div className="absolute inset-0 z-0">
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.08)_0%,transparent_50%)]" />
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_100%,transparent_100%)] opacity-30" />
-
-                        {/* Animated Orbs */}
                         <motion.div
-                            animate={{
-                                scale: [1, 1.2, 1],
-                                x: [0, 50, 0],
-                                y: [0, 30, 0]
-                            }}
+                            animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] }}
                             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
                             className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-400/10 rounded-full blur-[100px]"
                         />
                         <motion.div
-                            animate={{
-                                scale: [1.2, 1, 1.2],
-                                x: [0, -40, 0],
-                                y: [0, 50, 0]
-                            }}
+                            animate={{ scale: [1.2, 1, 1.2], x: [0, -40, 0], y: [0, 50, 0] }}
                             transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
                             className="absolute bottom-1/4 -right-20 w-[30rem] h-[30rem] bg-indigo-400/10 rounded-full blur-[120px]"
                         />
                     </div>
 
                     <div className="container relative z-10 max-w-6xl mx-auto">
-                        <motion.div
-                            style={{ y: yText, opacity: opacityHero }}
-                            className="text-center"
-                        >
+                        <motion.div style={{ y: yText, opacity: opacityHero }} className="text-center">
+
                             {/* Headline */}
                             <motion.h1
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.8, delay: 0.1 }}
-                                className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-slate-900 mb-8 leading-[0.95]"
+                                className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-slate-900 mb-8 leading-[0.95]"
                             >
-                                Education Reimagined <br />
+                                Where Education Meets <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                                    Through Entertainment
+                                    Intelligent Entertainment.
                                 </span>
                             </motion.h1>
 
-                            {/* Subheadline */}
+                            {/* Sub-headline */}
                             <motion.p
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-10 leading-relaxed font-medium"
+                                className="text-lg sm:text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-6 leading-relaxed font-medium"
                             >
-                                Vidyo AI transforms passive watching into active learning by blending high-production entertainment with intelligent educational modules. We bridge the gap between engagement and impact.
+                                Vidyo AI is redefining how college students learn — merging AI-driven content, agentic learning systems, and immersive entertainment to deliver Education 3.0.
+                            </motion.p>
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, delay: 0.3 }}
+                                className="text-lg sm:text-xl md:text-2xl text-slate-900 max-w-2xl mx-auto mb-10 leading-relaxed font-bold"
+                            >
+                                Stop studying harder. Start learning smarter.
                             </motion.p>
 
-                            {/* Tagline */}
+                            {/* CTA Buttons */}
+                            {/* Coming Soon Animated Effect */}
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ duration: 1, delay: 0.4 }}
-                                className="flex flex-col items-center gap-6"
+                                transition={{ duration: 1, delay: 0.5 }}
+                                className="mt-12 flex flex-col items-center"
                             >
-                                <div className="h-px w-24 bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-                                <p className="text-lg font-semibold text-blue-600 tracking-wide uppercase">
-                                    Intelligent, Immersive, and Entertaining Education.
-                                </p>
-
-                                <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
-                                    <button
-                                        onClick={() => navigate('/contact')}
-                                        className="group px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all hover:scale-105 shadow-xl shadow-slate-200 flex items-center gap-2"
-                                    >
-                                        Partner With Us
-                                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            const el = document.getElementById('about-vidyo');
-                                            el?.scrollIntoView({ behavior: 'smooth' });
+                                <div className="relative group">
+                                    <motion.div
+                                        animate={{
+                                            scale: [1, 1.05, 1],
+                                            opacity: [0.5, 0.8, 0.5],
                                         }}
-                                        className="px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all"
-                                    >
-                                        Learn More
-                                    </button>
+                                        transition={{
+                                            duration: 4,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                        }}
+                                        className="absolute inset-0 bg-blue-400/20 blur-3xl rounded-full"
+                                    />
+
+                                    <div className="relative flex flex-col items-center gap-4">
+                                        <motion.div
+                                            className="text-4xl md:text-5xl font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"
+                                            animate={{
+                                                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                                            }}
+                                            transition={{
+                                                duration: 5,
+                                                repeat: Infinity,
+                                                ease: "linear"
+                                            }}
+                                            style={{ backgroundSize: "200% auto" }}
+                                        >
+                                            Coming soon...
+                                        </motion.div>
+
+                                        <motion.p
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 1, duration: 1 }}
+                                            className="text-slate-400 font-medium tracking-widest uppercase text-xs mt-4"
+                                        >
+                                            Something revolutionary is in the works
+                                        </motion.p>
+                                    </div>
                                 </div>
                             </motion.div>
+
                         </motion.div>
                     </div>
                 </section>
 
-                {/* FEATURES SECTION */}
+                {/* ═══════════════════════════════════════════
+            ABOUT / VISION
+        ═══════════════════════════════════════════ */}
+                <ScrollSection id="about-vidyo" className="bg-slate-900 text-white selection:bg-white/10 selection:text-white">
+                    <div className="container max-w-7xl mx-auto px-4">
+
+                        {/* Section Tag */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="flex items-center gap-3 mb-6"
+                        >
+                            <span className="block h-px w-10 bg-indigo-400" />
+                            <span className="text-xs font-bold tracking-widest uppercase text-indigo-400">Our Vision</span>
+                        </motion.div>
+
+                        {/* Headline */}
+                        <motion.h2
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8 }}
+                            className="text-3xl sm:text-4xl md:text-6xl font-bold mb-12 leading-tight"
+                        >
+                            Built for the Next Generation <br />
+                            <span className="italic text-white/60">of Learners.</span>
+                        </motion.h2>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+
+                            {/* Body Copy */}
+                            <motion.div
+                                initial={{ opacity: 0, x: -30 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8 }}
+                                className="space-y-8"
+                            >
+                                <div className="space-y-6 text-lg sm:text-xl text-slate-300 leading-relaxed font-medium">
+                                    <p>
+                                        At UNAI Tech, we believe education should never feel like a burden. Vidyo AI was born from a simple conviction: <strong className="text-white">when learning is engaging, it becomes unstoppable.</strong>
+                                    </p>
+                                    <p>
+                                        We combine cutting-edge agentic AI systems with entertainment-first content design — creating an adaptive learning environment that understands each student, evolves with them, and delivers knowledge in the format they naturally consume.
+                                    </p>
+                                    <p className="text-2xl font-bold text-white border-l-4 border-indigo-500 pl-6">
+                                        This is not a productivity tool. This is a paradigm shift.
+                                    </p>
+                                </div>
+                            </motion.div>
+
+                            {/* Core Pillars */}
+                            <div className="space-y-6">
+                                {pillars.map((pillar, idx) => (
+                                    <motion.div
+                                        key={pillar.title}
+                                        initial={{ opacity: 0, x: 30 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ duration: 0.6, delay: idx * 0.1 }}
+                                        className="group p-6 sm:p-8 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-indigo-500/30 transition-all duration-300"
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0 group-hover:bg-indigo-500/30 transition-colors">
+                                                <pillar.icon size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{pillar.title}</h3>
+                                                <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{pillar.description}</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </ScrollSection>
+
+                {/* ═══════════════════════════════════════════
+            FEATURES
+        ═══════════════════════════════════════════ */}
                 <ScrollSection className="bg-white">
                     <div className="container max-w-7xl mx-auto px-4">
-                        <div className="text-center mb-20">
-                            <h2 className="text-base font-bold text-blue-600 uppercase tracking-widest mb-4">Core Capabilities</h2>
-                            <p className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
-                                Engineered for Engagement, <br />Designed for Impact.
-                            </p>
+
+                        {/* Header */}
+                        <div className="text-center mb-16 sm:mb-20">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                className="inline-flex items-center gap-3 mb-5"
+                            >
+                                <span className="block h-px w-8 bg-blue-400" />
+                                <span className="text-xs font-bold tracking-widest uppercase text-blue-600">Education 3.0</span>
+                                <span className="block h-px w-8 bg-blue-400" />
+                            </motion.div>
+
+                            <motion.h2
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-5 leading-tight"
+                            >
+                                Revolutionary Features, <br />Designed for You
+                            </motion.h2>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 }}
+                                className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto font-medium"
+                            >
+                                Every feature in Vidyo AI is engineered to eliminate friction between a student and their full potential.
+                            </motion.p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                        {/* Feature Grid — 3 columns */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                             {features.map((feature, idx) => (
                                 <motion.div
                                     key={feature.title}
                                     initial={{ opacity: 0, y: 30 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
-                                    transition={{ duration: 0.6, delay: idx * 0.1 }}
-                                    className="group relative p-8 md:p-12 rounded-[2.5rem] bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-100 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 overflow-hidden"
+                                    transition={{ duration: 0.6, delay: idx * 0.08 }}
+                                    className="group relative p-8 sm:p-10 rounded-[2rem] bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-100 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                 >
                                     {/* Icon */}
-                                    <div className={`w-16 h-16 rounded-2xl mb-8 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${feature.color === 'blue' ? 'bg-blue-100 text-blue-600' :
+                                    <div className={`w-14 h-14 rounded-2xl mb-6 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${feature.color === 'blue' ? 'bg-blue-100 text-blue-600' :
                                         feature.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' :
                                             'bg-purple-100 text-purple-600'
                                         }`}>
-                                        <feature.icon size={32} />
+                                        <feature.icon size={28} />
                                     </div>
 
-                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6 leading-tight group-hover:text-blue-600 transition-colors">
+                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 leading-tight group-hover:text-blue-600 transition-colors">
                                         {feature.title}
                                     </h3>
-                                    <p className="text-lg text-slate-600 leading-relaxed font-medium">
+                                    <p className="text-base text-slate-600 leading-relaxed">
                                         {feature.description}
                                     </p>
-
                                 </motion.div>
                             ))}
                         </div>
                     </div>
                 </ScrollSection>
 
-                {/* ABOUT & VISION SECTION */}
-                <ScrollSection id="about-vidyo" className="bg-slate-900 text-white selection:bg-white/10 selection:text-white">
-                    <div className="container max-w-6xl mx-auto px-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-                            <div>
-                                <motion.div
-                                    initial={{ opacity: 0, x: -30 }}
-                                    whileInView={{ opacity: 1, x: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.8 }}
-                                >
-                                    <h2 className="text-indigo-400 font-bold uppercase tracking-[0.2em] mb-6">Our Philosophy</h2>
-                                    <p className="text-3xl md:text-5xl font-bold mb-10 leading-tight">
-                                        Dismantling the boundary <br />
-                                        <span className="italic text-white/60">between learning and play.</span>
-                                    </p>
-
-                                    <div className="space-y-8 text-xl text-slate-300 leading-relaxed font-medium">
-                                        <p>
-                                            At UNAI TECH, we believe that the greatest barrier to education is not access to information, but access to sustained engagement. We are dedicated to creating a world where curiosity is fueled by the same high-production immersion typically reserved for entertainment.
-                                        </p>
-                                        <p>
-                                            Our vision for Vidyo AI is to empower human potential through intelligent, human-centered technology that respects the learner's time and attention. By weaving intelligence into the fabric of entertainment, we are not just teaching new skills—we are cultivating a lifelong passion for discovery.
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            </div>
-
-                            <div className="relative">
-                                {/* Founder Quote Card */}
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.8 }}
-                                    className="relative p-10 md:p-14 rounded-[3rem] bg-gradient-to-br from-blue-600 to-indigo-700 shadow-2xl overflow-hidden"
-                                >
-                                    <Quote size={80} className="text-white/10 absolute -top-4 -left-4" />
-
-                                    <blockquote className="relative z-10">
-                                        <p className="text-2xl md:text-3xl font-bold mb-10 leading-snug">
-                                            "Education is not the filling of a pail, but the lighting of a fire; we are simply providing the most powerful spark in history."
-                                        </p>
-                                        <footer className="flex items-center gap-4">
-                                            <div className="w-12 h-1 px-4 bg-white/30 rounded-full" />
-                                            <span className="text-lg font-bold tracking-widest uppercase text-white/80">UNAI TECH Founders</span>
-                                        </footer>
-                                    </blockquote>
-
-                                    {/* Aesthetic glow */}
-                                    <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-                                </motion.div>
-
-                                {/* Closing Line */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.8, delay: 0.2 }}
-                                    className="mt-12 text-center"
-                                >
-                                    <p className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic">
-                                        Vidyo AI: The Future of Education Starts Here.
-                                    </p>
-                                </motion.div>
-                            </div>
-                        </div>
-                    </div>
-                </ScrollSection>
-
-                {/* FINAL CTA */}
-                <section className="py-24 px-4 bg-white">
+                {/* ═══════════════════════════════════════════
+            FINAL CTA
+        ═══════════════════════════════════════════ */}
+                <section className="py-24 px-4 bg-slate-50">
                     <PremiumCTA
-                        title={<>Ready to Transform <br />Learning Experiences?</>}
-                        description="Speak with our strategic engineers about integrating Vidyo AI into your institution or content ecosystem."
+                        title={<>Ready to Experience <br /><span className="text-blue-300">Education 3.0</span>?</>}
+                        description="Join the next generation of learners. Get early access to Vidyo AI and start learning smarter."
                         primaryButton={{
-                            label: "Contact Strategic Team",
+                            label: "Get Early Access",
                             onClick: () => navigate('/contact')
                         }}
                     />
