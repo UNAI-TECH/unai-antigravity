@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import SEO from "@/components/SEO";
 import RadialOrbitalTimeline from "@/components/ui/radial-orbital-timeline";
+import { CinematicHero } from "@/components/ui/cinematic-landing-hero";
 
 
 // ─── Features Data ─────────────────────────────────────────────────────────────
@@ -130,21 +131,12 @@ const ScrollSection = ({ id, children, className = "" }: SectionProps) => (
 // ─── Component ─────────────────────────────────────────────────────────────────
 const VidyoAI = () => {
     const navigate = useNavigate();
-    const heroRef = useRef<HTMLElement>(null);
 
-    const { scrollYProgress } = useScroll({
-        target: heroRef,
-        offset: ["start start", "end start"]
-    });
-
-    const yText = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
-    const opacityHero = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+    const [activePillar, setActivePillar] = useState(0);
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
-
-    const [activePillar, setActivePillar] = useState(0);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -165,158 +157,80 @@ const VidyoAI = () => {
                 {/* ═══════════════════════════════════════════
             HERO
         ═══════════════════════════════════════════ */}
-                <section
-                    ref={heroRef}
-                    className="relative min-h-[100svh] flex items-center justify-center pt-24 pb-16 px-4 overflow-hidden bg-white"
-                >
-                    {/* Background */}
-                    <div className="absolute inset-0 z-0 text-center">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.08)_0%,transparent_50%)]" />
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_100%,transparent_100%)] opacity-30" />
-                        <motion.div
-                            animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] }}
-                            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-400/10 rounded-full blur-[100px]"
-                        />
-                        <motion.div
-                            animate={{ scale: [1.2, 1, 1.2], x: [0, -40, 0], y: [0, 50, 0] }}
-                            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute bottom-1/4 -right-20 w-[30rem] h-[30rem] bg-indigo-400/10 rounded-full blur-[120px]"
-                        />
-                    </div>
+                <CinematicHero
+                    brandName="Vidyo AI"
+                    tagline1={<>Education <span className="text-blue-500">Never</span></>}
+                    tagline2={<><span className="text-blue-500">will be</span> the same.</>}
+                    cardHeading="Education 3.0"
+                    cardDescription={
+                        <>
+                            <span className="text-white font-semibold">Vidyo AI</span> is redefining how students learn — merging AI-driven content, agentic learning systems, and immersive entertainment.
+                        </>
+                    }
+                    metricValue={3.0}
+                    metricLabel="Generation"
+                    ctaHeading="Education 3.0 Starts Here."
+                    ctaDescription="Join the revolution of AI-driven learning and immersive entertainment. Start your journey today."
+                />
 
-                    <div className="container relative z-10 max-w-6xl mx-auto">
-                        <motion.div style={{ y: yText, opacity: opacityHero }} className="text-center relative">
-                            {/* Background Design Blobs (Figma Inspired) */}
-                            <div className="absolute inset-0 -z-10 pointer-events-none overflow-visible">
+                {/* Additional Stats reveal as you scroll past hero */}
+                <section className="py-20 bg-white">
+                    <div className="container max-w-5xl mx-auto px-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                            {stats.map((stat, idx) => (
                                 <motion.div
-                                    animate={{
-                                        scale: [1, 1.2, 1],
-                                        opacity: [0.3, 0.5, 0.3],
-                                        x: [-20, 20, -20],
-                                        y: [-10, 10, -10],
-                                    }}
+                                    key={idx}
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
                                     transition={{
-                                        duration: 8,
-                                        repeat: Infinity,
-                                        ease: "easeInOut",
+                                        type: "spring",
+                                        stiffness: 100,
+                                        damping: 10,
+                                        delay: idx * 0.2
                                     }}
-                                    className="absolute -left-20 top-0 w-96 h-96 bg-blue-400/20 blur-[100px] rounded-full"
-                                />
-                                <motion.div
-                                    animate={{
-                                        scale: [1, 1.1, 1],
-                                        opacity: [0.2, 0.4, 0.2],
-                                        x: [20, -20, 20],
-                                        y: [10, -10, 10],
-                                    }}
-                                    transition={{
-                                        duration: 10,
-                                        repeat: Infinity,
-                                        ease: "easeInOut",
-                                    }}
-                                    className="absolute -right-20 top-20 w-[500px] h-[500px] bg-indigo-400/20 blur-[120px] rounded-full"
-                                />
-                            </div>
-
-                            {/* Large Headline: Education 3.0 with Typing Effect */}
-                            <motion.h1
-                                className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter text-slate-900 mb-4 leading-[0.85]"
-                            >
-                                {"Education 3.0".split("").map((char, index) => (
-                                    <motion.span
-                                        key={index}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{
-                                            duration: 0.1,
-                                            delay: index * 0.1,
-                                            ease: "easeIn"
-                                        }}
-                                    >
-                                        {char}
-                                    </motion.span>
-                                ))}
-                            </motion.h1>
-
-                            {/* Smaller Sub-title: Education meets Entertainment */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 1.4 }}
-                                className="text-xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 mb-10 tracking-tight"
-                            >
-                                Education meets Entertainment.
-                            </motion.div>
-
-                            {/* Description */}
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 1.8 }}
-                                className="text-lg sm:text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-6 leading-relaxed font-medium"
-                            >
-                                Vidyo AI is redefining how college students learn — merging AI-driven content, agentic learning systems, and immersive entertainment.
-                            </motion.p>
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 2.0 }}
-                                className="text-lg sm:text-xl md:text-2xl text-slate-900 max-w-2xl mx-auto mb-10 leading-relaxed font-bold text-center"
-                            >
-                                Stop studying harder. Start learning smarter.
-                            </motion.p>
-
-                            {/* Coming Soon Animated Effect */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 1, delay: 0.5 }}
-                                className="mt-12 flex flex-col items-center"
-                            >
-                                <div className="relative group">
-                                    <motion.div
-                                        animate={{
-                                            scale: [1, 1.05, 1],
-                                            opacity: [0.5, 0.8, 0.5],
-                                        }}
-                                        transition={{
-                                            duration: 4,
-                                            repeat: Infinity,
-                                            ease: "easeInOut",
-                                        }}
-                                        className="absolute inset-0 bg-blue-400/20 blur-3xl rounded-full"
-                                    />
-
-                                    <div className="relative flex flex-col items-center gap-4">
-                                        <motion.div
-                                            className="text-4xl md:text-5xl font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"
-                                            animate={{
-                                                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                                            }}
-                                            transition={{
-                                                duration: 5,
-                                                repeat: Infinity,
-                                                ease: "linear"
-                                            }}
-                                            style={{ backgroundSize: "200% auto" }}
-                                        >
-                                            Coming soon...
-                                        </motion.div>
-
-                                        <motion.p
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 1, duration: 1 }}
-                                            className="text-slate-400 font-medium tracking-widest uppercase text-xs mt-4"
-                                        >
-                                            Something revolutionary is in the works
-                                        </motion.p>
+                                >
+                                    <div className="text-5xl font-black text-slate-900 mb-2">{stat.value}</div>
+                                    <div className="text-slate-500 font-medium tracking-wide uppercase text-sm">
+                                        {stat.label}
                                     </div>
-                                </div>
-                            </motion.div>
+                                </motion.div>
+                            ))}
+                        </div>
 
-                        </motion.div>
+                        <div className="mt-20 relative text-center">
+                            <motion.div
+                                animate={{
+                                    scale: [1, 1.05, 1],
+                                    opacity: [0.5, 0.8, 0.5],
+                                }}
+                                transition={{
+                                    duration: 4,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                }}
+                                className="absolute inset-0 bg-blue-400/10 blur-3xl rounded-full"
+                            />
+                            <div className="relative flex flex-col items-center gap-4">
+                                <motion.div
+                                    className="text-4xl md:text-5xl font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"
+                                    animate={{
+                                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                                    }}
+                                    transition={{
+                                        duration: 5,
+                                        repeat: Infinity,
+                                        ease: "linear"
+                                    }}
+                                    style={{ backgroundSize: "200% auto" }}
+                                >
+                                    Coming soon...
+                                </motion.div>
+                                <p className="text-slate-400 font-medium tracking-widest uppercase text-xs mt-4">
+                                    Something revolutionary is in the works
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -330,7 +244,8 @@ const VidyoAI = () => {
                             whileInView={{ opacity: 1, y: 0, scale: 1 }}
                             viewport={{ once: false, amount: 0.2 }}
                             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                            className="relative overflow-hidden rounded-[3.5rem] p-8 md:p-16 lg:p-20 bg-slate-950 border border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)]"
+                            className="relative overflow-hidden rounded-[3.5rem] p-8 md:p-16 lg:p-20 border border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)]"
+                            style={{ background: "linear-gradient(145deg, #162C6D 0%, #0A101D 100%)" }}
                         >
                             {/* Decorative Background for Card */}
                             <div className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none">

@@ -34,6 +34,7 @@ export default function RadialOrbitalTimeline({
         y: 0,
     });
     const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
+    const [hoveredNodeId, setHoveredNodeId] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const orbitRef = useRef<HTMLDivElement>(null);
     const nodeRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -83,7 +84,9 @@ export default function RadialOrbitalTimeline({
     useEffect(() => {
         let rotationTimer: NodeJS.Timeout;
 
-        if (autoRotate && viewMode === "orbital") {
+        const shouldRotate = autoRotate && viewMode === "orbital" && !hoveredNodeId && !activeNodeId;
+
+        if (shouldRotate) {
             rotationTimer = setInterval(() => {
                 setRotationAngle((prev) => {
                     const newAngle = (prev + 0.3) % 360;
@@ -97,7 +100,7 @@ export default function RadialOrbitalTimeline({
                 clearInterval(rotationTimer);
             }
         };
-    }, [autoRotate, viewMode]);
+    }, [autoRotate, viewMode, hoveredNodeId, activeNodeId]);
 
     const centerViewOnNode = (nodeId: number) => {
         if (viewMode !== "orbital" || !nodeRefs.current[nodeId]) return;
@@ -111,7 +114,8 @@ export default function RadialOrbitalTimeline({
 
     const calculateNodePosition = (index: number, total: number) => {
         const angle = ((index / total) * 360 + rotationAngle) % 360;
-        const radius = 200;
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        const radius = isMobile ? 120 : 200;
         const radian = (angle * Math.PI) / 180;
 
         const x = radius * Math.cos(radian) + centerOffset.x;
@@ -141,7 +145,7 @@ export default function RadialOrbitalTimeline({
 
     return (
         <div
-            className="w-full h-[600px] flex flex-col items-center justify-center bg-transparent overflow-hidden"
+            className="w-full h-[600px] flex flex-col items-center justify-center bg-transparent"
             ref={containerRef}
             onClick={handleContainerClick}
         >
@@ -186,9 +190,9 @@ export default function RadialOrbitalTimeline({
                                 animate={{
                                     x: position.x,
                                     y: position.y,
-                                    opacity: isExpanded ? 1 : position.opacity,
-                                    scale: isExpanded ? 1.25 : 1,
-                                    zIndex: isExpanded ? 200 : position.zIndex,
+                                    opacity: (isExpanded || hoveredNodeId === item.id) ? 1 : position.opacity,
+                                    scale: (isExpanded || hoveredNodeId === item.id) ? 1.25 : 1,
+                                    zIndex: (isExpanded || hoveredNodeId === item.id) ? 200 : position.zIndex,
                                 }}
                                 transition={{
                                     type: "spring",
@@ -197,6 +201,8 @@ export default function RadialOrbitalTimeline({
                                     mass: 1,
                                     opacity: { duration: 0.3 }
                                 }}
+                                onMouseEnter={() => setHoveredNodeId(item.id)}
+                                onMouseLeave={() => setHoveredNodeId(null)}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleItem(item.id);
@@ -216,7 +222,7 @@ export default function RadialOrbitalTimeline({
 
                                 <div
                                     className={`
-                  w-10 h-10 rounded-full flex items-center justify-center
+                  w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center
                   ${isExpanded
                                             ? "bg-white text-black"
                                             : isRelated
@@ -231,7 +237,7 @@ export default function RadialOrbitalTimeline({
                                                 : "border-white/40"
                                         }
                   transition-all duration-300 transform
-                  ${isExpanded ? "scale-150" : ""}
+                  ${isExpanded ? "scale-125 md:scale-150" : ""}
                 `}
                                 >
                                     <Icon size={16} />
@@ -249,18 +255,26 @@ export default function RadialOrbitalTimeline({
                                     {item.title}
                                 </div>
 
-                                {isExpanded && (
-                                    <Card className="absolute top-20 left-1/2 -translate-x-1/2 w-64 bg-black/90 backdrop-blur-lg border-white/30 shadow-xl shadow-white/10 overflow-visible">
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-px h-3 bg-white/50"></div>
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="text-sm mt-2 text-white">
-                                                {item.title}
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="text-xs text-white/80">
-                                            <p>{item.content}</p>
-                                        </CardContent>
-                                    </Card>
+                                {(isExpanded || hoveredNodeId === item.id) && (
+                                    <div
+                                        className={`absolute left-1/2 -translate-x-1/2 pointer-events-auto transition-all duration-300 ${hoveredNodeId === item.id ? 'opacity-100 scale-100' : ''}`}
+                                        style={{
+                                            top: position.y > 50 ? '-240px' : '50px',
+                                            zIndex: 300
+                                        }}
+                                    >
+                                        <Card className="w-56 md:w-64 bg-black/90 backdrop-blur-lg border-white/30 shadow-2xl shadow-white/10 overflow-visible">
+                                            <div className={`absolute left-1/2 -translate-x-1/2 w-px h-6 bg-white/50 ${position.y > 50 ? '-bottom-6' : '-top-6'}`}></div>
+                                            <CardHeader className="pb-1 md:pb-2">
+                                                <CardTitle className="text-xs md:text-sm mt-1 md:mt-2 text-white">
+                                                    {item.title}
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="text-[10px] md:text-xs text-white/80">
+                                                <p>{item.content}</p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                                 )}
                             </motion.div>
                         );
