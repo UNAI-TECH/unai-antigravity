@@ -148,7 +148,7 @@ export function CinematicHero({
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: "top top",
-                    end: "+=6000",
+                    end: isMobile ? "+=1500" : "+=6000",
                     pin: true,
                     scrub: 1,
                     anticipatePin: 1,
@@ -239,13 +239,13 @@ export function CinematicHero({
 
                         <div className="ai-core-container order-2 lg:order-2 flex items-center justify-center relative w-full h-auto min-h-[220px] md:min-h-[400px] lg:min-h-[600px] mt-2 md:mt-0">
                             {/* Decorative Badges */}
-                            <div className="floating-badge absolute -left-10 md:-left-20 top-20 flex items-center gap-3 floating-ui-badge rounded-2xl p-4 z-30">
+                            <div className="floating-badge absolute -left-10 md:-left-20 top-20 hidden md:flex items-center gap-3 floating-ui-badge rounded-2xl p-4 z-30">
                                 <Sparkles className="text-blue-400 w-5 h-5 shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
                                 <span className="text-white font-bold text-xs uppercase tracking-widest leading-none">AI Agentic</span>
                             </div>
 
                             {metricValue && (
-                                <div className="floating-badge absolute -right-10 md:-right-20 bottom-20 flex flex-col items-center justify-center floating-ui-badge rounded-[2.5rem] p-6 z-30 min-w-[120px]">
+                                <div className="floating-badge absolute -right-10 md:-right-20 bottom-20 hidden md:flex flex-col items-center justify-center floating-ui-badge rounded-[2.5rem] p-6 z-30 min-w-[120px]">
                                     <span className="text-white text-4xl font-black tracking-tighter leading-none mb-1">
                                         {metricValue}
                                     </span>
