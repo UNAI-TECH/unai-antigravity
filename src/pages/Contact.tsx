@@ -9,7 +9,7 @@ import { Send, Mail, MapPin, Phone, Clock } from "lucide-react";
 import SEO from "@/components/SEO";
 
 const contactInfo = [
-  { icon: Mail, label: "Email", value: "hello@unaitech.com", href: "mailto:hello@unaitech.com" },
+  { icon: Mail, label: "Email", value: "contact@unaitech.com", href: "mailto:contact@unaitech.com" },
   { icon: Phone, label: "Phone", value: "+91 90439 88697", href: "tel:+919043988697" },
   { icon: MapPin, label: "Headquarters", value: "UNAI TECH, Chennai, Tamil Nadu", href: "#" },
   { icon: Clock, label: "Business Hours", value: "Mon - Fri: 9AM - 6PM IST", href: "#" },
