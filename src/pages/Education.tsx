@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
+import { SinglePricingCard } from "@/components/ui/single-pricing-card";
 import SEO from "@/components/SEO";
 import {
   ArrowRight,
@@ -32,6 +33,10 @@ import {
   Target,
   Languages,
   X,
+  Crown,
+  Stars,
+  ShoppingCart,
+  ChevronRight,
 } from "lucide-react";
 
 /* ─── Animation helpers ─── */
@@ -39,28 +44,28 @@ const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 32 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "-60px" },
-  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 const fadeLeft = (delay = 0) => ({
   initial: { opacity: 0, x: -40 },
   whileInView: { opacity: 1, x: 0 },
   viewport: { once: true, margin: "-60px" },
-  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 const fadeRight = (delay = 0) => ({
   initial: { opacity: 0, x: 40 },
   whileInView: { opacity: 1, x: 0 },
   viewport: { once: true, margin: "-60px" },
-  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 const scaleIn = (delay = 0) => ({
   initial: { opacity: 0, scale: 0.92 },
   whileInView: { opacity: 1, scale: 1 },
   viewport: { once: true, margin: "-60px" },
-  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 /* ─── Data ─── */
@@ -138,6 +143,15 @@ const coreModules = [
   { week: "M6", title: "RAG Systems", desc: "Embeddings, vector databases, and retrieval pipelines.", outcome: "Build custom AI systems" },
   { week: "M7", title: "AI Agents", desc: "Tool calling, multi-step reasoning, and autonomous workflows.", outcome: "Build intelligent agents" },
   { week: "M8", title: "Automation Systems", desc: "APIs plus workflows. No-code and custom automation pipelines.", outcome: "Build automation systems" },
+];
+
+/* Future Forge — 5 modules */
+const futureForgeModules = [
+  { week: "M1", title: "Prompt Engineering", desc: "Master the art of communicating with AI. Learn prompt structures, few-shot prompting, and output control to get exact results.", outcome: "Build reusable prompts" },
+  { week: "M2", title: "Learn AI Tools", desc: "Discover and master essential AI workflows. Leverage cutting-edge tools for research, productivity, and automation.", outcome: "Personal AI workflow" },
+  { week: "M3", title: "Video & Image Generation", desc: "Create stunning visuals and animations. Understand prompt-to-image/video models and design consistent visual assets.", outcome: "Generate high-quality media" },
+  { week: "M4", title: "Story Books Creation", desc: "Combine narrative and visuals. Write compelling stories using LLMs and illustrate them with AI-generated art.", outcome: "Publish an AI storybook" },
+  { week: "M5", title: "AI Interactive Games", desc: "Build playable experiences without heavy coding. Use AI to generate game logic, assets, and interactive elements.", outcome: "Create a working game" },
 ];
 
 /* Legacy alias so the rest of the file compiles without change */
@@ -241,28 +255,65 @@ const corporateBenefits = [
 ];
 
 /* ─── Flagship Bootcamp Track Slider ─── */
-const cardRows = [
+const cardRowsSchools = [
+  { icon: Clock, label: "Duration", value: "5 Module Cycle" },
+  { icon: MapPin, label: "Experience Mode", value: "Learn to CREATE" },
+  { icon: Users, label: "Cohort", value: "School Students & Beginners" },
+  { icon: BadgeCheck, label: "Outcome", value: "Interactive Games & Story Books" },
+  { icon: Brain, label: "Partner", value: "STORY SEED studio" },
+];
+
+const cardRowsEssentials = [
   { icon: Clock, label: "Duration", value: "8 Module Engineering Cycle" },
   { icon: MapPin, label: "Experience Mode", value: "Learn, Build, Deploy" },
-  { icon: Users, label: "Cohort ", value: "Students - Freshers - IT Professionals" },
+  { icon: Users, label: "Cohort", value: "Students - Freshers - IT Professionals" },
   { icon: BadgeCheck, label: "Outcome", value: "Shipped Product + Certificate" },
   { icon: Brain, label: "Mentors", value: "UNAI Tech Core Engineers" },
   { icon: Building2, label: "Placement", value: "Top performers → Internship" },
 ];
 
-const EnrollCard = ({ id, onEnroll }: { id: string; onEnroll: () => void }) => (
+const cardRowsCore = [
+  { icon: Clock, label: "Duration", value: "8 Module Engineering Cycle" },
+  { icon: MapPin, label: "Experience Mode", value: "Learn, Build, Deploy" },
+  { icon: Users, label: "Cohort", value: "Students - Freshers - IT Professionals" },
+  { icon: BadgeCheck, label: "Outcome", value: "Shipped Product + Certificate" },
+  { icon: Brain, label: "Mentors", value: "UNAI Tech Core Engineers" },
+  { icon: Building2, label: "Placement", value: "Top performers → Internship" },
+];
+
+const EnrollCard = ({
+  id,
+  onEnroll,
+  title,
+  subtitle,
+  price,
+  originalPrice,
+  badge,
+  rows
+}: {
+  id: string;
+  onEnroll: () => void;
+  title: string;
+  subtitle: string;
+  price?: string;
+  originalPrice?: string;
+  badge?: string;
+  rows: { icon: any; label: string; value: string }[];
+}) => (
   <div className="bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl">
     <div className="p-8 sm:p-10 bg-gradient-to-br from-blue-600/20 to-purple-600/10 border-b border-white/10">
-      <h3 className="font-heading text-2xl font-bold text-white mb-1">UNAIs AI Supercharge '26</h3>
-      <p className="text-slate-400 text-sm">Next cohort · Chennai · Limited seats</p>
-      <div className="mt-6 flex items-baseline gap-3">
-        <span className="font-heading text-4xl font-bold text-white">₹4,999</span>
-        <span className="text-slate-500 line-through text-lg">₹14,999</span>
-        <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">EARLY BIRD</span>
-      </div>
+      <h3 className="font-heading text-2xl font-bold text-white mb-1">{title}</h3>
+      <p className="text-slate-400 text-sm">{subtitle}</p>
+      {price && (
+        <div className="mt-6 flex items-baseline gap-3">
+          <span className="font-heading text-4xl font-bold text-white">{price}</span>
+          {originalPrice && <span className="text-slate-500 line-through text-lg">{originalPrice}</span>}
+          {badge && <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">{badge}</span>}
+        </div>
+      )}
     </div>
     <div className="p-8 sm:p-10 divide-y divide-white/10">
-      {cardRows.map((row, i) => (
+      {rows.map((row, i) => (
         <div key={i} className="flex items-center gap-4 py-4">
           <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
             <row.icon className="w-4 h-4 text-blue-400" />
@@ -326,7 +377,7 @@ const TrackSlider = ({ scrollToEnroll }: { scrollToEnroll: () => void }) => {
               initial={{ opacity: 0, x: -32 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -32 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] as const }}
             >
               <div className="mb-6">
                 <span className="inline-block px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold tracking-widest uppercase mb-3">
@@ -355,10 +406,19 @@ const TrackSlider = ({ scrollToEnroll }: { scrollToEnroll: () => void }) => {
               initial={{ opacity: 0, x: 80 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 80 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
               className="lg:sticky lg:top-28"
             >
-              <EnrollCard id="edu-bootcamp-apply-core-left" onEnroll={scrollToEnroll} />
+              <EnrollCard 
+                id="edu-bootcamp-apply-core-left" 
+                onEnroll={scrollToEnroll} 
+                title="AI Core Foundation '26"
+                subtitle="Next cohort · Chennai · Limited seats"
+                price="₹4,999"
+                originalPrice="₹14,999"
+                badge="EARLY BIRD"
+                rows={cardRowsCore}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -371,10 +431,19 @@ const TrackSlider = ({ scrollToEnroll }: { scrollToEnroll: () => void }) => {
               initial={{ opacity: 0, x: -80 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -80 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
               className="lg:sticky lg:top-28"
             >
-              <EnrollCard id="edu-bootcamp-apply-essentials" onEnroll={scrollToEnroll} />
+              <EnrollCard 
+                id="edu-bootcamp-apply-essentials" 
+                onEnroll={scrollToEnroll} 
+                title="UNAIs AI Supercharge '26"
+                subtitle="Next cohort · Chennai · Limited seats"
+                price="₹4,999"
+                originalPrice="₹14,999"
+                badge="EARLY BIRD"
+                rows={cardRowsEssentials}
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -382,7 +451,7 @@ const TrackSlider = ({ scrollToEnroll }: { scrollToEnroll: () => void }) => {
               initial={{ opacity: 0, x: 32 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 32 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] as const }}
             >
               <div className="mb-6">
                 <span className="inline-block px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold tracking-widest uppercase mb-3">
@@ -434,7 +503,7 @@ const InternshipModal = ({
       initial={{ scale: 0.92, y: 24, opacity: 0 }}
       animate={{ scale: 1, y: 0, opacity: 1 }}
       exit={{ scale: 0.92, y: 24, opacity: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as const }}
       onClick={(e) => e.stopPropagation()}
       className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
     >
@@ -831,9 +900,59 @@ const Education = () => {
         </section>
 
         {/* ══════════════════════════════════════════
-            3 — FLAGSHIP BOOTCAMP
+            3A — SCHOOL PROGRAMS
         ══════════════════════════════════════════ */}
-        <section id="bootcamp" className="py-20 sm:py-32 px-4 sm:px-6 bg-white">
+        <section id="schools" className="py-20 sm:py-32 px-4 sm:px-6 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <motion.div className="text-center mb-16" {...fadeUp()}>
+              <span className="inline-block px-4 py-2 rounded-full bg-purple-50 border border-purple-100 text-purple-600 text-sm font-bold tracking-tight mb-4">
+                FOR SCHOOLS
+              </span>
+              <h2 className="font-heading text-3xl sm:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+                Future <span className="text-purple-600">Forge</span> 2026
+              </h2>
+              <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                This summer, don't just play games... Learn to CREATE them! A special program designed for school students.
+              </p>
+            </motion.div>
+
+            <SinglePricingCard
+              badge={{
+                icon: Crown,
+                text: "Summer Program",
+              }}
+              title="Future Forge 2026"
+              subtitle="This summer, don't just play games... Learn to CREATE them! A special interactive program designed specifically for school students and absolute beginners."
+              price={{
+                current: "₹599",
+                original: "₹999",
+                discount: "EARLY BIRD",
+                discountBadgeClassName: "bg-cyan-50 text-cyan-600 border-cyan-200"
+              }}
+              benefits={cardRowsSchools.map(row => ({ icon: row.icon, text: `${row.label}: ${row.value}` }))}
+              features={futureForgeModules.map(m => ({ text: `${m.week}: ${m.title}` }))}
+              featuresIcon={Check}
+              featuresBadge={{
+                icon: Stars,
+                text: "5 Modules",
+              }}
+              primaryButton={{
+                text: "Apply Now",
+                icon: ShoppingCart,
+                onClick: scrollToEnroll,
+                chevronIcon: ChevronRight,
+              }}
+              testimonials={[]}
+              className="mt-8"
+              maxWidth="max-w-4xl"
+            />
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════
+            3B — FLAGSHIP BOOTCAMP
+        ══════════════════════════════════════════ */}
+        <section id="bootcamp" className="py-20 sm:py-32 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
             <motion.div className="text-center mb-16" {...fadeUp()}>
               <span className="inline-block px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-bold tracking-tight mb-4">
@@ -934,7 +1053,7 @@ const Education = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
-                  transition={{ duration: 0.5, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.5, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] as const }}
                   className="bg-white hover:bg-slate-50 transition-colors duration-200 grid grid-cols-[52px_1fr_auto] sm:grid-cols-[72px_1fr_auto] items-center gap-4 sm:gap-6 px-5 sm:px-8 py-5 sm:py-6 group"
                 >
                   <span className="font-heading text-2xl sm:text-3xl font-bold text-slate-100 group-hover:text-slate-200 transition-colors select-none">
@@ -1119,6 +1238,7 @@ const Education = () => {
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                   >
                     <option value="">Select a program</option>
+                    <option>Future Forge 2026</option>
                     <option>AI &amp; ML Workshop</option>
                     <option>UNAI Builders Bootcamp</option>
                     <option>Tech Internship (AI/ML)</option>
