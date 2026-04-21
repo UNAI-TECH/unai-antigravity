@@ -13,7 +13,7 @@ const repeatedClients = [...clients, ...clients, ...clients, ...clients];
 export const ClientCarousel = () => {
     return (
         <section className="py-12 sm:py-16 bg-[#f8faff] border-y border-slate-100 overflow-hidden">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-12 mb-8 text-center">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-12 mb-16 text-center">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -42,7 +42,7 @@ export const ClientCarousel = () => {
                     }}
                 >
                     {repeatedClients.map((client, index) => (
-                        <div key={index} className="flex-shrink-0 w-32 h-20 sm:w-40 sm:h-24 md:w-48 md:h-28 flex items-center justify-center bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div key={index} className="flex-shrink-0 w-32 h-20 sm:w-40 sm:h-24 md:w-48 md:h-28 flex items-center justify-center transition-all duration-300 hover:-translate-y-1">
                             <img
                                 src={client}
                                 alt={`Client ${index}`}
