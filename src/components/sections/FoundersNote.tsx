@@ -40,7 +40,7 @@ export const FoundersNote = () => {
             <div className="container mx-auto px-4 sm:px-6 relative z-10">
                 <div className="text-center mb-10 sm:mb-20">
                     <h2 className="font-heading text-3xl md:text-4xl font-bold text-slate-900">
-                        Founders' Note
+                        Founder's Note
                     </h2>
                     <div className="h-1 w-20 bg-blue-600 mx-auto mt-4 rounded-full opacity-20"></div>
                 </div>
@@ -110,7 +110,7 @@ export const FoundersNote = () => {
                                                 <div className="relative z-10">
                                                     <span className="text-blue-600 font-bold uppercase tracking-[0.2em] text-[10px] block mb-4">A Message from our Leaders</span>
 
-                                                    <h4 
+                                                    <h4
                                                         className="font-heading text-2xl sm:text-3xl font-bold text-slate-900 mb-8 leading-tight"
                                                         dangerouslySetInnerHTML={{ __html: leader.title }}
                                                     />
