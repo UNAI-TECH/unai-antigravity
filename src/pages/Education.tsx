@@ -243,7 +243,7 @@ const levelColor: Record<string, string> = {
 const stats = [
   { num: "500+", label: "Students Trained" },
   { num: "12+", label: "Active Programs" },
-  { num: "40+", label: "Colleges Reached" },
+  { num: "40+", label: "Institutions Reached" },
   { num: "90%", label: "Placement Rate" },
 ];
 
