@@ -5,6 +5,7 @@ import { ServicesPreview } from "@/components/sections/ServicesPreview";
 import { Differentiation } from "@/components/sections/Differentiation";
 import { VisionBlock } from "@/components/sections/VisionBlock";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { ClientCarousel } from "@/components/sections/ClientCarousel";
 import SEO from "@/components/SEO";
 
 const Index = () => {
@@ -23,6 +24,7 @@ const Index = () => {
         <Differentiation />
         <VisionBlock />
         <div className="energy-line" />
+        <ClientCarousel />
         <FinalCTA />
       </main>
       <Footer />

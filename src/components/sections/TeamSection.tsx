@@ -22,7 +22,7 @@ const teamMembers: Array<{
 }> = [
         {
             name: "Anjali Patel",
-            role: "HRM",
+            role: "COO",
             image: "/Anjali_M.JPG.jpeg",
             imageClass: "object-cover object-top",
             shortNote: "Strategic human resource leader dedicated to building high-performing teams and fostering a culture of innovation and inclusivity.",
@@ -43,22 +43,6 @@ const teamMembers: Array<{
             imageClass: "object-cover object-top",
             shortNote: "Specializing in frontier AI research and implementing sophisticated neural architectures that drive the core intelligence of our systems.",
             bio: "Kamalesh is at the forefront of our AI research. He translates complex mathematical models into production-ready intelligence, ensuring UNAI TECH remains at the cutting edge of what's possible."
-        },
-        {
-            name: "Muthasir",
-            role: "Marketing Head",
-            image: "/WhatsApp Image 2026-03-03 at 2.13.21 PM.jpg",
-            imageClass: "object-cover object-top",
-            shortNote: "Visionary marketing strategist focused on communicating the transformative power of AI and building strong global brand presence.",
-            bio: "Muthasir combines data-driven insights with creative storytelling to bridge the gap between complex engineering and market needs. He drives our global growth and brand recognition."
-        },
-        {
-            name: "Iniyan",
-            role: "Marketing Head",
-            image: "/iniyan.jpg",
-            imageClass: "object-cover object-top",
-            shortNote: "Dynamic marketing lead expertise in digital growth, community engagement, and strategic positioning of AI-native solutions.",
-            bio: "Iniyan focuses on the intersection of community and technology. He ensures that our AI solutions resonate with users and build lasting value through strategic digital positioning."
         }
     ];
 
