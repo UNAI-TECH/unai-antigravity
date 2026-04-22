@@ -299,6 +299,80 @@ const Products = () => {
               </div>
             </div>
           </div>
+          {/* New Swaxthika Platform Section */}
+          <div className="container mx-auto relative mt-16 sm:mt-24">
+            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] px-4 py-5 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
+              <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-16 relative z-10">
+                {/* Left Column: Visual */}
+                <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="flex-1 relative w-full"
+                >
+                  <div className="relative p-2 md:p-4">
+                    <img
+                      src="/illustration-1.png"
+                      alt="Swaxthika Platform Illustration"
+                      width="600"
+                      height="500"
+                      className="w-full h-auto rounded-3xl" />
+                  </div>
+
+                  {/* Background decorative elements */}
+                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10" />
+                  <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-indigo-100/30 rounded-full blur-3xl -z-10" />
+                </motion.div>
+
+                {/* Right Column: Text Content */}
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="flex-1"
+                >
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-4 sm:mb-5">
+                    <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-[10px] sm:text-xs font-bold text-blue-700 tracking-widest uppercase">
+                      Coming Soon
+                    </span>
+                  </div>
+
+                  <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-[#1F2937] leading-tight">
+                    Swaxthika <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-2xl sm:text-3xl md:text-4xl">
+                      Tradition meets Technology
+                    </span>
+                  </h1>
+
+                  <p className="text-base sm:text-lg text-gray-700/80 mb-6 leading-relaxed">
+                    A comprehensive digital platform designed to serve the cultural, spiritual, and celebratory needs of Indian families. Bringing together five deeply connected life experiences under one roof — just as Flipkart and Amazon transformed everyday shopping, Swaxthika will transform how Indian families discover, plan, and celebrate life's most sacred milestones.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-5 mb-8">
+                    {["Sacred Store", "Astrology", "Matrimony", "Wedding & Catering"].map((pillar) => (
+                      <div key={pillar} className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                          <CheckCircle2 size={20} />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-800">{pillar}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    disabled
+                    size="xl"
+                    className="h-14 px-10 rounded-2xl bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200"
+                  >
+                    Launching Soon
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+          </div>
           {/* PremiumCTA Merged Here */}
           <div className="mt-16 sm:mt-24">
             <PremiumCTA

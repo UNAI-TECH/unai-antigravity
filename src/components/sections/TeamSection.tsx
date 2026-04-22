@@ -21,6 +21,22 @@ const teamMembers: Array<{
     imageClass?: string;
 }> = [
         {
+            name: "Neethi selvan",
+            role: "Marketing",
+            image: "/1776426332350.png",
+            imageClass: "object-cover object-top",
+            shortNote: "Visionary marketing strategist focused on communicating the transformative power of AI and building strong global brand presence.",
+            bio: "Neethi combines data-driven insights with creative storytelling to bridge the gap between complex engineering and market needs. He drives our global growth and brand recognition."
+        },
+        {
+            name: "Kishore",
+            role: "Marketing",
+            image: "/Kishore_K.jpg.jpeg",
+            imageClass: "object-cover object-top",
+            shortNote: "Dynamic marketing lead expertise in digital growth, community engagement, and strategic positioning of AI-native solutions.",
+            bio: "Kishore focuses on the intersection of community and technology. He ensures that our AI solutions resonate with users and build lasting value through strategic digital positioning."
+        },
+        {
             name: "Anjali Patel",
             role: "COO",
             image: "/Anjali_M.JPG.jpeg",
@@ -114,14 +130,6 @@ export const TeamSection = () => {
                                                 alt={member.name}
                                                 className={`w-full h-full object-cover transition-all duration-700 ${isActiveOnMobile ? 'grayscale-0' : 'grayscale group-hover:grayscale-0'} ${member.imageClass || 'object-[50%_20%]'}`}
                                             />
-                                            <div className={`absolute inset-0 bg-gradient-to-t from-blue-900/80 via-transparent to-transparent transition-opacity duration-500 ${isActiveOnMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
-
-                                            {/* Hover/Active Content */}
-                                            <div className={`absolute inset-0 flex flex-col justify-end p-6 transition-all duration-500 ${isActiveOnMobile ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100'}`}>
-                                                <p className="text-white/90 text-sm font-medium leading-relaxed italic line-clamp-3">
-                                                    "{member.shortNote}"
-                                                </p>
-                                            </div>
                                         </div>
 
                                         <div className="text-center">
