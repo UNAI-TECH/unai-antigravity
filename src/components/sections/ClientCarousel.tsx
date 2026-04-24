@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 
 const clients = [
-    "/371063523_122115951206008830_4198149107452173976_n.jpg.jpeg",
+    "/autobourn.png",
     "/460932001_507081895296250_8501373947895446188_n.jpg.jpeg",
     "/logo-CBEH-HVV.png",
-    "/1.svg",
+    "/pasted_file-removebg-preview.png",
 ];
 
 // Duplicate the array to create a seamless looping effect

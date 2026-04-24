@@ -11,7 +11,6 @@ import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import { FoundersNote } from "@/components/sections/FoundersNote";
 import { AdvisorNote } from "@/components/sections/AdvisorNote";
 import { TeamSection } from "@/components/sections/TeamSection";
-import { ClientCarousel } from "@/components/sections/ClientCarousel";
 import SEO from "@/components/SEO";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -374,9 +373,6 @@ const About = () => {
             </div>
           </div>
         </ScrollSection>
-
-        {/* Client Carousel */}
-        <ClientCarousel />
 
         {/* ═══════════════════════════════════════════
             CORE VALUES
