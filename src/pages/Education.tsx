@@ -240,13 +240,6 @@ const levelColor: Record<string, string> = {
   Advanced: "bg-red-50 text-red-600 border-red-100",
 };
 
-const stats = [
-  { num: "500+", label: "Students Trained" },
-  { num: "12+", label: "Active Programs" },
-  { num: "40+", label: "Institutions Reached" },
-  { num: "90%", label: "Success Rate" },
-];
-
 const corporateBenefits = [
   { icon: Target, title: "Custom Curriculum", desc: "Built around your team's actual tools, stack, and business problems — not generic slides." },
   { icon: Languages, title: "Multilingual Delivery", desc: "Sessions in Tamil and English — technical AI explained in the language your team thinks in." },
@@ -668,19 +661,6 @@ const Education = () => {
                     Explore Programs
                   </Button>
                 </div>
-              </motion.div>
-
-              {/* Stats row */}
-              <motion.div
-                {...fadeUp(0.2)}
-                className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-white/10 pt-12"
-              >
-                {stats.map((s, i) => (
-                  <div key={i} className="text-center">
-                    <p className="font-heading text-3xl sm:text-4xl font-bold text-white mb-1">{s.num}</p>
-                    <p className="text-xs sm:text-sm text-white/50 uppercase tracking-widest">{s.label}</p>
-                  </div>
-                ))}
               </motion.div>
 
               {/* Scroll cue */}
