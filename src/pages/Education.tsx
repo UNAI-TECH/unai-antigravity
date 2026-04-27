@@ -244,7 +244,7 @@ const stats = [
   { num: "500+", label: "Students Trained" },
   { num: "12+", label: "Active Programs" },
   { num: "40+", label: "Institutions Reached" },
-  { num: "90%", label: "Placement Rate" },
+  { num: "90%", label: "Success Rate" },
 ];
 
 const corporateBenefits = [
@@ -259,6 +259,7 @@ const cardRowsSchools = [
   { icon: Clock, label: "Duration", value: "5 Module Cycle" },
   { icon: MapPin, label: "Experience Mode", value: "Learn to CREATE" },
   { icon: Users, label: "Cohort", value: "School Students & Beginners" },
+  { icon: GraduationCap, label: "Eligibility", value: "6th class to 12th class grade" },
   { icon: BadgeCheck, label: "Outcome", value: "Interactive Games & Story Books" },
   { icon: Brain, label: "Partner", value: "STORY SEED studio" },
 ];
@@ -409,9 +410,9 @@ const TrackSlider = ({ scrollToEnroll }: { scrollToEnroll: () => void }) => {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
               className="lg:sticky lg:top-28"
             >
-              <EnrollCard 
-                id="edu-bootcamp-apply-core-left" 
-                onEnroll={scrollToEnroll} 
+              <EnrollCard
+                id="edu-bootcamp-apply-core-left"
+                onEnroll={scrollToEnroll}
                 title="AI Core Foundation '26"
                 subtitle="Next cohort · Chennai · Limited seats"
                 price="₹4,999"
@@ -434,9 +435,9 @@ const TrackSlider = ({ scrollToEnroll }: { scrollToEnroll: () => void }) => {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
               className="lg:sticky lg:top-28"
             >
-              <EnrollCard 
-                id="edu-bootcamp-apply-essentials" 
-                onEnroll={scrollToEnroll} 
+              <EnrollCard
+                id="edu-bootcamp-apply-essentials"
+                onEnroll={scrollToEnroll}
                 title="UNAIs AI Supercharge '26"
                 subtitle="Next cohort · Chennai · Limited seats"
                 price="₹4,999"
@@ -700,127 +701,7 @@ const Education = () => {
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════
-            1b — CODEKARX HACKATHON AD
-        ══════════════════════════════════════════ */}
-        <section className="px-4 sm:px-6 lg:px-10 py-6">
-          <motion.div
-            {...fadeUp(0)}
-            className="max-w-[1920px] mx-auto relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0a0f1e] via-[#0d1a3a] to-[#1a0a2e] shadow-2xl border border-white/5"
-          >
-            {/* Background glows */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-20 -left-20 w-72 h-72 bg-cyan-500/20 blur-[100px] rounded-full" />
-              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-purple-500/20 blur-[120px] rounded-full" />
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
-              {/* Grid lines */}
-              <div
-                className="absolute inset-0 opacity-[0.035]"
-                style={{
-                  backgroundImage: "linear-gradient(rgba(0,229,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,1) 1px, transparent 1px)",
-                  backgroundSize: "40px 40px",
-                }}
-              />
-            </div>
 
-            <div className="relative z-10 px-6 sm:px-12 lg:px-20 py-12 sm:py-16 flex flex-col lg:flex-row items-center justify-between gap-10">
-              {/* Left: Text content */}
-              <div className="flex-1 text-center lg:text-left">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-300 text-xs font-bold tracking-widest uppercase mb-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  National Online Hackathon
-                </div>
-
-                {/* Headline */}
-                <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-[1.05] mb-3 tracking-tight">
-                  Build.{" "}
-                  <span className="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">Innovate.</span>{" "}
-                  <span className="bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent">Transform.</span>
-                </h2>
-
-                {/* Sub-headline */}
-                <p className="text-white/70 text-base sm:text-lg max-w-xl lg:max-w-none mb-3 leading-relaxed">
-                  India's premier national online hackathon for college students and professionals — solve real-world problems, build working solutions, and get evaluated by top industry experts.
-                </p>
-
-                {/* Supporting line */}
-                <p className="text-cyan-400/80 text-sm font-semibold tracking-wide mb-8">
-                  6 Tracks &nbsp;·&nbsp; 2 Phases &nbsp;·&nbsp; Real Projects &nbsp;·&nbsp; IIT Faculty Evaluation
-                </p>
-
-                {/* CTA buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                  <a
-                    href="https://codekarx.in"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    id="edu-codekarx-register"
-                    className="inline-flex items-center justify-center gap-2 h-13 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-900 font-bold text-sm shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    Register Now
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                  <a
-                    href="https://codekarx.in"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    id="edu-codekarx-tracks"
-                    className="inline-flex items-center justify-center gap-2 h-13 px-8 py-3.5 rounded-2xl bg-white/5 border border-white/15 text-white font-bold text-sm hover:bg-white/10 hover:border-white/25 transition-all duration-300"
-                  >
-                    Explore Tracks
-                  </a>
-                </div>
-
-                {/* Trust line */}
-                <p className="mt-6 text-white/30 text-xs tracking-widest uppercase">
-                  Your Code. Your Idea. Your Moment.
-                </p>
-              </div>
-
-              {/* Right: Visual badge */}
-              <div className="flex-shrink-0 flex flex-col items-center gap-4">
-                <div className="relative">
-                  {/* Outer ring */}
-                  <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-cyan-400/20 flex items-center justify-center relative">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500/10 to-purple-500/10 blur-xl" />
-                    {/* Inner ring */}
-                    <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-purple-400/20 bg-gradient-to-br from-cyan-500/10 via-blue-600/15 to-purple-500/10 flex flex-col items-center justify-center relative z-10">
-                      <Trophy className="w-8 h-8 text-cyan-300 mb-1" />
-                      <p className="font-heading text-2xl sm:text-3xl font-bold text-white">CODE</p>
-                      <p className="font-heading text-xl sm:text-2xl font-bold bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent -mt-1">KARX</p>
-                      <p className="text-white/40 text-[10px] tracking-widest mt-1">codekarx.in</p>
-                    </div>
-                  </div>
-                  {/* Orbiting dots */}
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0"
-                  >
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,229,255,0.8)]" />
-                  </motion.div>
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0"
-                  >
-                    <div className="absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_6px_rgba(168,85,247,0.8)]" />
-                  </motion.div>
-                </div>
-
-                {/* Track pills */}
-                <div className="flex flex-wrap gap-1.5 justify-center max-w-[200px]">
-                  {["AI / ML", "Web Dev", "Cybersecurity", "Data Analytics", "Design", "Mobile"].map((track) => (
-                    <span key={track} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/50">
-                      {track}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </section>
 
         {/* ══════════════════════════════════════════
             2 — PROGRAMS GRID

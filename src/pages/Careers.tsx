@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 /* ─── Internship data (mirrors EDU page) ─── */
-const internshipRoles = [
+export const internshipRoles = [
   { icon: Cpu, role: "AI / ML Engineer Intern", duration: "3–6 Months", desc: "Work on building intelligent systems that power next-generation digital products. Develop, train, and deploy machine learning models using real-world datasets. Contribute to model optimization, fine-tuning, and integration of AI capabilities into production-grade applications.", skills: ["Python", "TensorFlow / PyTorch", "Hugging Face", "Supabase"] },
   { icon: Globe, role: "Full Stack Developer Intern", duration: "3–6 Months", desc: "Be part of a high-performance engineering team focused on delivering scalable digital solutions. Design, develop, and deploy full-stack features across live platforms using modern frontend and backend technologies in a real-world multi-tenant environment.", skills: ["React Native", "Node.js", "Supabase", "Expo"] },
   { icon: TrendingUp, role: "Data & Analytics Intern", duration: "2–3 Months", desc: "Transform complex datasets into meaningful insights. Build analytics pipelines, dashboards, and data-driven tools that support strategic decision-making across business and research domains.", skills: ["Python", "SQL", "Data Visualisation", "Power BI"] },

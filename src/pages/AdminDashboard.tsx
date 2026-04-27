@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
+import { internshipRoles } from "@/pages/Careers";
 
 const AdminDashboard = () => {
     const {
@@ -42,9 +43,23 @@ const AdminDashboard = () => {
 
     if (!isAuthenticated) return null;
 
+    const virtualInternships: Job[] = internshipRoles.map((intern, index) => ({
+        id: `intern-${index}`,
+        title: intern.role,
+        department: "Internship",
+        type: "Internship",
+        location: "Chennai / Remote",
+        salary: "Stipend Based",
+        experience: intern.duration,
+        description: intern.desc,
+        questions: [],
+    }));
+
+    const allJobs = [...jobs, ...virtualInternships];
+
     const stats = [
         { label: "Total Events", value: events.length, icon: Calendar, color: "text-blue-400" },
-        { label: "Open Jobs", value: jobs.length, icon: Briefcase, color: "text-green-400" },
+        { label: "Open Jobs", value: allJobs.length, icon: Briefcase, color: "text-green-400" },
         { label: "Applications", value: jobApplications.length, icon: FileText, color: "text-yellow-400" },
         { label: "Team Members", value: teamMembers.length, icon: Users, color: "text-purple-400" },
         { label: "Gallery Items", value: galleryItems.length, icon: ImageIcon, color: "text-pink-400" },
@@ -63,7 +78,7 @@ const AdminDashboard = () => {
                                         <p className="text-muted-foreground text-sm font-medium">{stat.label}</p>
                                         <p className="text-4xl font-bold mt-2">{stat.value}</p>
                                     </div>
-                                    <div className={`p-4 rounded-full bg-white/5 ${stat.color}`}>
+                                    <div className={`p-4 rounded-full bg-primary/5 ${stat.color}`}>
                                         <stat.icon className="w-8 h-8" />
                                     </div>
                                 </GlassCard>
@@ -108,16 +123,16 @@ const AdminDashboard = () => {
                         </div>
                         <div className="grid gap-4">
                             {events.length === 0 && (
-                                <div className="text-center py-12 border border-dashed border-white/10 rounded-xl">
+                                <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                     <p className="text-muted-foreground">No events scheduled.</p>
                                 </div>
                             )}
                             {events.map(event => (
-                                <GlassCard key={event.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-metal-blue-500/30 transition-colors">
+                                <GlassCard key={event.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
                                     <div>
                                         <div className="flex items-center gap-3 mb-1">
                                             <h3 className="font-bold text-xl">{event.title}</h3>
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.status === 'upcoming' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-muted-foreground'}`}>
+                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.status === 'upcoming' ? 'bg-green-500/20 text-green-400' : 'bg-primary/10 text-muted-foreground'}`}>
                                                 {event.status}
                                             </span>
                                         </div>
@@ -144,21 +159,28 @@ const AdminDashboard = () => {
                             <AddJobDialog onAdd={addJob} />
                         </div>
                         <div className="grid gap-4">
-                            {jobs.length === 0 && (
-                                <div className="text-center py-12 border border-dashed border-white/10 rounded-xl">
+                            {allJobs.length === 0 && (
+                                <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                     <p className="text-muted-foreground">No active job listings.</p>
                                 </div>
                             )}
-                            {jobs.map(job => (
+                            {allJobs.map(job => (
                                 <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-green-500/30 transition-colors">
                                     <div>
-                                        <h3 className="font-bold text-xl">{job.title}</h3>
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <h3 className="font-bold text-xl">{job.title}</h3>
+                                            {job.id.startsWith('intern-') && (
+                                                <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Internship</span>
+                                            )}
+                                        </div>
                                         <p className="text-sm text-muted-foreground">{job.department} • {job.location} • {job.type}</p>
                                         <p className="mt-1 text-sm font-semibold text-green-400">{job.salary}</p>
                                     </div>
-                                    <Button variant="destructive" size="icon" onClick={() => deleteJob(job.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    {!job.id.startsWith('intern-') && (
+                                        <Button variant="destructive" size="icon" onClick={() => deleteJob(job.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                 </GlassCard>
                             ))}
                         </div>
@@ -166,13 +188,13 @@ const AdminDashboard = () => {
                 );
             case "applications":
                 if (selectedJobId) {
-                    const selectedJob = jobs.find(j => j.id === selectedJobId);
+                    const selectedJob = allJobs.find(j => j.id === selectedJobId);
                     const applications = jobApplications.filter(app => app.job_id === selectedJobId);
 
                     return (
                         <div className="space-y-6">
                             <div className="flex items-center gap-4">
-                                <Button variant="outline" onClick={() => setSelectedJobId(null)} className="border-white/10 hover:bg-white/5">
+                                <Button variant="outline" onClick={() => setSelectedJobId(null)} className="border-primary/10 hover:bg-primary/5">
                                     ← Back
                                 </Button>
                                 <div>
@@ -182,29 +204,29 @@ const AdminDashboard = () => {
                             </div>
                             <div className="grid gap-4">
                                 {applications.length === 0 && (
-                                    <div className="text-center py-12 border border-dashed border-white/10 rounded-xl">
+                                    <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                         <p className="text-muted-foreground">No applications for this job yet.</p>
                                     </div>
                                 )}
                                 {applications.map(app => (
-                                    <GlassCard key={app.id} className="p-6 hover:border-metal-blue-500/30 transition-colors">
+                                    <GlassCard key={app.id} className="p-6 hover:border-primary/30 transition-colors">
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
                                                 <h3 className="font-bold text-xl">{app.applicant_name}</h3>
-                                                <p className="text-sm text-metal-blue-300">{app.email}</p>
+                                                <p className="text-sm text-primary">{app.email}</p>
                                             </div>
                                             <span className="bg-yellow-500/10 text-yellow-400 px-3 py-1 rounded-full text-xs uppercase tracking-wider font-semibold border border-yellow-500/20">
                                                 {app.status}
                                             </span>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground mb-4">
-                                            <p>Phone: <span className="text-white">{app.phone}</span></p>
-                                            <p>Applied: <span className="text-white">{new Date(app.created_at).toLocaleDateString()}</span></p>
+                                            <p>Phone: <span className="text-foreground">{app.phone}</span></p>
+                                            <p>Applied: <span className="text-foreground">{new Date(app.created_at).toLocaleDateString()}</span></p>
                                         </div>
 
                                         <div className="flex gap-3 mt-4">
                                             {app.resume_url && (
-                                                <Button variant="outline" size="sm" onClick={() => window.open(app.resume_url, '_blank')} className="border-white/10 hover:bg-white/5">
+                                                <Button variant="outline" size="sm" onClick={() => window.open(app.resume_url, '_blank')} className="border-primary/10 hover:bg-primary/5">
                                                     <FileText className="w-4 h-4 mr-2" /> View Resume
                                                 </Button>
                                             )}
@@ -256,26 +278,31 @@ const AdminDashboard = () => {
                             </div>
                         </div>
                         <div className="grid gap-4">
-                            {jobs.length === 0 && (
-                                <div className="text-center py-12 border border-dashed border-white/10 rounded-xl">
+                            {allJobs.length === 0 && (
+                                <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                     <p className="text-muted-foreground">No active jobs found.</p>
                                 </div>
                             )}
-                            {jobs.map(job => {
+                            {allJobs.map(job => {
                                 const applicantCount = jobApplications.filter(app => app.job_id === job.id).length;
                                 return (
-                                    <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-metal-blue-500/30 transition-colors">
+                                    <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
                                         <div>
-                                            <h3 className="font-bold text-xl">{job.title}</h3>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <h3 className="font-bold text-xl">{job.title}</h3>
+                                                {job.id.startsWith('intern-') && (
+                                                    <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Internship</span>
+                                                )}
+                                            </div>
                                             <p className="text-sm text-muted-foreground">{job.department} • {job.location}</p>
-                                            <p className="mt-2 text-sm font-medium text-metal-blue-400">
+                                            <p className="mt-2 text-sm font-medium text-primary/80">
                                                 {applicantCount} Applicant{applicantCount !== 1 ? 's' : ''}
                                             </p>
                                         </div>
                                         <Button
                                             variant="secondary"
                                             onClick={() => setSelectedJobId(job.id)}
-                                            className="bg-white/5 hover:bg-white/10 text-white"
+                                            className="bg-primary/5 hover:bg-primary/10 text-foreground"
                                         >
                                             View Applications
                                         </Button>
@@ -297,19 +324,19 @@ const AdminDashboard = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {teamMembers.length === 0 && (
-                                <div className="col-span-full text-center py-12 border border-dashed border-white/10 rounded-xl">
+                                <div className="col-span-full text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                     <p className="text-muted-foreground">No team members listed.</p>
                                 </div>
                             )}
                             {teamMembers.map(member => (
-                                <GlassCard key={member.id} className="p-6 flex justify-between items-start group hover:border-metal-purple-500/30 transition-colors">
+                                <GlassCard key={member.id} className="p-6 flex justify-between items-start group hover:border-purple-500/30 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-metal-blue-500 to-metal-purple-500 flex items-center justify-center text-white font-bold text-lg">
                                             {member.name.charAt(0)}
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-lg">{member.name}</h3>
-                                            <p className="text-sm text-metal-blue-400">{member.role}</p>
+                                            <p className="text-sm text-primary/80">{member.role}</p>
                                         </div>
                                     </div>
                                     <Button variant="destructive" size="icon" onClick={() => deleteTeamMember(member.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -332,7 +359,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {galleryItems.length === 0 && (
-                                <div className="col-span-full text-center py-12 border border-dashed border-white/10 rounded-xl">
+                                <div className="col-span-full text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                     <p className="text-muted-foreground">No gallery items found.</p>
                                 </div>
                             )}
@@ -344,12 +371,12 @@ const AdminDashboard = () => {
                                         ) : (
                                             <ImageIcon className={`w-8 h-8 ${item.color === 'blue' ? 'text-blue-400' : 'text-purple-400'}`} />
                                         )}
-                                        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <h3 className="font-bold text-lg">{item.title}</h3>
-                                            <span className="text-xs px-2 py-1 rounded bg-white/10 text-muted-foreground">{item.category}</span>
+                                            <span className="text-xs px-2 py-1 rounded bg-primary/10 text-muted-foreground">{item.category}</span>
                                         </div>
                                         <Button variant="destructive" size="icon" onClick={() => deleteGalleryItem(item.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Trash2 className="w-4 h-4" />
@@ -368,7 +395,7 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-background flex font-sans">
             {/* Sidebar */}
-            <div className="w-20 md:w-64 border-r border-white/5 bg-black/20 backdrop-blur-xl flex flex-col fixed h-full z-20 transition-all duration-300">
+            <div className="w-20 md:w-64 border-r border-primary/5 bg-background/80 backdrop-blur-xl flex flex-col fixed h-full z-20 transition-all duration-300">
                 <div className="p-6 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-metal flex items-center justify-center">
                         <div className="w-3 h-3 bg-white rounded-full" />
@@ -389,8 +416,8 @@ const AdminDashboard = () => {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${activeTab === item.id
-                                ? 'bg-metal-blue-500/10 text-metal-blue-400 border border-metal-blue-500/20'
-                                : 'text-muted-foreground hover:bg-white/5 hover:text-white'
+                                ? 'bg-primary/10 text-primary/80 border border-primary/20'
+                                : 'text-muted-foreground hover:bg-primary/5 hover:text-foreground'
                                 }`}
                         >
                             <item.icon className="w-5 h-5" />
@@ -402,7 +429,7 @@ const AdminDashboard = () => {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-white/5">
+                <div className="p-4 border-t border-primary/5">
                     <button
                         onClick={() => { logout(); navigate("/admin"); }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all"
@@ -415,17 +442,17 @@ const AdminDashboard = () => {
 
             {/* Main Content */}
             <div className="flex-1 ml-20 md:ml-64 relative">
-                <header className="h-20 border-b border-white/5 bg-black/20 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
+                <header className="h-20 border-b border-primary/5 bg-background/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
                     <h2 className="font-semibold text-lg capitalize">{activeTab}</h2>
                     <div className="flex items-center gap-4">
                         <div className="relative">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input
                                 placeholder="Search..."
-                                className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-metal-blue-500"
+                                className="bg-primary/5 border border-primary/10 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-primary"
                             />
                         </div>
-                        <button className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5">
+                        <button className="w-10 h-10 rounded-full border border-primary/10 flex items-center justify-center hover:bg-primary/5">
                             <Bell className="w-4 h-4" />
                         </button>
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-metal-blue-500 to-purple-500 flex items-center justify-center text-sm font-bold">
@@ -566,22 +593,22 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             </DialogTrigger>
             <DialogContent
                 data-lenis-prevent
-                className="sm:max-w-[650px] bg-[#0B1221] border-white/10 text-white max-h-[85vh] overflow-y-auto custom-scrollbar pr-6"
+                className="sm:max-w-[650px] bg-background border-primary/10 text-foreground max-h-[85vh] overflow-y-auto custom-scrollbar pr-6"
             >
                 <DialogHeader className="pb-4 mb-4">
-                    <DialogTitle className="text-2xl font-bold text-gradient-metal">Add New Event</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold text-gradient-blue">Add New Event</DialogTitle>
                     <p className="text-sm text-muted-foreground">Fill in the details to create a new event</p>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 pb-6">
                     {/* Banner Upload */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Event Banner *</label>
+                        <label className="text-sm font-medium text-primary">Event Banner *</label>
                         <Input
                             type="file"
                             name="banner"
                             accept="image/*"
                             required
-                            className="h-auto py-3 bg-white/5 border-white/10 file:text-white file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                            className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
                         />
                         <p className="text-xs text-muted-foreground">Main banner image for the event</p>
                     </div>
@@ -589,20 +616,20 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                     {/* Title & Caption Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Event Title *</label>
+                            <label className="text-sm font-medium text-primary">Event Title *</label>
                             <Input
                                 name="title"
                                 placeholder="e.g., AI Workshop 2024"
                                 required
-                                className="bg-white/5 border-white/10 focus:border-metal-blue-500"
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-purple-300">Event Caption</label>
+                            <label className="text-sm font-medium text-purple-600">Event Caption</label>
                             <Input
                                 name="caption"
                                 placeholder="Short tagline"
-                                className="bg-white/5 border-white/10 focus:border-metal-purple-500"
+                                className="bg-primary/5 border-primary/10 focus:border-purple-500"
                             />
                         </div>
                     </div>
@@ -610,21 +637,21 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                     {/* Location & Date Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Location *</label>
+                            <label className="text-sm font-medium text-primary">Location *</label>
                             <Input
                                 name="location"
                                 placeholder="e.g., San Francisco, CA"
                                 required
-                                className="bg-white/5 border-white/10 focus:border-metal-blue-500"
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Date *</label>
+                            <label className="text-sm font-medium text-primary">Date *</label>
                             <Input
                                 name="date"
                                 placeholder="e.g., March 15-17, 2024"
                                 required
-                                className="bg-white/5 border-white/10 focus:border-metal-blue-500"
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
                             />
                         </div>
                     </div>
@@ -632,14 +659,14 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                     {/* Type & Attendees Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-purple-300">Event Type *</label>
+                            <label className="text-sm font-medium text-purple-600">Event Type *</label>
                             <Select name="type" defaultValue="Workshop">
-                                <SelectTrigger className="bg-white/5 border-white/10 focus:border-metal-purple-500">
+                                <SelectTrigger className="bg-primary/5 border-primary/10 focus:border-purple-500">
                                     <SelectValue placeholder="Select event type" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0B1221] border-white/10">
+                                <SelectContent className="bg-background border-primary/10">
                                     {eventTypes.map(type => (
-                                        <SelectItem key={type} value={type} className="text-white hover:bg-white/10">
+                                        <SelectItem key={type} value={type} className="text-foreground hover:bg-primary/10">
                                             {type}
                                         </SelectItem>
                                     ))}
@@ -647,49 +674,49 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Estimated Attendees *</label>
+                            <label className="text-sm font-medium text-primary">Estimated Attendees *</label>
                             <Input
                                 name="attendees"
                                 placeholder="e.g., 500+"
                                 required
-                                className="bg-white/5 border-white/10 focus:border-metal-blue-500"
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
                             />
                         </div>
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Event Description *</label>
+                        <label className="text-sm font-medium text-primary">Event Description *</label>
                         <Textarea
                             name="description"
                             placeholder="Detailed description of the event, what attendees can expect, agenda, etc."
                             required
-                            className="bg-white/5 border-white/10 h-32 resize-none focus:border-metal-blue-500"
+                            className="bg-primary/5 border-primary/10 h-32 resize-none focus:border-primary"
                         />
                     </div>
 
                     {/* Posters Upload */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-purple-300">Event Posters</label>
+                        <label className="text-sm font-medium text-purple-600">Event Posters</label>
                         <Input
                             type="file"
                             name="posters"
                             accept="image/*"
                             multiple
-                            className="bg-white/5 border-white/10 file:text-white file:bg-metal-purple-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-purple-500/30 transition-all"
+                            className="bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-purple-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-purple-500/30 transition-all"
                         />
                         <p className="text-xs text-muted-foreground">Upload multiple promotional posters (optional)</p>
                     </div>
 
                     {/* Registration URL */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Registration URL *</label>
+                        <label className="text-sm font-medium text-primary">Registration URL *</label>
                         <Input
                             name="registration_link"
                             placeholder="https://example.com/register"
                             type="url"
                             required
-                            className="bg-white/5 border-white/10 focus:border-metal-blue-500"
+                            className="bg-primary/5 border-primary/10 focus:border-primary"
                         />
                     </div>
 
@@ -698,8 +725,8 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
 
                     {/* Upload Progress */}
                     {isUploading && uploadProgress && (
-                        <div className="p-3 rounded-lg bg-metal-blue-500/10 border border-metal-blue-500/20">
-                            <p className="text-sm text-metal-blue-300 flex items-center gap-2">
+                        <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                            <p className="text-sm text-primary flex items-center gap-2">
                                 <div className="w-4 h-4 border-2 border-metal-blue-400 border-t-transparent rounded-full animate-spin" />
                                 {uploadProgress}
                             </p>
@@ -804,44 +831,44 @@ const AddJobDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             <DialogTrigger asChild>
                 <Button variant="hero"><Plus className="w-4 h-4 mr-2" /> Post Job</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] bg-[#0B1221] border-white/10 text-white max-h-[85vh] overflow-y-auto custom-scrollbar" data-lenis-prevent>
+            <DialogContent className="sm:max-w-[700px] bg-background border-primary/10 text-foreground max-h-[85vh] overflow-y-auto custom-scrollbar" data-lenis-prevent>
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-gradient-metal">Post New Job</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold text-gradient-blue">Post New Job</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 mt-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Job Title *</label>
-                            <Input name="title" required className="bg-white/5 border-white/10" />
+                            <label className="text-sm font-medium text-primary">Job Title *</label>
+                            <Input name="title" required className="bg-primary/5 border-primary/10" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Department *</label>
-                            <Input name="department" required className="bg-white/5 border-white/10" />
+                            <label className="text-sm font-medium text-primary">Department *</label>
+                            <Input name="department" required className="bg-primary/5 border-primary/10" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Location *</label>
-                            <Input name="location" required className="bg-white/5 border-white/10" />
+                            <label className="text-sm font-medium text-primary">Location *</label>
+                            <Input name="location" required className="bg-primary/5 border-primary/10" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Salary Range *</label>
-                            <Input name="salary" placeholder="e.g. $80k - $100k" required className="bg-white/5 border-white/10" />
+                            <label className="text-sm font-medium text-primary">Salary Range *</label>
+                            <Input name="salary" placeholder="e.g. $80k - $100k" required className="bg-primary/5 border-primary/10" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         {/* Experience */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Experience *</label>
+                            <label className="text-sm font-medium text-primary">Experience *</label>
                             <Select value={experienceType} onValueChange={setExperienceType}>
-                                <SelectTrigger className="bg-white/5 border-white/10">
+                                <SelectTrigger className="bg-primary/5 border-primary/10">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0B1221] border-white/10">
-                                    <SelectItem value="Freshers 0-1 years" className="text-white hover:bg-white/10 focus:bg-white/10">Freshers 0-1 years</SelectItem>
-                                    <SelectItem value="Other" className="text-white hover:bg-white/10 focus:bg-white/10">Other</SelectItem>
+                                <SelectContent className="bg-background border-primary/10">
+                                    <SelectItem value="Freshers 0-1 years" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Freshers 0-1 years</SelectItem>
+                                    <SelectItem value="Other" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                             {experienceType === "Other" && (
@@ -849,24 +876,24 @@ const AddJobDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                                     placeholder="Enter experience requirements"
                                     value={customExperience}
                                     onChange={(e) => setCustomExperience(e.target.value)}
-                                    className="bg-white/5 border-white/10 mt-2"
+                                    className="bg-primary/5 border-primary/10 mt-2"
                                 />
                             )}
                         </div>
 
                         {/* Job Type */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Job Type *</label>
+                            <label className="text-sm font-medium text-primary">Job Type *</label>
                             <Select value={jobType} onValueChange={setJobType}>
-                                <SelectTrigger className="bg-white/5 border-white/10">
+                                <SelectTrigger className="bg-primary/5 border-primary/10">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0B1221] border-white/10">
-                                    <SelectItem value="Full-time" className="text-white hover:bg-white/10 focus:bg-white/10">Full-time</SelectItem>
-                                    <SelectItem value="Part-time" className="text-white hover:bg-white/10 focus:bg-white/10">Part-time</SelectItem>
-                                    <SelectItem value="Intern" className="text-white hover:bg-white/10 focus:bg-white/10">Intern</SelectItem>
-                                    <SelectItem value="Hybrid" className="text-white hover:bg-white/10 focus:bg-white/10">Hybrid</SelectItem>
-                                    <SelectItem value="Other" className="text-white hover:bg-white/10 focus:bg-white/10">Other</SelectItem>
+                                <SelectContent className="bg-background border-primary/10">
+                                    <SelectItem value="Full-time" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Full-time</SelectItem>
+                                    <SelectItem value="Part-time" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Part-time</SelectItem>
+                                    <SelectItem value="Intern" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Intern</SelectItem>
+                                    <SelectItem value="Hybrid" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Hybrid</SelectItem>
+                                    <SelectItem value="Other" className="text-foreground hover:bg-primary/10 focus:bg-primary/10">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                             {jobType === "Other" && (
@@ -874,41 +901,41 @@ const AddJobDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                                     placeholder="Enter job type"
                                     value={customJobType}
                                     onChange={(e) => setCustomJobType(e.target.value)}
-                                    className="bg-white/5 border-white/10 mt-2"
+                                    className="bg-primary/5 border-primary/10 mt-2"
                                 />
                             )}
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Description *</label>
-                        <Textarea name="description" required className="bg-white/5 border-white/10 min-h-[100px]" />
+                        <label className="text-sm font-medium text-primary">Description *</label>
+                        <Textarea name="description" required className="bg-primary/5 border-primary/10 min-h-[100px]" />
                     </div>
 
                     {/* Job Specific Questions */}
-                    <div className="space-y-4 border-t border-white/10 pt-4">
+                    <div className="space-y-4 border-t border-primary/10 pt-4">
                         <div className="flex justify-between items-center">
-                            <label className="text-sm font-medium text-metal-purple-300">Job Specific Questions (Multi-choice)</label>
-                            <Button type="button" size="sm" variant="outline" onClick={addQuestion} className="h-8 border-metal-purple-500/30 text-metal-purple-300 hover:bg-metal-purple-500/10">
+                            <label className="text-sm font-medium text-purple-600">Job Specific Questions (Multi-choice)</label>
+                            <Button type="button" size="sm" variant="outline" onClick={addQuestion} className="h-8 border-purple-500/30 text-purple-600 hover:bg-metal-purple-500/10">
                                 <Plus className="w-4 h-4 mr-1" /> Add Question
                             </Button>
                         </div>
 
                         <div className="space-y-4">
                             {questions.map((q, qImg) => (
-                                <div key={q.id} className="p-4 rounded-lg bg-white/5 space-y-3 relative group">
+                                <div key={q.id} className="p-4 rounded-lg bg-primary/5 space-y-3 relative group">
                                     <div className="flex gap-2">
                                         <Input
                                             placeholder="Enter question text..."
                                             value={q.question}
                                             onChange={(e) => updateQuestion(q.id, e.target.value)}
-                                            className="bg-black/20 border-white/10 text-sm"
+                                            className="bg-background/80 border-primary/10 text-sm"
                                         />
                                         <Button type="button" size="icon" variant="ghost" onClick={() => removeQuestion(q.id)} className="h-10 w-10 text-red-400 hover:bg-red-400/10 hover:text-red-300">
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </div>
-                                    <div className="pl-4 space-y-2 border-l-2 border-white/10">
+                                    <div className="pl-4 space-y-2 border-l-2 border-primary/10">
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider">Options</p>
                                         {q.options.map((opt, optIdx) => (
                                             <div key={optIdx} className="flex gap-2">
@@ -916,14 +943,14 @@ const AddJobDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                                                     placeholder={`Option ${optIdx + 1}`}
                                                     value={opt}
                                                     onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
-                                                    className="h-8 bg-black/20 border-white/10 text-xs"
+                                                    className="h-8 bg-background/80 border-primary/10 text-xs"
                                                 />
                                                 <Button type="button" size="icon" variant="ghost" onClick={() => removeOption(q.id, optIdx)} className="h-8 w-8 text-red-400 hover:bg-red-400/10">
                                                     <Trash2 className="w-3 h-3" />
                                                 </Button>
                                             </div>
                                         ))}
-                                        <Button type="button" size="sm" variant="ghost" onClick={() => addOption(q.id)} className="h-6 text-xs text-metal-blue-300 hover:text-metal-blue-200">
+                                        <Button type="button" size="sm" variant="ghost" onClick={() => addOption(q.id)} className="h-6 text-xs text-primary hover:text-metal-blue-200">
                                             + Add Option
                                         </Button>
                                     </div>
@@ -966,17 +993,17 @@ const AddTeamDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             <DialogTrigger asChild>
                 <Button variant="hero"><Plus className="w-4 h-4 mr-2" /> Add Member</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-[#0B1221] border-white/10 text-white">
+            <DialogContent className="sm:max-w-[425px] bg-background border-primary/10 text-foreground">
                 <DialogHeader>
                     <DialogTitle>Add Team Member</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                    <Input name="name" placeholder="Name" required className="bg-white/5 border-white/10" />
-                    <Input name="role" placeholder="Role" required className="bg-white/5 border-white/10" />
-                    <Textarea name="bio" placeholder="Bio" required className="bg-white/5 border-white/10" />
-                    <Input name="linkedin" placeholder="LinkedIn URL" className="bg-white/5 border-white/10" />
-                    <Input name="twitter" placeholder="X (Twitter) URL" className="bg-white/5 border-white/10" />
-                    <Input name="github" placeholder="GitHub URL" className="bg-white/5 border-white/10" />
+                    <Input name="name" placeholder="Name" required className="bg-primary/5 border-primary/10" />
+                    <Input name="role" placeholder="Role" required className="bg-primary/5 border-primary/10" />
+                    <Textarea name="bio" placeholder="Bio" required className="bg-primary/5 border-primary/10" />
+                    <Input name="linkedin" placeholder="LinkedIn URL" className="bg-primary/5 border-primary/10" />
+                    <Input name="twitter" placeholder="X (Twitter) URL" className="bg-primary/5 border-primary/10" />
+                    <Input name="github" placeholder="GitHub URL" className="bg-primary/5 border-primary/10" />
                     <Button type="submit" className="w-full bg-metal-blue-500 hover:bg-metal-blue-600">Add Member</Button>
                 </form>
             </DialogContent>
@@ -1075,22 +1102,22 @@ const AddGalleryDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             <DialogTrigger asChild>
                 <Button variant="hero"><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[650px] bg-[#0B1221] border-white/10 text-white max-h-[85vh] overflow-y-auto custom-scrollbar pr-6" data-lenis-prevent>
+            <DialogContent className="sm:max-w-[650px] bg-background border-primary/10 text-foreground max-h-[85vh] overflow-y-auto custom-scrollbar pr-6" data-lenis-prevent>
                 <DialogHeader className="pb-4 mb-4">
-                    <DialogTitle className="text-2xl font-bold text-gradient-metal">Add Gallery Item</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold text-gradient-blue">Add Gallery Item</DialogTitle>
                     <p className="text-sm text-muted-foreground">Add new visual content to the gallery</p>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 pb-6">
 
                     {/* Banner Upload */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Gallery Banner *</label>
+                        <label className="text-sm font-medium text-primary">Gallery Banner *</label>
                         <Input
                             type="file"
                             name="banner"
                             accept="image/*"
                             required
-                            className="h-auto py-3 bg-white/5 border-white/10 file:text-white file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                            className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
                         />
                         <p className="text-xs text-muted-foreground">Main banner image for the gallery page</p>
                     </div>
@@ -1098,69 +1125,69 @@ const AddGalleryDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                     {/* Title & Caption */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-blue-300">Title *</label>
-                            <Input name="title" placeholder="Event Name" required className="bg-white/5 border-white/10 focus:border-metal-blue-500" />
+                            <label className="text-sm font-medium text-primary">Title *</label>
+                            <Input name="title" placeholder="Event Name" required className="bg-primary/5 border-primary/10 focus:border-primary" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-metal-purple-300">Category *</label>
+                            <label className="text-sm font-medium text-purple-600">Category *</label>
                             <Select name="category" defaultValue="Events">
-                                <SelectTrigger className="bg-white/5 border-white/10 focus:border-metal-purple-500">
+                                <SelectTrigger className="bg-primary/5 border-primary/10 focus:border-purple-500">
                                     <SelectValue placeholder="Select Category" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0B1221] border-white/10">
-                                    <SelectItem value="Events" className="text-white hover:bg-white/10">Events</SelectItem>
-                                    <SelectItem value="Team" className="text-white hover:bg-white/10">Team</SelectItem>
-                                    <SelectItem value="Products" className="text-white hover:bg-white/10">Products</SelectItem>
-                                    <SelectItem value="Spaces" className="text-white hover:bg-white/10">Spaces</SelectItem>
+                                <SelectContent className="bg-background border-primary/10">
+                                    <SelectItem value="Events" className="text-foreground hover:bg-primary/10">Events</SelectItem>
+                                    <SelectItem value="Team" className="text-foreground hover:bg-primary/10">Team</SelectItem>
+                                    <SelectItem value="Products" className="text-foreground hover:bg-primary/10">Products</SelectItem>
+                                    <SelectItem value="Spaces" className="text-foreground hover:bg-primary/10">Spaces</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Caption *</label>
-                        <Input name="caption" placeholder="One-line Caption" required className="bg-white/5 border-white/10 focus:border-metal-blue-500" />
+                        <label className="text-sm font-medium text-primary">Caption *</label>
+                        <Input name="caption" placeholder="One-line Caption" required className="bg-primary/5 border-primary/10 focus:border-primary" />
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-blue-300">Detailed Description *</label>
+                        <label className="text-sm font-medium text-primary">Detailed Description *</label>
                         <Textarea
                             name="description"
                             placeholder="Full story about this event/item..."
                             required
-                            className="bg-white/5 border-white/10 h-32 resize-none focus:border-metal-blue-500"
+                            className="bg-primary/5 border-primary/10 h-32 resize-none focus:border-primary"
                         />
                     </div>
 
                     {/* Highlights */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-purple-300">Highlights (One per line)</label>
+                        <label className="text-sm font-medium text-purple-600">Highlights (One per line)</label>
                         <Textarea
                             name="highlights"
                             placeholder="- Keynote Speech&#10;- Network Session&#10;- Product Demo"
                             required
-                            className="bg-white/5 border-white/10 focus:border-metal-purple-500"
+                            className="bg-primary/5 border-primary/10 focus:border-purple-500"
                         />
                     </div>
 
                     {/* Photos Upload */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-metal-purple-300">Event Photos (Carousel)</label>
+                        <label className="text-sm font-medium text-purple-600">Event Photos (Carousel)</label>
                         <Input
                             type="file"
                             name="photos_files"
                             accept="image/*"
                             multiple
-                            className="bg-white/5 border-white/10 file:text-white file:bg-metal-purple-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-purple-500/30 transition-all"
+                            className="bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-purple-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-purple-500/30 transition-all"
                         />
                         <p className="text-xs text-muted-foreground">Upload 2 or more photos for the carousel</p>
                     </div>
 
                     {/* Upload Progress */}
                     {isUploading && uploadProgress && (
-                        <div className="p-3 rounded-lg bg-metal-blue-500/10 border border-metal-blue-500/20">
-                            <p className="text-sm text-metal-blue-300 flex items-center gap-2">
+                        <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                            <p className="text-sm text-primary flex items-center gap-2">
                                 <div className="w-4 h-4 border-2 border-metal-blue-400 border-t-transparent rounded-full animate-spin" />
                                 {uploadProgress}
                             </p>

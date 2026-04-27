@@ -472,7 +472,7 @@ const Events = () => {
                     {[
                       "/Madhan_Kumar_P.JPG.jpeg",
                       "/Kamalesh_S.JPG.jpeg",
-                      "/WhatsApp Image 2026-03-03 at 2.13.21 PM.jpeg",
+                      "/Kishore_K.jpg.jpeg",
                       "/Anjali_M.JPG.jpeg"
                     ].map((img, i) => (
                       <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0f1e] overflow-hidden bg-slate-800">
