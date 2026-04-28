@@ -1,58 +1,53 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { useLayoutEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, CheckCircle2, Layout, Users, BarChart3, ShieldCheck, Zap, Globe, ArrowRight, X } from "lucide-react";
+import { ExternalLink, CheckCircle2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumCTA } from "@/components/ui/PremiumCTA";
 import SEO from "@/components/SEO";
 
-import Grainient from "@/components/effects/Grainient";
 import ColumnGridBackground from "@/components/effects/ColumnGridBackground";
 
-const features = [
-  {
-    icon: Layout,
-    title: "Unified Administration",
-    description: "Centrally manage students, staff, and operations with our intuitive dashboard.",
-    color: "blue"
-  },
-  {
-    icon: Users,
-    title: "Seamless Communication",
-    description: "Bridge the gap between parents, teachers, and students with real-time updates.",
-    color: "purple"
-  },
-  {
-    icon: BarChart3,
-    title: "Advanced Analytics",
-    description: "Make data-driven decisions with comprehensive performance and attendance reports.",
-    color: "indigo"
-  },
-  {
-    icon: ShieldCheck,
-    title: "Secure Data",
-    description: "Enterprise-grade security to keep all educational and personal data protected.",
-    color: "blue"
-  },
-  {
-    icon: Zap,
-    title: "Instants Reports",
-    description: "Generate academic, financial, and attendance reports with a single click.",
-    color: "purple"
-  },
-  {
-    icon: Globe,
-    title: "Anywhere Access",
-    description: "Fully responsive platform accessible from mobile, tablet, or desktop devices.",
-    color: "indigo"
-  }
-];
+gsap.registerPlugin(ScrollTrigger);
 
 const Products = () => {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const handleExploreNow = () => {
     window.open("https://www.myvidyon.com/", "_blank", "noopener,noreferrer");
   };
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const panels = gsap.utils.toArray('.product-panel') as HTMLElement[];
+      
+      // Pin the container and animate each panel from the bottom up, snapping sequentially
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          pin: true,
+          scrub: 1,
+          start: "top top",
+          end: () => "+=" + (panels.length * window.innerHeight),
+        }
+      });
+      
+      // Initially, panel 0 is in view. We animate subsequent panels sliding up to cover the previous.
+      panels.forEach((panel, i) => {
+        if (i === 0) return;
+        tl.fromTo(panel, 
+          { yPercent: 100 },
+          { yPercent: 0, ease: "none" }
+        );
+      });
+      
+    }, containerRef);
+    
+    return () => ctx.revert();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -61,329 +56,152 @@ const Products = () => {
         description="Experience the next generation of intelligent systems with UNAI TECH's specialized product ecosystems."
       />
 
-
       <main>
-        {/* Premium Framing Hero Section */}
-        <section className="relative mx-4 mt-2 mb-4 md:my-4 rounded-[2.5rem] md:rounded-[4rem] min-h-[calc(100dvh-2rem)] flex flex-col items-center justify-center overflow-hidden pt-0 md:pt-0 pb-40 md:pb-72 shadow-2xl bg-white">
-          {/* New Framing Background Component */}
-          <ColumnGridBackground className="opacity-40 md:opacity-100" />
-
-          <div className="container relative z-10 mx-auto px-6 flex flex-col items-center justify-center text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="max-w-4xl"
-            >
-              <h1 className="text-[34px] sm:text-5xl md:text-6xl lg:text-6xl font-bold text-[#0D2872] mb-3 md:mb-6 leading-[1.2] md:leading-tight tracking-tight">
-                My Vidyon <br className="md:hidden" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                  ERP Solution
-                </span>
-              </h1>
-
-              <p className="text-[16px] sm:text-xl md:text-xl text-slate-500 mb-5 md:mb-10 font-medium tracking-wide">
-                Organize <span className="mx-2 opacity-30">|</span> Educate <span className="mx-2 opacity-30">|</span> Elevate
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 w-full px-6 sm:px-0 max-w-[400px] sm:max-w-none mx-auto">
-                <Button
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 shadow-glow-blue hover:shadow-glow-blue-strong py-2 w-full sm:w-auto rounded-full bg-gradient-to-r from-[#0D2872] to-[#1e40af] text-white hover:opacity-90 px-8 sm:px-10 h-[48px] sm:h-[54px] text-base sm:text-lg font-bold shadow-2xl transition-all hover:scale-105"
-                  onClick={() => navigate("/contact")}
-                >
-                  Schedule Demo
-                </Button>
-                <Button
-                  variant="outline"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:border-metal-blue-500/50 hover:shadow-glow-blue py-2 w-full sm:w-auto rounded-full border-2 border-[#0D2872] bg-white text-[#0D2872] hover:bg-slate-50 px-8 sm:px-10 h-[48px] sm:h-[54px] text-base sm:text-lg font-bold transition-all hover:scale-105"
-                  onClick={handleExploreNow}
-                >
-                  Explore <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </div>
-
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Side-by-Side ERP Solution Section with Triple Mockup PEeking */}
-        <section className="relative z-20 -mt-48 sm:-mt-24 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-transparent to-white">
-          <div className="container mx-auto relative">
-
-            {/* Triple Mobile Mockup Peek Layout (Behind Card) - Hidden on mobile, shown on md+ */}
-            <div className="hidden md:flex absolute -top-20 sm:-top-48 md:-top-72 left-1/2 -translate-x-1/2 w-full max-w-[850px] md:max-w-[1100px] items-end justify-center pointer-events-none z-0 px-4 sm:px-10">
-              {/* Left Phone */}
-              <motion.div
-                initial={{ opacity: 0, y: 100, x: 20 }}
-                whileInView={{ opacity: 1, y: 0, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, delay: 0.2 }}
-                className="w-[40%] sm:w-[20%] md:w-[300px] -mr-20 sm:-mr-10 md:-mr-36"
-              >
-                <img src="/6.png" alt="Mockup Left" width="336" height="728" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
-              </motion.div>
-
-              {/* Center Phone (Higher) */}
-              <motion.div
-                initial={{ opacity: 0, y: 120 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
-                className="w-3/5 sm:w-2/5 md:w-[400px] z-10 -mb-8 sm:-mb-10 md:-mb-16"
-              >
-                <img src="/5.png" alt="Mockup Center" width="441" height="956" className="w-full h-auto drop-shadow-[0_35px_60px_rgba(0,0,0,0.3)] transform-gpu" loading="lazy" />
-              </motion.div>
-
-              {/* Right Phone */}
-              <motion.div
-                initial={{ opacity: 0, y: 100, x: -20 }}
-                whileInView={{ opacity: 1, y: 0, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, delay: 0.4 }}
-                className="w-1/2 sm:w-1/3 md:w-[336px] -ml-16 sm:-ml-24 md:-ml-36"
-              >
-                <img src="/7.png" alt="Mockup Right" width="336" height="728" className="w-full h-auto drop-shadow-2xl opacity-90 transform-gpu" loading="lazy" />
-              </motion.div>
-            </div>
-
-            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] px-4 py-5 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
-              <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-16 relative z-10">
-                {/* Left Column: Illustration with Glows */}
-                <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  className="flex-1 relative"
-                >
-                  <div className="relative p-2 md:p-4">
-                    {/* The Illustration */}
-                    <img
-                      src="/illustration2.png"
-                      alt="Vidyon ERP Illustration"
-                      width="600"
-                      height="500"
-                      className="w-full h-auto rounded-3xl" />
-                  </div>
-
-                  {/* Background decorative elements */}
-                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10" />
-                  <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-purple-100/30 rounded-full blur-3xl -z-10" />
-                </motion.div>
-
-                {/* Right Column: Text Content */}
-                <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  className="flex-1"
-                >
-                  <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-2 text-[#1F2937] leading-tight">
-                    My Vidyon <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                      ERP Solution
-                    </span>
-                  </h1>
-
-                  <p className="text-base sm:text-lg text-gray-700/80 mb-3 leading-relaxed">
-                    Transform your educational institution with our comprehensive ERP ecosystem.
-                    Bridge communication, automate administration, and empower learning with
-                    a system designed for excellence and scale.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-4 lg:gap-6 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                        <CheckCircle2 size={20} />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-800">Unified Data</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
-                        <CheckCircle2 size={20} />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-800">Real-time Sync</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-4">
-                    <Button
-                      onClick={handleExploreNow}
-                      size="xl"
-                      className="h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
-                    >
-                      Explore Now
-                      <ExternalLink className="ml-2 w-5 h-5" />
-                    </Button>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-
-          {/* New AI Platform Section */}
-          <div className="container mx-auto relative mt-16 sm:mt-24">
-            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] px-4 py-5 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
-              <div className="flex flex-col lg:flex-row-reverse items-center gap-4 lg:gap-16 relative z-10">
-                {/* Right Column: Illustration with Glows (Illustration on right this time) */}
-                <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  className="flex-1 relative"
-                >
-                  <div className="relative p-2 md:p-4">
-                    {/* The Illustration */}
-                    <img
-                      src="/ai_platform_illustration.png"
-                      alt="Vidyo Ai platform"
-                      width="600"
-                      height="500"
-                      className="w-full h-auto rounded-3xl" />
-                  </div>
-
-                  {/* Background decorative elements */}
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-100/50 rounded-full blur-3xl -z-10" />
-                  <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-indigo-100/30 rounded-full blur-3xl -z-10" />
-                </motion.div>
-
-                {/* Left Column: Text Content */}
-                <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  className="flex-1"
-                >
-                  <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-bold mb-2 text-[#1F2937] leading-tight">
-                    Vidyo <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                      Ai platform
-                    </span>
-                  </h1>
-
-                  <p className="text-lg sm:text-xl font-medium text-blue-600/80 mb-2">
-                    Reimagine the way you work with next-generation AI technology.
-                  </p>
-
-                  <p className="text-base sm:text-lg text-gray-700/80 mb-6 leading-relaxed">
-                    Automate operations, unlock insights, and accelerate growth with a solution designed for modern organizations.
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-8">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                        <CheckCircle2 size={20} />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-800">Faster Execution</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
-                        <CheckCircle2 size={20} />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-800">Seamless Integration</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={() => navigate("/vidyo-ai")}
-                    size="xl"
-                    className="h-14 px-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105"
-                  >
-                    Explore more
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-          {/* New Swaxthika Platform Section */}
-          <div className="container mx-auto relative mt-16 sm:mt-24">
-            <div className="relative z-10 bg-white/40 backdrop-blur-2xl border border-white/40 rounded-[2.5rem] sm:rounded-[3rem] px-4 py-5 sm:p-10 md:p-16 shadow-2xl overflow-hidden">
-              <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-16 relative z-10">
-                {/* Left Column: Visual */}
-                <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  className="flex-1 relative w-full"
-                >
-                  <div className="relative p-2 md:p-4">
-                    <img
-                      src="/illustration-1.png"
-                      alt="Swaxthika Platform Illustration"
-                      width="600"
-                      height="500"
-                      className="w-full h-auto rounded-3xl" />
-                  </div>
-
-                  {/* Background decorative elements */}
-                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10" />
-                  <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-indigo-100/30 rounded-full blur-3xl -z-10" />
-                </motion.div>
-
-                {/* Right Column: Text Content */}
-                <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  className="flex-1"
-                >
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-4 sm:mb-5">
-                    <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                    <span className="text-[10px] sm:text-xs font-bold text-blue-700 tracking-widest uppercase">
-                      Coming Soon
-                    </span>
-                  </div>
-
-                  <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-[#1F2937] leading-tight">
-                    Swaxthika <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-2xl sm:text-3xl md:text-4xl">
-                      Tradition meets Technology
-                    </span>
-                  </h1>
-
-                  <p className="text-base sm:text-lg text-gray-700/80 mb-6 leading-relaxed">
-                    A comprehensive digital platform designed to serve the cultural, spiritual, and celebratory needs of Indian families. Bringing together five deeply connected life experiences under one roof — just as Flipkart and Amazon transformed everyday shopping, Swaxthika will transform how Indian families discover, plan, and celebrate life's most sacred milestones.
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-5 mb-8">
-                    {["Sacred Store", "Astrology", "Matrimony", "Wedding & Catering"].map((pillar) => (
-                      <div key={pillar} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                          <CheckCircle2 size={20} />
+        {/* GSAP Parallax Pinned Container */}
+        <div ref={containerRef} className="relative h-screen w-full overflow-hidden bg-slate-50">
+          
+          {/* Panel 1: Vidyo AI */}
+          <div className="product-panel absolute inset-0 z-10 w-full h-full bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)]">
+             <ColumnGridBackground className="opacity-40 md:opacity-100" />
+             <div className="container relative z-10 mx-auto px-4 sm:px-6 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                 <div className="min-h-full flex items-center justify-center pt-24 pb-8">
+                     <div className="relative z-10 bg-white/60 backdrop-blur-3xl border border-white/50 rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-10 md:p-16 shadow-2xl w-full max-w-7xl">
+                        <div className="flex flex-col lg:flex-row-reverse items-center gap-6 lg:gap-16 relative z-10">
+                          <div className="flex-1 relative w-full max-w-sm lg:max-w-none mx-auto">
+                            <div className="relative p-2 md:p-4 flex justify-center">
+                              <img src="/ai_platform_illustration.png" alt="Vidyo Ai platform" width="600" height="500" className="max-h-[25vh] lg:max-h-none w-auto lg:w-full h-auto rounded-3xl object-contain" />
+                            </div>
+                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-100/50 rounded-full blur-3xl -z-10 hidden sm:block" />
+                            <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-indigo-100/30 rounded-full blur-3xl -z-10 hidden sm:block" />
+                          </div>
+                          <div className="flex-1 text-center lg:text-left mt-4 lg:mt-0">
+                            <h1 className="font-heading text-3xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-4 text-[#1F2937] leading-tight">
+                              Vidyo <br />
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Ai platform</span>
+                            </h1>
+                            <p className="text-base sm:text-xl font-medium text-blue-600/80 mb-2">Reimagine the way you work with next-generation AI technology.</p>
+                            <p className="text-sm sm:text-lg text-gray-700/80 mb-5 sm:mb-6 leading-relaxed">Automate operations, unlock insights, and accelerate growth with a solution designed for modern organizations.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-6 sm:mb-8 text-left">
+                              <div className="flex items-center justify-center lg:justify-start gap-3">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+                                  <CheckCircle2 size={18} />
+                                </div>
+                                <span className="text-xs sm:text-sm font-semibold text-gray-800">Faster Execution</span>
+                              </div>
+                              <div className="flex items-center justify-center lg:justify-start gap-3">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shrink-0">
+                                  <CheckCircle2 size={18} />
+                                </div>
+                                <span className="text-xs sm:text-sm font-semibold text-gray-800">Seamless Integration</span>
+                              </div>
+                            </div>
+                            <Button onClick={() => navigate("/vidyo-ai")} size="lg" className="h-12 sm:h-14 px-8 sm:px-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105 w-full sm:w-auto">
+                              Explore more <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                            </Button>
+                          </div>
                         </div>
-                        <span className="text-sm font-semibold text-gray-800">{pillar}</span>
-                      </div>
-                    ))}
-                  </div>
+                     </div>
+                 </div>
+             </div>
+          </div>
+          
+          {/* Panel 2: My Vidyon */}
+          <div className="product-panel absolute inset-0 z-20 w-full h-full bg-slate-50 shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
+             <div className="container relative z-10 mx-auto px-4 sm:px-6 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                 <div className="min-h-full flex items-center justify-center pt-24 pb-8">
+                     <div className="relative z-10 bg-white/70 backdrop-blur-3xl border border-white/50 rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-10 md:p-16 shadow-2xl w-full max-w-7xl">
+                        <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-16 relative z-10">
+                          <div className="flex-1 relative w-full max-w-sm lg:max-w-none mx-auto">
+                            <div className="relative p-2 md:p-4 flex justify-center">
+                              <img src="/illustration2.png" alt="Vidyon ERP Illustration" width="600" height="500" className="max-h-[25vh] lg:max-h-none w-auto lg:w-full h-auto rounded-3xl object-contain" />
+                            </div>
+                            <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10 hidden sm:block" />
+                            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-purple-100/30 rounded-full blur-3xl -z-10 hidden sm:block" />
+                          </div>
+                          <div className="flex-1 text-center lg:text-left mt-4 lg:mt-0">
+                            <h1 className="font-heading text-3xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-4 text-[#1F2937] leading-tight">
+                              My Vidyon <br />
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">ERP Solution</span>
+                            </h1>
+                            <p className="text-sm sm:text-lg text-gray-700/80 mb-5 sm:mb-6 leading-relaxed">Transform your educational institution with our comprehensive ERP ecosystem. Bridge communication, automate administration, and empower learning with a system designed for excellence and scale.</p>
+                            <div className="grid grid-cols-2 gap-3 sm:gap-6 mb-6 sm:mb-8 text-left">
+                              <div className="flex items-center justify-center lg:justify-start gap-3">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+                                  <CheckCircle2 size={18} />
+                                </div>
+                                <span className="text-xs sm:text-sm font-semibold text-gray-800">Unified Data</span>
+                              </div>
+                              <div className="flex items-center justify-center lg:justify-start gap-3">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 shrink-0">
+                                  <CheckCircle2 size={18} />
+                                </div>
+                                <span className="text-xs sm:text-sm font-semibold text-gray-800">Real-time Sync</span>
+                              </div>
+                            </div>
+                            <Button onClick={handleExploreNow} size="lg" className="h-12 sm:h-14 px-8 sm:px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200 transition-all hover:scale-105 w-full sm:w-auto">
+                              Explore Now <ExternalLink className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                            </Button>
+                          </div>
+                        </div>
+                     </div>
+                 </div>
+             </div>
+          </div>
+          
+          {/* Panel 3: Swaxthika */}
+          <div className="product-panel absolute inset-0 z-30 w-full h-full bg-white shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
+             <div className="container relative z-10 mx-auto px-4 sm:px-6 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                 <div className="min-h-full flex items-center justify-center pt-24 pb-8">
+                     <div className="relative z-10 bg-slate-50/70 backdrop-blur-3xl border border-white/50 rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-10 md:p-16 shadow-2xl w-full max-w-7xl">
+                        <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-16 relative z-10">
+                          <div className="flex-1 relative w-full max-w-sm lg:max-w-none mx-auto">
+                            <div className="relative p-2 md:p-4 flex justify-center">
+                              <img src="/illustration-1.png" alt="Swaxthika Platform Illustration" width="600" height="500" className="max-h-[25vh] lg:max-h-none w-auto lg:w-full h-auto rounded-3xl object-contain" />
+                            </div>
+                            <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10 hidden sm:block" />
+                            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-indigo-100/30 rounded-full blur-3xl -z-10 hidden sm:block" />
+                          </div>
+                          <div className="flex-1 text-center lg:text-left mt-4 lg:mt-0">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-3 sm:mb-4">
+                              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                              <span className="text-[10px] sm:text-xs font-bold text-blue-700 tracking-widest uppercase">Coming Soon</span>
+                            </div>
+                            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-[#1F2937] leading-tight">
+                              Swaxthika <br />
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-xl sm:text-2xl md:text-4xl">Tradition meets Technology</span>
+                            </h1>
+                            <p className="text-sm sm:text-lg text-gray-700/80 mb-5 sm:mb-6 leading-relaxed">A comprehensive digital platform designed to serve the cultural, spiritual, and celebratory needs of Indian families. Bringing together five deeply connected life experiences under one roof.</p>
+                            <div className="grid grid-cols-2 gap-3 lg:gap-5 mb-6 sm:mb-8 text-left">
+                              {["Sacred Store", "Astrology", "Matrimony", "Wedding & Catering"].map((pillar) => (
+                                <div key={pillar} className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
+                                  <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+                                    <CheckCircle2 size={14} className="sm:w-[20px] sm:h-[20px]" />
+                                  </div>
+                                  <span className="text-[10px] sm:text-sm font-semibold text-gray-800 leading-tight">{pillar}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <Button disabled size="lg" className="h-12 sm:h-14 px-8 sm:px-10 rounded-2xl bg-white text-slate-400 cursor-not-allowed shadow-none border border-slate-200 w-full sm:w-auto">
+                              Launching Soon
+                            </Button>
+                          </div>
+                        </div>
+                     </div>
+                 </div>
+             </div>
+          </div>
+        </div>
 
-                  <Button
-                    disabled
-                    size="xl"
-                    className="h-14 px-10 rounded-2xl bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200"
-                  >
-                    Launching Soon
-                  </Button>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-          {/* PremiumCTA Merged Here */}
-          <div className="mt-16 sm:mt-24">
-            <PremiumCTA
-              title={<>Empower Your Institution <br />With <span className="text-blue-300">My Vidyon</span></>}
-              description="Join hundreds of schools already transforming their administrative workflows and academic excellence."
-              primaryButton={{
-                label: "Schedule Free Demo",
-                onClick: () => navigate('/contact')
-              }} />
-          </div>
-        </section>
+        {/* PremiumCTA Merged Here */}
+        <div className="py-16 sm:py-24 bg-[#F8FAFC] relative z-40">
+          <PremiumCTA
+            title={<>Empower Your Institution <br />With <span className="text-blue-500">My Vidyon</span></>}
+            description="Join hundreds of schools already transforming their administrative workflows and academic excellence."
+            primaryButton={{
+              label: "Schedule Free Demo",
+              onClick: () => navigate('/contact')
+            }} />
+        </div>
       </main>
       <Footer />
     </div>
