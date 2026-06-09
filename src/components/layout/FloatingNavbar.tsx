@@ -47,6 +47,7 @@ export const FloatingNavbar = () => {
     { name: "SERVICES", href: "/services" },
 
     { name: "EDU", href: "/education" },
+    { name: "UNAI PAC", href: "/unai-pac" },
     { name: "PRODUCTS", href: "/products" },
     { name: "EVENTS", href: "/events" },
     { name: "CAREERS", href: "/careers" },
