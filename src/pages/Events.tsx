@@ -7,6 +7,177 @@ import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
 import { Magnetic } from "@/components/effects/Magnetic";
 import SEO from "@/components/SEO";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+
+// ─── Registration Modal ──────────────────────────────────────────────────────────
+const RegistrationModal = ({ event }: { event: any }) => {
+  const { addEventRegistration } = useData();
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState<any>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Extract default fields
+    const name = formData['name'] || '';
+    const email = formData['email'] || '';
+    const phone = formData['phone'] || '';
+
+    // Extract dynamic answers
+    const answers = { ...formData };
+    delete answers['name'];
+    delete answers['email'];
+    delete answers['phone'];
+
+    try {
+      await addEventRegistration({
+        event_id: event.id,
+        applicant_name: name,
+        email,
+        phone,
+        answers,
+      });
+      toast.success("Registration Successful!");
+      setOpen(false);
+    } catch (error) {
+      toast.error("Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFieldChange = (key: string, value: any) => {
+    setFormData((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
+      setFormData((prev: any) => {
+          const current = prev[key] || [];
+          if (checked) {
+              return { ...prev, [key]: [...current, value] };
+          } else {
+              return { ...prev, [key]: current.filter((v: string) => v !== value) };
+          }
+      });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group">
+          Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px] bg-white border-slate-100 text-slate-900 p-8 rounded-[2rem] max-h-[85vh] overflow-y-auto custom-scrollbar">
+        <DialogHeader className="mb-6">
+          <DialogTitle className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Register for {event.title}
+          </DialogTitle>
+          <p className="text-sm text-slate-500 mt-2">Please fill in the details below to secure your spot.</p>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Default Fields */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Full Name *</label>
+              <Input required onChange={(e) => handleFieldChange("name", e.target.value)} className="bg-slate-50 border-slate-200" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Email *</label>
+                <Input type="email" required onChange={(e) => handleFieldChange("email", e.target.value)} className="bg-slate-50 border-slate-200" />
+                </div>
+                <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Phone *</label>
+                <Input type="tel" required onChange={(e) => handleFieldChange("phone", e.target.value)} className="bg-slate-50 border-slate-200" />
+                </div>
+            </div>
+          </div>
+
+          {/* Dynamic Fields */}
+          {event.form_fields && event.form_fields.length > 0 && (
+            <div className="space-y-5 pt-5 border-t border-slate-100">
+                <h4 className="text-sm font-black uppercase tracking-widest text-slate-800">Additional Information</h4>
+                {event.form_fields.map((field: any) => (
+                    <div key={field.id} className="space-y-2">
+                        <label className="text-xs font-bold text-slate-600 block">
+                            {field.label} {field.required && "*"}
+                        </label>
+                        
+                        {field.type === 'short_answer' && (
+                            <Input 
+                                required={field.required} 
+                                onChange={(e) => handleFieldChange(field.label, e.target.value)}
+                                className="bg-slate-50 border-slate-200"
+                            />
+                        )}
+
+                        {field.type === 'long_answer' && (
+                            <Textarea 
+                                required={field.required} 
+                                onChange={(e) => handleFieldChange(field.label, e.target.value)}
+                                className="bg-slate-50 border-slate-200 resize-none h-24"
+                            />
+                        )}
+
+                        {field.type === 'multiple_choice' && (
+                            <div className="space-y-2">
+                                {field.options.map((opt: string, i: number) => (
+                                    <label key={i} className="flex items-center gap-3 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name={`field_${field.id}`} 
+                                            required={field.required}
+                                            value={opt}
+                                            onChange={(e) => handleFieldChange(field.label, e.target.value)}
+                                            className="w-4 h-4 accent-slate-900"
+                                        />
+                                        <span className="text-sm text-slate-600">{opt}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+
+                        {field.type === 'checkboxes' && (
+                            <div className="space-y-2">
+                                {field.options.map((opt: string, i: number) => (
+                                    <label key={i} className="flex items-center gap-3 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            value={opt}
+                                            onChange={(e) => handleCheckboxChange(field.label, opt, e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-300 accent-slate-900"
+                                        />
+                                        <span className="text-sm text-slate-600">{opt}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+          )}
+
+          <div className="pt-6">
+            <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
+            >
+                {isSubmitting ? "Submitting..." : "Complete Registration"}
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 // ─── Poster Carousel ───────────────────────────────────────────────────────────
 const PosterCarousel = ({ posters }: { posters: string[] }) => {
@@ -303,17 +474,21 @@ const Events = () => {
                 </motion.div>
 
                 {/* CTA */}
-                {selectedEvent.registration_link && (
+                {(selectedEvent.registration_link || selectedEvent.registration_type === 'manual') && (
                   <motion.div
                     initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                   >
-                    <button
-                      onClick={() => window.open(selectedEvent.registration_link, "_blank")}
-                      className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group"
-                    >
-                      Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                    {selectedEvent.registration_type === 'manual' ? (
+                        <RegistrationModal event={selectedEvent} />
+                    ) : (
+                        <button
+                          onClick={() => window.open(selectedEvent.registration_link, "_blank")}
+                          className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group"
+                        >
+                          Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    )}
                   </motion.div>
                 )}
               </div>

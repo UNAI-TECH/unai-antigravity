@@ -29,11 +29,13 @@ const AdminDashboard = () => {
         teamMembers, addTeamMember, deleteTeamMember,
         galleryItems, addGalleryItem, deleteGalleryItem,
         jobApplications,
+        eventRegistrations,
         updateJobApplicationStatus
     } = useData();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("overview");
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -112,6 +114,58 @@ const AdminDashboard = () => {
                     </div>
                 );
             case "events":
+                if (selectedEventId) {
+                    const selectedEvent = events.find(e => e.id === selectedEventId);
+                    const registrations = eventRegistrations.filter(reg => reg.event_id === selectedEventId);
+
+                    return (
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <Button variant="outline" onClick={() => setSelectedEventId(null)} className="border-primary/10 hover:bg-primary/5">
+                                    ← Back
+                                </Button>
+                                <div>
+                                    <h2 className="text-3xl font-heading font-bold">Registrations for {selectedEvent?.title}</h2>
+                                    <p className="text-muted-foreground">Reviewing {registrations.length} registrations.</p>
+                                </div>
+                            </div>
+                            <div className="grid gap-4">
+                                {registrations.length === 0 && (
+                                    <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
+                                        <p className="text-muted-foreground">No registrations for this event yet.</p>
+                                    </div>
+                                )}
+                                {registrations.map(reg => (
+                                    <GlassCard key={reg.id} className="p-6 hover:border-primary/30 transition-colors">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="font-bold text-xl">{reg.applicant_name}</h3>
+                                                <p className="text-sm text-primary">{reg.email}</p>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(reg.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mb-4">Phone: <span className="text-foreground">{reg.phone}</span></p>
+                                        
+                                        <div className="space-y-3 pt-4 border-t border-primary/10">
+                                            <h4 className="text-sm font-semibold text-primary mb-2">Form Responses</h4>
+                                            {reg.answers && Object.entries(reg.answers).map(([question, answer]) => (
+                                                <div key={question} className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                                                    <p className="text-xs text-muted-foreground mb-1">{question}</p>
+                                                    <p className="text-sm font-medium">
+                                                        {Array.isArray(answer) ? answer.join(", ") : String(answer)}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </GlassCard>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                }
+
                 return (
                     <div className="space-y-6">
                         <div className="flex justify-between items-center">
@@ -127,24 +181,46 @@ const AdminDashboard = () => {
                                     <p className="text-muted-foreground">No events scheduled.</p>
                                 </div>
                             )}
-                            {events.map(event => (
-                                <GlassCard key={event.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <h3 className="font-bold text-xl">{event.title}</h3>
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.status === 'upcoming' ? 'bg-green-500/20 text-green-400' : 'bg-primary/10 text-muted-foreground'}`}>
-                                                {event.status}
-                                            </span>
+                            {events.map(event => {
+                                const regCount = eventRegistrations.filter(r => r.event_id === event.id).length;
+                                return (
+                                    <GlassCard key={event.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <h3 className="font-bold text-xl">{event.title}</h3>
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.status === 'upcoming' ? 'bg-green-500/20 text-green-400' : 'bg-primary/10 text-muted-foreground'}`}>
+                                                    {event.status}
+                                                </span>
+                                                {event.registration_type === 'manual' && (
+                                                    <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Manual Form</span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                <Calendar className="w-3 h-3" /> {event.date} • <Search className="w-3 h-3" /> {event.location}
+                                            </p>
+                                            {event.registration_type === 'manual' && (
+                                                <p className="mt-2 text-sm font-medium text-primary/80">
+                                                    {regCount} Registration{regCount !== 1 ? 's' : ''}
+                                                </p>
+                                            )}
                                         </div>
-                                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                            <Calendar className="w-3 h-3" /> {event.date} • <Search className="w-3 h-3" /> {event.location}
-                                        </p>
-                                    </div>
-                                    <Button variant="destructive" size="icon" onClick={() => deleteEvent(event.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </GlassCard>
-                            ))}
+                                        <div className="flex items-center gap-3">
+                                            {event.registration_type === 'manual' && (
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={() => setSelectedEventId(event.id)}
+                                                    className="bg-primary/5 hover:bg-primary/10 text-foreground"
+                                                >
+                                                    View Registrations
+                                                </Button>
+                                            )}
+                                            <Button variant="destructive" size="icon" onClick={() => deleteEvent(event.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </GlassCard>
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -485,6 +561,37 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
     const [open, setOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState("");
+    const [registrationType, setRegistrationType] = useState<"url" | "manual">("url");
+    const [formFields, setFormFields] = useState<{ id: string, type: string, label: string, options: string[], required: boolean }[]>([]);
+
+    const addFormField = () => {
+        setFormFields([...formFields, { id: Date.now().toString() + Math.random().toString(), type: "short_answer", label: "", options: [""], required: true }]);
+    };
+    const removeFormField = (id: string) => setFormFields(formFields.filter(f => f.id !== id));
+    const updateFormField = (id: string, key: string, value: any) => {
+        setFormFields(formFields.map(f => f.id === id ? { ...f, [key]: value } : f));
+    };
+    const addFieldOption = (id: string) => {
+        setFormFields(formFields.map(f => f.id === id ? { ...f, options: [...f.options, ""] } : f));
+    };
+    const updateFieldOption = (id: string, idx: number, value: string) => {
+        setFormFields(formFields.map(f => {
+            if (f.id === id) {
+                const newOpts = [...f.options];
+                newOpts[idx] = value;
+                return { ...f, options: newOpts };
+            }
+            return f;
+        }));
+    };
+    const removeFieldOption = (id: string, idx: number) => {
+        setFormFields(formFields.map(f => {
+            if (f.id === id) {
+                return { ...f, options: f.options.filter((_, i) => i !== idx) };
+            }
+            return f;
+        }));
+    };
 
     const eventTypes = [
         "Workshop",
@@ -574,7 +681,9 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             attendees: formData.get("attendees"),
             status: "upcoming",
             description: formData.get("description"),
-            registration_link: formData.get("registration_link"),
+            registration_link: registrationType === "url" ? formData.get("registration_link") : "",
+            registration_type: registrationType,
+            form_fields: registrationType === "manual" ? formFields : [],
             banner: bannerUrl,
             posters: posterUrls
         };
@@ -708,17 +817,134 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                         <p className="text-xs text-muted-foreground">Upload multiple promotional posters (optional)</p>
                     </div>
 
-                    {/* Registration URL */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-primary">Registration URL *</label>
-                        <Input
-                            name="registration_link"
-                            placeholder="https://example.com/register"
-                            type="url"
-                            required
-                            className="bg-primary/5 border-primary/10 focus:border-primary"
-                        />
+                    {/* Registration Type */}
+                    <div className="space-y-4 pt-4 border-t border-primary/10">
+                        <label className="text-sm font-medium text-purple-600">Registration Type</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="reg_type"
+                                    checked={registrationType === "url"}
+                                    onChange={() => setRegistrationType("url")}
+                                    className="accent-purple-500"
+                                />
+                                <span className="text-sm">External URL</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="reg_type"
+                                    checked={registrationType === "manual"}
+                                    onChange={() => setRegistrationType("manual")}
+                                    className="accent-purple-500"
+                                />
+                                <span className="text-sm">Manual Form (On-site)</span>
+                            </label>
+                        </div>
                     </div>
+
+                    {/* Registration URL or Manual Form Fields */}
+                    {registrationType === "url" ? (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Registration URL *</label>
+                            <Input
+                                name="registration_link"
+                                placeholder="https://example.com/register"
+                                type="url"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                            />
+                        </div>
+                    ) : (
+                        <div className="space-y-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-primary">Registration Form Fields</label>
+                                <Button type="button" variant="outline" size="sm" onClick={addFormField} className="border-primary/20 hover:bg-primary/10">
+                                    <Plus className="w-4 h-4 mr-1" /> Add Field
+                                </Button>
+                            </div>
+                            
+                            {formFields.length === 0 && (
+                                <p className="text-xs text-muted-foreground italic py-2">No custom fields added. Default fields (Name, Email, Phone) will always be included.</p>
+                            )}
+
+                            <div className="space-y-4">
+                                {formFields.map((field, idx) => (
+                                    <div key={field.id} className="p-4 rounded-lg bg-background border border-primary/10 relative group">
+                                        <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-muted-foreground">Field Label *</label>
+                                                <Input
+                                                    value={field.label}
+                                                    onChange={e => updateFormField(field.id, "label", e.target.value)}
+                                                    placeholder="e.g., Why do you want to attend?"
+                                                    className="h-8 text-sm"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-muted-foreground">Field Type</label>
+                                                <Select value={field.type} onValueChange={v => updateFormField(field.id, "type", v)}>
+                                                    <SelectTrigger className="h-8 text-sm">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="short_answer">Short Answer</SelectItem>
+                                                        <SelectItem value="long_answer">Long Answer</SelectItem>
+                                                        <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                                                        <SelectItem value="checkboxes">Checkboxes</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={field.required}
+                                                    onChange={e => updateFormField(field.id, "required", e.target.checked)}
+                                                    className="rounded border-primary/20 accent-primary"
+                                                />
+                                                Required Field
+                                            </label>
+                                        </div>
+
+                                        {(field.type === "multiple_choice" || field.type === "checkboxes") && (
+                                            <div className="mt-3 pl-2 border-l-2 border-primary/20 space-y-2">
+                                                <label className="text-xs text-muted-foreground">Options</label>
+                                                {field.options.map((opt, oIdx) => (
+                                                    <div key={oIdx} className="flex items-center gap-2">
+                                                        <div className={`w-3 h-3 border border-primary/40 ${field.type === 'multiple_choice' ? 'rounded-full' : 'rounded-sm'}`} />
+                                                        <Input
+                                                            value={opt}
+                                                            onChange={e => updateFieldOption(field.id, oIdx, e.target.value)}
+                                                            placeholder={`Option ${oIdx + 1}`}
+                                                            className="h-7 text-xs flex-1"
+                                                            required
+                                                        />
+                                                        {field.options.length > 1 && (
+                                                            <button type="button" onClick={() => removeFieldOption(field.id, oIdx)} className="text-muted-foreground hover:text-red-400">
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                <Button type="button" variant="ghost" size="sm" onClick={() => addFieldOption(field.id)} className="h-6 text-xs px-2 text-primary">
+                                                    + Add Option
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Hidden Status */}
                     <input type="hidden" name="status" value="upcoming" />

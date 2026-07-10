@@ -16,6 +16,18 @@ export interface Event {
     banner?: string;
     posters?: string[];
     registration_link?: string;
+    registration_type?: 'url' | 'manual';
+    form_fields?: any[];
+}
+
+export interface EventRegistration {
+    id: string;
+    event_id: string;
+    applicant_name: string;
+    email: string;
+    phone: string;
+    answers: any;
+    created_at: string;
 }
 
 export interface JobQuestion {
@@ -86,7 +98,9 @@ interface DataContextType {
     addGalleryItem: (item: Omit<GalleryItem, "id">) => void;
     deleteGalleryItem: (id: string) => void;
     jobApplications: JobApplication[];
+    eventRegistrations: EventRegistration[];
     addJobApplication: (app: Omit<JobApplication, "id" | "created_at" | "status">) => Promise<void>;
+    addEventRegistration: (app: Omit<EventRegistration, "id" | "created_at">) => Promise<void>;
     updateJobApplicationStatus: (id: string, status: "pending" | "approved" | "rejected", applicantEmail: string) => Promise<void>;
     isAuthenticated: boolean;
     login: () => void;
@@ -101,6 +115,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
     const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
+    const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>([]);
 
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
         return localStorage.getItem("unai_auth") === "true";
@@ -150,6 +165,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .order('created_at', { ascending: false });
                 if (appsData) setJobApplications(appsData as JobApplication[]);
                 if (appsError) console.error("Error fetching job applications:", appsError);
+
+                const { data: eventsRegData, error: eventsRegError } = await supabase
+                    .from('event_registrations')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (eventsRegData) setEventRegistrations(eventsRegData as EventRegistration[]);
+                if (eventsRegError) console.error("Error fetching event registrations:", eventsRegError);
             }
         };
 
@@ -285,6 +307,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) console.error("Error adding job application:", error);
     };
 
+    const addEventRegistration = async (app: Omit<EventRegistration, "id" | "created_at">) => {
+        const { data, error } = await supabase
+            .from('event_registrations')
+            .insert([app])
+            .select();
+
+        if (data) {
+            setEventRegistrations(prev => [data[0] as EventRegistration, ...prev]);
+        }
+        if (error) console.error("Error adding event registration:", error);
+    };
+
     const updateJobApplicationStatus = async (id: string, status: "pending" | "approved" | "rejected", applicantEmail: string) => {
         // 1. Update Status in Supabase
         const { error } = await supabase
@@ -336,7 +370,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 addGalleryItem,
                 deleteGalleryItem,
                 jobApplications,
+                eventRegistrations,
                 addJobApplication,
+                addEventRegistration,
                 updateJobApplicationStatus,
                 isAuthenticated,
                 login,
