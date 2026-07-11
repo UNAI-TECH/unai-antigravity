@@ -90,6 +90,7 @@ interface DataContextType {
     teamMembers: TeamMember[];
     galleryItems: GalleryItem[];
     addEvent: (event: Omit<Event, "id">) => void;
+    updateEvent: (id: string, event: Partial<Event>) => void;
     deleteEvent: (id: string) => void;
     addJob: (job: Omit<Job, "id">) => void;
     deleteJob: (id: string) => void;
@@ -194,6 +195,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setEvents(prev => [data[0] as Event, ...prev]);
         }
         if (error) console.error("Error adding event:", error);
+    };
+
+    const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
+        const { data, error } = await supabase
+            .from('events')
+            .update(updatedEvent)
+            .eq('id', id)
+            .select();
+
+        if (data && data.length > 0) {
+            setEvents(prev => prev.map(e => e.id === id ? data[0] as Event : e));
+        }
+        if (error) console.error("Error updating event:", error);
     };
 
     const deleteEvent = async (id: string) => {
@@ -362,6 +376,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 teamMembers,
                 galleryItems,
                 addEvent,
+                updateEvent,
                 deleteEvent,
                 addJob,
                 deleteJob,

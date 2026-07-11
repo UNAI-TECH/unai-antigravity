@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X } from "lucide-react";
+import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit } from "lucide-react";
 import { toast } from "sonner";
 import {
     Dialog,
@@ -24,7 +24,7 @@ import { internshipRoles } from "@/pages/Careers";
 const AdminDashboard = () => {
     const {
         isAuthenticated, logout,
-        events, addEvent, deleteEvent,
+        events, addEvent, deleteEvent, updateEvent,
         jobs, addJob, deleteJob,
         teamMembers, addTeamMember, deleteTeamMember,
         galleryItems, addGalleryItem, deleteGalleryItem,
@@ -214,6 +214,7 @@ const AdminDashboard = () => {
                                                     View Registrations
                                                 </Button>
                                             )}
+                                            <EditEventDialog event={event} onEdit={(id, data) => updateEvent(id, data)} />
                                             <Button variant="destructive" size="icon" onClick={() => deleteEvent(event.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
@@ -974,6 +975,437 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                             <span className="flex items-center gap-2">
                                 <Plus className="w-5 h-5" />
                                 Create Event
+                            </span>
+                        )}
+                    </Button>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string, data: any) => void }) => {
+    const [open, setOpen] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
+    const [registrationType, setRegistrationType] = useState<"url" | "manual">(event.registration_type || "url");
+    const [formFields, setFormFields] = useState<{ id: string, type: string, label: string, options: string[], required: boolean }[]>(event.form_fields || []);
+
+    const addFormField = () => {
+        setFormFields([...formFields, { id: Date.now().toString() + Math.random().toString(), type: "short_answer", label: "", options: [""], required: true }]);
+    };
+    const removeFormField = (id: string) => setFormFields(formFields.filter(f => f.id !== id));
+    const updateFormField = (id: string, key: string, value: any) => {
+        setFormFields(formFields.map(f => f.id === id ? { ...f, [key]: value } : f));
+    };
+    const addFieldOption = (id: string) => {
+        setFormFields(formFields.map(f => f.id === id ? { ...f, options: [...f.options, ""] } : f));
+    };
+    const updateFieldOption = (id: string, idx: number, value: string) => {
+        setFormFields(formFields.map(f => {
+            if (f.id === id) {
+                const newOpts = [...f.options];
+                newOpts[idx] = value;
+                return { ...f, options: newOpts };
+            }
+            return f;
+        }));
+    };
+    const removeFieldOption = (id: string, idx: number) => {
+        setFormFields(formFields.map(f => {
+            if (f.id === id) {
+                return { ...f, options: f.options.filter((_, i) => i !== idx) };
+            }
+            return f;
+        }));
+    };
+
+    const eventTypes = [
+        "Workshop",
+        "AI Event",
+        "Summer Internship",
+        "Conference",
+        "Meetup",
+        "Webinar",
+        "Hackathon",
+        "Training Program",
+        "Seminar"
+    ];
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUploading(true);
+        const formData = new FormData(e.target as HTMLFormElement);
+
+        let bannerUrl = event.banner || "";
+        const bannerFile = formData.get("banner") as File;
+
+        if (bannerFile && bannerFile.size > 0) {
+            setUploadProgress("Uploading banner...");
+            const fileExt = bannerFile.name.split('.').pop();
+            const fileName = `banner_${Date.now()}_${Math.random()}.${fileExt}`;
+            const { data, error } = await supabase.storage
+                .from('event-banners')
+                .upload(fileName, bannerFile);
+
+            if (error) {
+                console.error("Error uploading banner:", error);
+                toast.error("Failed to upload banner");
+                setIsUploading(false);
+                setUploadProgress("");
+                return;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('event-banners')
+                .getPublicUrl(fileName);
+
+            bannerUrl = publicUrl;
+        }
+
+        let posterUrls: string[] = event.posters || [];
+        const posterFiles = formData.getAll("posters") as File[];
+
+        if (posterFiles && posterFiles.length > 0 && posterFiles[0].size > 0) {
+            posterUrls = []; // Replace entirely if new ones provided, or we could append. Let's replace.
+            setUploadProgress(`Uploading posters (0/${posterFiles.length})...`);
+
+            for (let i = 0; i < posterFiles.length; i++) {
+                const posterFile = posterFiles[i];
+                if (posterFile.size > 0) {
+                    const fileExt = posterFile.name.split('.').pop();
+                    const fileName = `poster_${Date.now()}_${i}_${Math.random()}.${fileExt}`;
+
+                    const { data, error } = await supabase.storage
+                        .from('event-posters')
+                        .upload(fileName, posterFile);
+
+                    if (error) {
+                        console.error(`Error uploading poster ${i + 1}:`, error);
+                        toast.error(`Failed to upload poster ${i + 1}`);
+                        continue;
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('event-posters')
+                        .getPublicUrl(fileName);
+
+                    posterUrls.push(publicUrl);
+                    setUploadProgress(`Uploading posters (${i + 1}/${posterFiles.length})...`);
+                }
+            }
+        }
+
+        setUploadProgress("Updating event...");
+
+        const data = {
+            title: formData.get("title"),
+            caption: formData.get("caption"),
+            date: formData.get("date"),
+            location: formData.get("location"),
+            type: formData.get("type"),
+            attendees: formData.get("attendees"),
+            status: "upcoming",
+            description: formData.get("description"),
+            registration_link: registrationType === "url" ? formData.get("registration_link") : "",
+            registration_type: registrationType,
+            form_fields: registrationType === "manual" ? formFields : [],
+            banner: bannerUrl,
+            posters: posterUrls
+        };
+
+        onEdit(event.id, data);
+        setOpen(false);
+        setIsUploading(false);
+        setUploadProgress("");
+        toast.success("Event updated successfully");
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="border-primary/20 hover:bg-primary/10 text-primary transition-colors">
+                    <Edit className="w-4 h-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent
+                data-lenis-prevent
+                className="sm:max-w-[650px] bg-background border-primary/10 text-foreground max-h-[85vh] overflow-y-auto custom-scrollbar pr-6"
+            >
+                <DialogHeader className="pb-4 mb-4">
+                    <DialogTitle className="text-2xl font-bold text-gradient-blue">Edit Event</DialogTitle>
+                    <p className="text-sm text-muted-foreground">Modify event details below</p>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-5 pb-6">
+                    {/* Banner Upload */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-primary">Event Banner (Leave empty to keep existing)</label>
+                        <Input
+                            type="file"
+                            name="banner"
+                            accept="image/*"
+                            className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                        />
+                    </div>
+
+                    {/* Title & Caption Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Event Title *</label>
+                            <Input
+                                name="title"
+                                defaultValue={event.title}
+                                placeholder="e.g., AI Workshop 2024"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-purple-600">Event Caption</label>
+                            <Input
+                                name="caption"
+                                defaultValue={event.caption}
+                                placeholder="Short tagline"
+                                className="bg-primary/5 border-primary/10 focus:border-purple-500"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Location & Date Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Location *</label>
+                            <Input
+                                name="location"
+                                defaultValue={event.location}
+                                placeholder="e.g., San Francisco, CA"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Date *</label>
+                            <Input
+                                name="date"
+                                defaultValue={event.date}
+                                placeholder="e.g., March 15-17, 2024"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Type & Attendees Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-purple-600">Event Type *</label>
+                            <Select name="type" defaultValue={event.type}>
+                                <SelectTrigger className="bg-primary/5 border-primary/10 focus:border-purple-500">
+                                    <SelectValue placeholder="Select event type" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border-primary/10">
+                                    {eventTypes.map(type => (
+                                        <SelectItem key={type} value={type} className="text-foreground hover:bg-primary/10">
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Estimated Attendees *</label>
+                            <Input
+                                name="attendees"
+                                defaultValue={event.attendees}
+                                placeholder="e.g., 500+"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-primary">Event Description *</label>
+                        <Textarea
+                            name="description"
+                            defaultValue={event.description}
+                            placeholder="Detailed description of the event, what attendees can expect, agenda, etc."
+                            required
+                            className="bg-primary/5 border-primary/10 h-32 resize-none focus:border-primary"
+                        />
+                    </div>
+
+                    {/* Posters Upload */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-purple-600">Event Posters (Leave empty to keep existing)</label>
+                        <Input
+                            type="file"
+                            name="posters"
+                            accept="image/*"
+                            multiple
+                            className="bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-purple-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-purple-500/30 transition-all"
+                        />
+                    </div>
+
+                    {/* Registration Type */}
+                    <div className="space-y-4 pt-4 border-t border-primary/10">
+                        <label className="text-sm font-medium text-purple-600">Registration Type</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="reg_type"
+                                    checked={registrationType === "url"}
+                                    onChange={() => setRegistrationType("url")}
+                                    className="accent-purple-500"
+                                />
+                                <span className="text-sm">External URL</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="reg_type"
+                                    checked={registrationType === "manual"}
+                                    onChange={() => setRegistrationType("manual")}
+                                    className="accent-purple-500"
+                                />
+                                <span className="text-sm">Manual Form (On-site)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Registration URL or Manual Form Fields */}
+                    {registrationType === "url" ? (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Registration URL *</label>
+                            <Input
+                                name="registration_link"
+                                defaultValue={event.registration_link}
+                                placeholder="https://example.com/register"
+                                type="url"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                            />
+                        </div>
+                    ) : (
+                        <div className="space-y-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-primary">Registration Form Fields</label>
+                                <Button type="button" variant="outline" size="sm" onClick={addFormField} className="border-primary/20 hover:bg-primary/10">
+                                    <Plus className="w-4 h-4 mr-1" /> Add Field
+                                </Button>
+                            </div>
+                            
+                            {formFields.length === 0 && (
+                                <p className="text-xs text-muted-foreground italic py-2">No custom fields added. Default fields (Name, Email, Phone) will always be included.</p>
+                            )}
+
+                            <div className="space-y-4">
+                                {formFields.map((field, idx) => (
+                                    <div key={field.id} className="p-4 rounded-lg bg-background border border-primary/10 relative group">
+                                        <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-muted-foreground">Field Label *</label>
+                                                <Input
+                                                    value={field.label}
+                                                    onChange={e => updateFormField(field.id, "label", e.target.value)}
+                                                    placeholder="e.g., Why do you want to attend?"
+                                                    className="h-8 text-sm"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-muted-foreground">Field Type</label>
+                                                <Select value={field.type} onValueChange={v => updateFormField(field.id, "type", v)}>
+                                                    <SelectTrigger className="h-8 text-sm">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="short_answer">Short Answer</SelectItem>
+                                                        <SelectItem value="long_answer">Long Answer</SelectItem>
+                                                        <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                                                        <SelectItem value="checkboxes">Checkboxes</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={field.required}
+                                                    onChange={e => updateFormField(field.id, "required", e.target.checked)}
+                                                    className="rounded border-primary/20 accent-primary"
+                                                />
+                                                Required Field
+                                            </label>
+                                        </div>
+
+                                        {(field.type === "multiple_choice" || field.type === "checkboxes") && (
+                                            <div className="mt-3 pl-2 border-l-2 border-primary/20 space-y-2">
+                                                <label className="text-xs text-muted-foreground">Options</label>
+                                                {field.options.map((opt, oIdx) => (
+                                                    <div key={oIdx} className="flex items-center gap-2">
+                                                        <div className={`w-3 h-3 border border-primary/40 ${field.type === 'multiple_choice' ? 'rounded-full' : 'rounded-sm'}`} />
+                                                        <Input
+                                                            value={opt}
+                                                            onChange={e => updateFieldOption(field.id, oIdx, e.target.value)}
+                                                            placeholder={`Option ${oIdx + 1}`}
+                                                            className="h-7 text-xs flex-1"
+                                                            required
+                                                        />
+                                                        {field.options.length > 1 && (
+                                                            <button type="button" onClick={() => removeFieldOption(field.id, oIdx)} className="text-muted-foreground hover:text-red-400">
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                <Button type="button" variant="ghost" size="sm" onClick={() => addFieldOption(field.id)} className="h-6 text-xs px-2 text-primary">
+                                                    + Add Option
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Hidden Status */}
+                    <input type="hidden" name="status" value="upcoming" />
+
+                    {/* Upload Progress */}
+                    {isUploading && uploadProgress && (
+                        <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                            <p className="text-sm text-primary flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-metal-blue-400 border-t-transparent rounded-full animate-spin" />
+                                {uploadProgress}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <Button
+                        type="submit"
+                        disabled={isUploading}
+                        className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 hover:from-metal-blue-600 hover:to-metal-purple-600 text-white font-semibold py-6 text-lg shadow-lg shadow-metal-blue-500/20"
+                    >
+                        {isUploading ? (
+                            <span className="flex items-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Updating Event...
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                <Edit className="w-5 h-5" />
+                                Save Changes
                             </span>
                         )}
                     </Button>
