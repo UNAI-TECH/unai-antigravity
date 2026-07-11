@@ -272,8 +272,6 @@ const Countdown = ({ targetDate }: { targetDate?: string }) => {
 
 // ─── Event Card ───────────────────────────────────────────────────────────────
 const EventCard = ({ event, index, onClick }: { event: any; index: number; onClick: () => void }) => {
-  const isFeature = index === 0;
-
   return (
     <motion.article
       initial={{ opacity: 0, y: 50 }}
@@ -281,16 +279,16 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, delay: index * 0.08, ease: [0.23, 1, 0.32, 1] }}
       onClick={onClick}
-      className={`group relative cursor-pointer ${isFeature ? "md:col-span-2 md:row-span-2" : ""}`}
+      className="group relative cursor-pointer aspect-[3/4]"
     >
       {/* Card Shell */}
-      <div className="relative h-full overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-700 flex flex-col">
+      <div className="relative w-full h-full overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-700 flex flex-col">
 
-        {/* Image Area */}
-        <div className={`relative overflow-hidden flex-shrink-0 ${isFeature ? "h-52 sm:h-80" : "h-40 sm:h-52"}`}>
-          {event.banner ? (
-            <img src={event.banner} alt={event.title}
-              width="800" height="400"
+        {/* Image Area (1:1 Ratio) */}
+        <div className="relative overflow-hidden flex-shrink-0 aspect-square w-full">
+          {event.cover_image || event.banner ? (
+            <img src={event.cover_image || event.banner} alt={event.title}
+              width="400" height="400"
               className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
@@ -312,43 +310,43 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
           </div>
 
           {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-7 flex flex-col flex-1">
-          <h3 className={`font-black text-slate-900 mb-2.5 leading-tight group-hover:text-slate-600 transition-colors duration-300 ${isFeature ? "text-2xl md:text-3xl" : "text-lg"}`}>
-            {event.title}
-          </h3>
-
-          <p className="text-sm text-slate-500 leading-relaxed mb-6 flex-1 line-clamp-2">
-            {event.description}
-          </p>
-
-          {/* Meta Row */}
-          <div className="flex items-center gap-4 text-[11px] text-slate-400 font-semibold mb-5">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-3 h-3 text-slate-300" /> {event.location || "TBA"}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3 h-3 text-slate-300" /> {event.date ? event.date.split('T')[0] : "Upcoming"}
-            </span>
+        <div className="p-4 sm:p-6 flex flex-col flex-1 justify-between bg-white">
+          <div>
+            <h3 className="font-black text-slate-900 mb-2 leading-tight group-hover:text-slate-600 transition-colors duration-300 text-lg line-clamp-1">
+              {event.title}
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-2">
+              {event.description}
+            </p>
           </div>
 
-          {/* Divider */}
-          <div className="h-px bg-slate-100 mb-5" />
+          <div>
+            {/* Meta Row */}
+            <div className="flex items-center gap-3 text-[11px] text-slate-400 font-semibold mb-4 overflow-hidden">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <MapPin className="w-3 h-3 text-slate-300" /> <span className="truncate max-w-[100px]">{event.location || "TBA"}</span>
+              </span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <Clock className="w-3 h-3 text-slate-300" /> {event.date ? event.date.split('T')[0] : "Upcoming"}
+              </span>
+            </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between">
-            <Countdown targetDate={event.date} />
-            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              <Users className="w-3 h-3" /> {event.attendees ?? "—"}
+            {/* Divider */}
+            <div className="h-px bg-slate-100 mb-4" />
+
+            {/* Footer */}
+            <div className="flex items-center justify-between">
+              <Countdown targetDate={event.date} />
             </div>
           </div>
         </div>
 
         {/* Bottom accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-slate-900 via-slate-600 to-slate-900 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-900 via-slate-600 to-slate-900 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
       </div>
     </motion.article>
   );
@@ -387,22 +385,22 @@ const Events = () => {
 
         <main>
           {/* Hero */}
-          <section className="relative h-[70vh] min-h-[540px] overflow-hidden">
+          <section className="relative w-full aspect-video overflow-hidden bg-slate-950">
             {selectedEvent.banner ? (
-              <img src={selectedEvent.banner} alt={selectedEvent.title} width="1200" height="700" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={selectedEvent.banner} alt={selectedEvent.title} width="1920" height="1080" className="absolute inset-0 w-full h-full object-contain" />
             ) : (
-              <div className="absolute inset-0 bg-slate-900" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#F7F6F2]" />
 
-            <div className="absolute inset-0 flex flex-col justify-end px-8 md:px-16 pb-16">
+            <div className="absolute inset-0 flex flex-col justify-end px-4 sm:px-8 md:px-16 pb-8 md:pb-16 max-w-[1400px] mx-auto w-full">
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}>
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-[0.2em] mb-6">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] mb-4 sm:mb-6">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   {selectedEvent.type || "Event"}
                 </span>
                 <h1 style={{ fontFamily: "'Playfair Display', serif" }}
-                  className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-white leading-[0.9] mb-4 max-w-4xl">
+                  className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] mb-2 sm:mb-4 max-w-4xl">
                   {selectedEvent.title}
                 </h1>
               </motion.div>
@@ -498,14 +496,16 @@ const Events = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                   transition={{ duration: 0.8, delay: 0.3 }}
-                  className="lg:col-span-3 bg-slate-950 rounded-[2.5rem] p-8 md:p-12"
+                  className="lg:col-span-3 flex flex-col items-center mt-8"
                 >
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-6 h-0.5 bg-white/20" />
-                    <span className="text-xs font-black uppercase tracking-[0.3em] text-white/30">Gallery</span>
-                  </div>
-                  <div className="h-96">
-                    <PosterCarousel posters={selectedEvent.posters} />
+                  <div className="w-full max-w-md">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-6 h-0.5 bg-slate-900" />
+                      <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Event Posters</span>
+                    </div>
+                    <div className="w-full aspect-[3/4] relative rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
+                      <PosterCarousel posters={selectedEvent.posters} />
+                    </div>
                   </div>
                 </motion.div>
               )}

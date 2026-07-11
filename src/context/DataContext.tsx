@@ -13,6 +13,7 @@ export interface Event {
     description: string;
     attendees: string;
     status: "upcoming" | "past";
+    cover_image?: string;
     banner?: string;
     posters?: string[];
     registration_link?: string;

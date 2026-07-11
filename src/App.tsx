@@ -37,7 +37,7 @@ const App = () => {
         <Sonner />
         <DataProvider>
           <LenisSmoothScroll>
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <FloatingNavbar />
               <ScrollToTop />
               <Routes>

@@ -13,6 +13,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -611,6 +612,29 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
         setIsUploading(true);
         const formData = new FormData(e.target as HTMLFormElement);
 
+        // Upload Cover
+        let coverUrl = "";
+        const coverFile = formData.get("cover") as File;
+
+        if (coverFile && coverFile.size > 0) {
+            setUploadProgress("Uploading cover...");
+            const fileExt = coverFile.name.split('.').pop();
+            const fileName = `cover_${Date.now()}_${Math.random()}.${fileExt}`;
+            const { error } = await supabase.storage
+                .from('event-banners')
+                .upload(fileName, coverFile);
+
+            if (error) {
+                console.error("Error uploading cover:", error);
+                toast.error("Failed to upload cover");
+            } else {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('event-banners')
+                    .getPublicUrl(fileName);
+                coverUrl = publicUrl;
+            }
+        }
+
         // Upload Banner
         let bannerUrl = "";
         const bannerFile = formData.get("banner") as File;
@@ -685,6 +709,7 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             registration_link: registrationType === "url" ? formData.get("registration_link") : "",
             registration_type: registrationType,
             form_fields: registrationType === "manual" ? formFields : [],
+            cover_image: coverUrl,
             banner: bannerUrl,
             posters: posterUrls
         };
@@ -707,20 +732,33 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             >
                 <DialogHeader className="pb-4 mb-4">
                     <DialogTitle className="text-2xl font-bold text-gradient-blue">Add New Event</DialogTitle>
-                    <p className="text-sm text-muted-foreground">Fill in the details to create a new event</p>
+                    <DialogDescription>Fill in the details to create a new event</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 pb-6">
-                    {/* Banner Upload */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-primary">Event Banner *</label>
-                        <Input
-                            type="file"
-                            name="banner"
-                            accept="image/*"
-                            required
-                            className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
-                        />
-                        <p className="text-xs text-muted-foreground">Main banner image for the event</p>
+                    {/* Images Upload */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Cover Image (1:1 Ratio) *</label>
+                            <Input
+                                type="file"
+                                name="cover"
+                                accept="image/*"
+                                required
+                                className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                            />
+                            <p className="text-xs text-muted-foreground">Square image for the event card</p>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Banner Image (16:9 Ratio) *</label>
+                            <Input
+                                type="file"
+                                name="banner"
+                                accept="image/*"
+                                required
+                                className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                            />
+                            <p className="text-xs text-muted-foreground">Wide banner image for the event preview</p>
+                        </div>
                     </div>
 
                     {/* Title & Caption Row */}
@@ -1037,6 +1075,28 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
         setIsUploading(true);
         const formData = new FormData(e.target as HTMLFormElement);
 
+        let coverUrl = event.cover_image || "";
+        const coverFile = formData.get("cover") as File;
+
+        if (coverFile && coverFile.size > 0) {
+            setUploadProgress("Uploading cover...");
+            const fileExt = coverFile.name.split('.').pop();
+            const fileName = `cover_${Date.now()}_${Math.random()}.${fileExt}`;
+            const { error } = await supabase.storage
+                .from('event-banners')
+                .upload(fileName, coverFile);
+
+            if (error) {
+                console.error("Error uploading cover:", error);
+                toast.error("Failed to upload cover");
+            } else {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('event-banners')
+                    .getPublicUrl(fileName);
+                coverUrl = publicUrl;
+            }
+        }
+
         let bannerUrl = event.banner || "";
         const bannerFile = formData.get("banner") as File;
 
@@ -1110,6 +1170,7 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
             registration_link: registrationType === "url" ? formData.get("registration_link") : "",
             registration_type: registrationType,
             form_fields: registrationType === "manual" ? formFields : [],
+            cover_image: coverUrl,
             banner: bannerUrl,
             posters: posterUrls
         };
@@ -1134,18 +1195,31 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
             >
                 <DialogHeader className="pb-4 mb-4">
                     <DialogTitle className="text-2xl font-bold text-gradient-blue">Edit Event</DialogTitle>
-                    <p className="text-sm text-muted-foreground">Modify event details below</p>
+                    <DialogDescription>Modify event details below</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 pb-6">
-                    {/* Banner Upload */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-primary">Event Banner (Leave empty to keep existing)</label>
-                        <Input
-                            type="file"
-                            name="banner"
-                            accept="image/*"
-                            className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
-                        />
+                    {/* Images Upload */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Cover Image (1:1 Ratio)</label>
+                            <Input
+                                type="file"
+                                name="cover"
+                                accept="image/*"
+                                className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                            />
+                            <p className="text-[10px] text-muted-foreground">Leave empty to keep existing</p>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Banner Image (16:9 Ratio)</label>
+                            <Input
+                                type="file"
+                                name="banner"
+                                accept="image/*"
+                                className="h-auto py-3 bg-primary/5 border-primary/10 file:text-foreground file:bg-metal-blue-500/20 file:border-0 file:px-4 file:py-2 file:rounded-md file:mr-4 hover:file:bg-metal-blue-500/30 transition-all cursor-pointer"
+                            />
+                            <p className="text-[10px] text-muted-foreground">Leave empty to keep existing</p>
+                        </div>
                     </div>
 
                     {/* Title & Caption Row */}
