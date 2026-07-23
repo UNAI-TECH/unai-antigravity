@@ -6,7 +6,6 @@ const footerLinks = {
   company: [
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
-    { name: "UNAI PAC", path: "/unai-pac" },
     { name: "Careers", path: "/careers" },
     { name: "Team", path: "/about#meet-team" },
   ],
