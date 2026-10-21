@@ -5,28 +5,19 @@ import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, MapPin, Clock, IndianRupee, Briefcase, X, Upload, CheckCircle, ChevronLeft, ChevronRight, FileText, Loader2, Cpu, Globe, TrendingUp, Target, Palette, Megaphone, BookOpenCheck, Smartphone, FlaskConical } from "lucide-react";
+import { ArrowRight, MapPin, Clock, IndianRupee, Briefcase, X, Upload, CheckCircle, ChevronLeft, ChevronRight, FileText, Loader2, GraduationCap } from "lucide-react";
 import { useData, Job } from "@/context/DataContext";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-
-/* ─── Internship data (mirrors EDU page) ─── */
-export const internshipRoles = [
-  { icon: Cpu, role: "AI / ML Engineer Intern", duration: "3–6 Months", desc: "Work on building intelligent systems that power next-generation digital products. Develop, train, and deploy machine learning models using real-world datasets. Contribute to model optimization, fine-tuning, and integration of AI capabilities into production-grade applications.", skills: ["Python", "TensorFlow / PyTorch", "Hugging Face", "Supabase"] },
-  { icon: Globe, role: "Full Stack Developer Intern", duration: "3–6 Months", desc: "Be part of a high-performance engineering team focused on delivering scalable digital solutions. Design, develop, and deploy full-stack features across live platforms using modern frontend and backend technologies in a real-world multi-tenant environment.", skills: ["React Native", "Node.js", "Supabase", "Expo"] },
-  { icon: TrendingUp, role: "Data & Analytics Intern", duration: "2–3 Months", desc: "Transform complex datasets into meaningful insights. Build analytics pipelines, dashboards, and data-driven tools that support strategic decision-making across business and research domains.", skills: ["Python", "SQL", "Data Visualisation", "Power BI"] },
-  { icon: Target, role: "Product & UX Research Intern", duration: "2–3 Months", desc: "Drive product excellence through research and strategy. Conduct user research, analyze competitors, and create structured product documentation that guides development teams in building impactful digital experiences.", skills: ["User Research", "Figma", "Product Strategy", "Documentation"] },
-  { icon: Palette, role: "Graphic Designer Intern", duration: "3–6 Months", desc: "Create visually compelling designs that reflect brand identity and enhance user engagement. Work on digital assets, marketing creatives, and UI elements aligned with modern design standards.", skills: ["Adobe Creative Suite", "Figma", "Branding", "Visual Design"] },
-  { icon: Megaphone, role: "Social Media Manager Intern", duration: "2–3 Months", desc: "Manage and grow digital presence across platforms. Plan content strategies, execute campaigns, analyze engagement metrics, and build a strong online brand voice.", skills: ["Content Strategy", "Social Media Marketing", "Analytics", "Copywriting"] },
-  { icon: BookOpenCheck, role: "Teaching Expert Intern", duration: "2–3 Months", desc: "Deliver high-quality learning experiences by teaching technical and non-technical concepts. Design structured sessions, simplify complex topics, and support learners in achieving practical outcomes.", skills: ["Communication", "Subject Expertise", "Curriculum Design", "Presentation"] },
-  { icon: Smartphone, role: "Mobile App Developer Intern", duration: "2–4 Months", desc: "Develop high-performance mobile applications with a focus on usability and scalability. Build and optimize mobile solutions ensuring smooth user experiences and efficient backend integration.", skills: ["React Native / Flutter", "APIs", "UI/UX Principles", "App Deployment"] },
-  { icon: FlaskConical, role: "Software Testing Intern", duration: "3–6 Months", desc: "Ensure product quality through systematic testing and validation. Identify bugs, perform functional and performance testing, and contribute to delivering reliable and robust software solutions.", skills: ["Manual Testing", "Test Case Design", "Bug Tracking", "QA Processes"] },
-];
+import { getInternshipIcon } from "@/utils/internshipIcons";
 
 const Careers = () => {
-    const { jobs, addJobApplication } = useData();
+    const { jobs, internships, addJobApplication } = useData();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isApplying, setIsApplying] = useState(false);
+
+    // Filter regular jobs (excluding internships mirrored in jobs)
+    const regularJobs = jobs.filter(j => j.department !== 'Internship' && j.type !== 'Internship');
 
     return (
         <div className="min-h-screen bg-background">
@@ -92,7 +83,7 @@ const Careers = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
-                            className="mb-4"
+                            className="mb-6"
                         >
                             <span className="inline-block px-4 py-2 rounded-full bg-metal-blue-500/10 border border-metal-blue-500/20 text-metal-blue-400 text-sm font-bold tracking-wide mb-4">
                                 INTERNSHIP PROGRAM
@@ -105,73 +96,106 @@ const Careers = () => {
                             </p>
                         </motion.div>
 
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                            {internshipRoles.map((intern, index) => (
-                                <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.5, delay: index * 0.06 }}
-                                >
-                                    <GlassCard className="p-6 group hover:border-metal-blue-500/30 transition-all duration-300 h-full flex flex-col">
-                                        {/* Header */}
-                                        <div className="flex items-start gap-3 mb-4">
-                                            <div className="w-11 h-11 rounded-xl bg-metal-blue-500/10 border border-metal-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-metal-blue-500/20 transition-colors">
-                                                <intern.icon className="w-5 h-5 text-metal-blue-400" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-heading font-bold text-foreground text-base leading-tight group-hover:text-metal-blue-300 transition-colors">
-                                                    {intern.role}
-                                                </h3>
-                                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                                                    <Clock className="w-3 h-3" />
-                                                    {intern.duration}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Description */}
-                                        <p className="text-muted-foreground text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
-                                            {intern.desc}
-                                        </p>
-
-                                        {/* Skills */}
-                                        <div className="flex flex-wrap gap-1.5 mb-5">
-                                            {intern.skills.map((s, si) => (
-                                                <span key={si} className="text-xs px-2.5 py-1 rounded-full bg-metal-blue-500/10 border border-metal-blue-500/20 text-metal-blue-400 font-medium">
-                                                    {s}
-                                                </span>
-                                            ))}
-                                        </div>
-
-                                        {/* Apply CTA */}
-                                        <Button
-                                            size="sm"
-                                            className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 text-white font-semibold hover:shadow-lg hover:shadow-metal-blue-500/25 transition-all"
-                                            onClick={() => {
-                                                const internJob: Job = {
-                                                    id: `intern-${index}`,
-                                                    title: intern.role,
-                                                    department: "Internship",
-                                                    type: "Internship",
-                                                    location: "Chennai / Remote",
-                                                    salary: "Stipend Based",
-                                                    experience: intern.duration,
-                                                    description: intern.desc,
-                                                    questions: [],
-                                                };
-                                                setSelectedJob(internJob);
-                                                setIsApplying(true);
-                                            }}
-                                            id={`careers-intern-apply-${index}`}
+                        {internships.length === 0 ? (
+                            <div className="flex justify-center py-12 mb-8">
+                                <GlassCard className="max-w-md w-full p-8 text-center border-dashed border-white/10 relative overflow-hidden">
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-metal-blue-500/10 border border-metal-blue-500/20 flex items-center justify-center">
+                                        <GraduationCap className="w-8 h-8 text-metal-blue-400" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground mb-2">No Open Internships Currently</h3>
+                                    <p className="text-sm text-muted-foreground mb-6">
+                                        Our internship cohorts open periodically. Check back soon or send your resume directly to our talent team!
+                                    </p>
+                                    <a
+                                        href="mailto:unai.technology@gmail.com"
+                                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-metal-blue-500/10 border border-metal-blue-500/20 text-metal-blue-400 hover:text-metal-blue-300 hover:bg-metal-blue-500/20 text-sm font-medium transition-all"
+                                    >
+                                        Send Us Your Resume <ArrowRight className="w-4 h-4" />
+                                    </a>
+                                </GlassCard>
+                            </div>
+                        ) : (
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                                {internships.map((intern, index) => {
+                                    const IconComp = getInternshipIcon(intern.icon);
+                                    return (
+                                        <motion.div
+                                            key={intern.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 0.5, delay: index * 0.06 }}
                                         >
-                                            Apply Now <ArrowRight className="ml-1.5 w-4 h-4" />
-                                        </Button>
-                                    </GlassCard>
-                                </motion.div>
-                            ))}
-                        </div>
+                                            <GlassCard className="p-6 group hover:border-metal-blue-500/30 transition-all duration-300 h-full flex flex-col">
+                                                {/* Header */}
+                                                <div className="flex items-start gap-3 mb-4">
+                                                    <div className="w-11 h-11 rounded-xl bg-metal-blue-500/10 border border-metal-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-metal-blue-500/20 transition-colors">
+                                                        <IconComp className="w-5 h-5 text-metal-blue-400" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-heading font-bold text-foreground text-base leading-tight group-hover:text-metal-blue-300 transition-colors truncate">
+                                                            {intern.role}
+                                                        </h3>
+                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                                                            <span className="inline-flex items-center gap-1">
+                                                                <Clock className="w-3 h-3 text-purple-400" />
+                                                                {intern.duration}
+                                                            </span>
+                                                            {intern.stipend && (
+                                                                <span className="inline-flex items-center gap-1 text-green-400">
+                                                                    <IndianRupee className="w-3 h-3" />
+                                                                    {intern.stipend}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Description */}
+                                                <p className="text-muted-foreground text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
+                                                    {intern.description}
+                                                </p>
+
+                                                {/* Skills */}
+                                                {intern.skills && intern.skills.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mb-5">
+                                                        {intern.skills.map((s, si) => (
+                                                            <span key={si} className="text-xs px-2.5 py-1 rounded-full bg-metal-blue-500/10 border border-metal-blue-500/20 text-metal-blue-400 font-medium">
+                                                                {s}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Apply CTA */}
+                                                <Button
+                                                    size="sm"
+                                                    className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 text-white font-semibold hover:shadow-lg hover:shadow-metal-blue-500/25 transition-all"
+                                                    onClick={() => {
+                                                        const internJob: Job = {
+                                                            id: intern.id,
+                                                            title: intern.role,
+                                                            department: "Internship",
+                                                            type: "Internship",
+                                                            location: intern.location || "Chennai / Remote",
+                                                            salary: intern.stipend || "Stipend Based",
+                                                            experience: intern.duration,
+                                                            description: intern.description,
+                                                            questions: [],
+                                                        };
+                                                        setSelectedJob(internJob);
+                                                        setIsApplying(true);
+                                                    }}
+                                                    id={`careers-intern-apply-${index}`}
+                                                >
+                                                    Apply Now <ArrowRight className="ml-1.5 w-4 h-4" />
+                                                </Button>
+                                            </GlassCard>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -180,7 +204,7 @@ const Careers = () => {
                 {/* Open Positions */}
                 <section className="relative pt-16 lg:pt-24 pb-12 overflow-hidden">
                     <div className="container mx-auto px-6">
-                        {jobs.length > 0 && (
+                        {regularJobs.length > 0 && (
                             <motion.h2
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -193,7 +217,7 @@ const Careers = () => {
                         )}
 
                         <div className="space-y-6">
-                            {jobs.length === 0 ? (
+                            {regularJobs.length === 0 ? (
                                 <div className="flex justify-center py-12">
                                     <GlassCard className="max-w-md w-full p-12 text-center relative overflow-hidden group border-dashed border-white/10">
                                         <GlowOrb size="md" color="plasma" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
@@ -221,7 +245,7 @@ const Careers = () => {
                                     </GlassCard>
                                 </div>
                             ) : (
-                                jobs.map((job, index) => (
+                                regularJobs.map((job, index) => (
                                     <motion.div
                                         key={job.id}
                                         initial={{ opacity: 0, y: 20 }}

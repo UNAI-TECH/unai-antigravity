@@ -85,9 +85,22 @@ export interface GalleryItem {
     banner?: string;
 }
 
+export interface Internship {
+    id: string;
+    role: string;
+    duration: string;
+    description: string;
+    skills: string[];
+    icon?: string;
+    location?: string;
+    stipend?: string;
+    created_at?: string;
+}
+
 interface DataContextType {
     events: Event[];
     jobs: Job[];
+    internships: Internship[];
     teamMembers: TeamMember[];
     galleryItems: GalleryItem[];
     addEvent: (event: Omit<Event, "id">) => void;
@@ -95,6 +108,8 @@ interface DataContextType {
     deleteEvent: (id: string) => void;
     addJob: (job: Omit<Job, "id">) => void;
     deleteJob: (id: string) => void;
+    addInternship: (internship: Omit<Internship, "id" | "created_at">) => Promise<Internship | void>;
+    deleteInternship: (id: string) => Promise<void>;
     addTeamMember: (member: Omit<TeamMember, "id">) => void;
     deleteTeamMember: (id: string) => void;
     addGalleryItem: (item: Omit<GalleryItem, "id">) => void;
@@ -114,6 +129,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [internships, setInternships] = useState<Internship[]>([]);
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
     const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
@@ -142,6 +158,55 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .order('created_at', { ascending: false });
             if (jobsData) setJobs(jobsData as Job[]);
             if (jobsError) console.error("Error fetching jobs:", jobsError);
+
+            // Internships
+            let loadedInternships: Internship[] = [];
+            const { data: internData, error: internError } = await supabase
+                .from('internships')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (!internError && internData) {
+                loadedInternships = internData.map((item: any) => ({
+                    id: item.id,
+                    role: item.role || item.title || "",
+                    duration: item.duration || item.experience || "3–6 Months",
+                    description: item.description || "",
+                    skills: Array.isArray(item.skills) ? item.skills : (item.questions?.skills || []),
+                    icon: item.icon || item.questions?.icon || "Cpu",
+                    location: item.location || "Chennai / Remote",
+                    stipend: item.stipend || item.salary || "Stipend Based",
+                    created_at: item.created_at
+                }));
+            } else {
+                // Fallback: If 'internships' table does not exist in Supabase yet,
+                // fetch internships stored in 'jobs' table where department = 'Internship' or type = 'Internship'
+                const { data: jobInternData } = await supabase
+                    .from('jobs')
+                    .select('*')
+                    .or('department.eq.Internship,type.eq.Internship')
+                    .order('created_at', { ascending: false });
+
+                if (jobInternData) {
+                    loadedInternships = jobInternData.map((item: any) => {
+                        const extra = typeof item.questions === 'object' && item.questions !== null && !Array.isArray(item.questions)
+                            ? item.questions
+                            : {};
+                        return {
+                            id: item.id,
+                            role: item.title,
+                            duration: item.experience || "3–6 Months",
+                            description: item.description,
+                            skills: Array.isArray(extra.skills) ? extra.skills : (Array.isArray(item.skills) ? item.skills : []),
+                            icon: extra.icon || "Cpu",
+                            location: item.location || "Chennai / Remote",
+                            stipend: item.salary || "Stipend Based",
+                            created_at: item.created_at
+                        };
+                    });
+                }
+            }
+            setInternships(loadedInternships);
 
             // Team
             const { data: teamData, error: teamError } = await supabase
@@ -247,6 +312,96 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
             console.error("Error deleting job:", error);
         }
+    };
+
+    const addInternship = async (internship: Omit<Internship, "id" | "created_at">) => {
+        // 1. Try to insert into 'internships' table
+        const { data: internData, error: internError } = await supabase
+            .from('internships')
+            .insert([{
+                role: internship.role,
+                duration: internship.duration,
+                description: internship.description,
+                skills: internship.skills || [],
+                icon: internship.icon || 'Cpu',
+                location: internship.location || 'Chennai / Remote',
+                stipend: internship.stipend || 'Stipend Based'
+            }])
+            .select();
+
+        if (!internError && internData && internData.length > 0) {
+            const newIntern: Internship = {
+                id: internData[0].id,
+                role: internData[0].role,
+                duration: internData[0].duration,
+                description: internData[0].description,
+                skills: internData[0].skills || [],
+                icon: internData[0].icon || 'Cpu',
+                location: internData[0].location,
+                stipend: internData[0].stipend,
+                created_at: internData[0].created_at
+            };
+
+            // Mirror into jobs table to maintain foreign key compatibility with job_applications
+            await supabase.from('jobs').insert([{
+                id: internData[0].id,
+                title: internship.role,
+                department: 'Internship',
+                type: 'Internship',
+                location: internship.location || 'Chennai / Remote',
+                salary: internship.stipend || 'Stipend Based',
+                experience: internship.duration,
+                description: internship.description,
+                questions: { skills: internship.skills || [], icon: internship.icon || 'Cpu' }
+            }]);
+
+            setInternships(prev => [newIntern, ...prev]);
+            return newIntern;
+        }
+
+        // 2. Fallback: If 'internships' table doesn't exist yet, insert directly into 'jobs' table
+        const { data: jobData, error: jobError } = await supabase
+            .from('jobs')
+            .insert([{
+                title: internship.role,
+                department: 'Internship',
+                type: 'Internship',
+                location: internship.location || 'Chennai / Remote',
+                salary: internship.stipend || 'Stipend Based',
+                experience: internship.duration,
+                description: internship.description,
+                questions: { skills: internship.skills || [], icon: internship.icon || 'Cpu' }
+            }])
+            .select();
+
+        if (jobData && jobData.length > 0) {
+            const newIntern: Internship = {
+                id: jobData[0].id,
+                role: jobData[0].title,
+                duration: jobData[0].experience || internship.duration,
+                description: jobData[0].description,
+                skills: internship.skills || [],
+                icon: internship.icon || 'Cpu',
+                location: jobData[0].location,
+                stipend: jobData[0].salary,
+                created_at: jobData[0].created_at
+            };
+            setInternships(prev => [newIntern, ...prev]);
+            return newIntern;
+        }
+
+        if (jobError) {
+            console.error("Error adding internship:", jobError);
+            throw jobError;
+        }
+    };
+
+    const deleteInternship = async (id: string) => {
+        // Delete from both potential tables
+        await supabase.from('internships').delete().eq('id', id);
+        await supabase.from('jobs').delete().eq('id', id);
+
+        setInternships(prev => prev.filter(i => i.id !== id));
     };
 
     const addTeamMember = async (member: Omit<TeamMember, "id">) => {
@@ -374,6 +529,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             value={{
                 events,
                 jobs,
+                internships,
                 teamMembers,
                 galleryItems,
                 addEvent,
@@ -381,6 +537,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 deleteEvent,
                 addJob,
                 deleteJob,
+                addInternship,
+                deleteInternship,
                 addTeamMember,
                 deleteTeamMember,
                 addGalleryItem,

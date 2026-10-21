@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { useData, Event, Job, TeamMember } from "@/context/DataContext";
+import { useData, Event, Job, TeamMember, Internship } from "@/context/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit } from "lucide-react";
+import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
     Dialog,
@@ -20,13 +20,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
-import { internshipRoles } from "@/pages/Careers";
+import { INTERNSHIP_ICON_OPTIONS, getInternshipIcon } from "@/utils/internshipIcons";
 
 const AdminDashboard = () => {
     const {
         isAuthenticated, logout,
         events, addEvent, deleteEvent, updateEvent,
         jobs, addJob, deleteJob,
+        internships, addInternship, deleteInternship,
         teamMembers, addTeamMember, deleteTeamMember,
         galleryItems, addGalleryItem, deleteGalleryItem,
         jobApplications,
@@ -46,23 +47,26 @@ const AdminDashboard = () => {
 
     if (!isAuthenticated) return null;
 
-    const virtualInternships: Job[] = internshipRoles.map((intern, index) => ({
-        id: `intern-${index}`,
-        title: intern.role,
-        department: "Internship",
-        type: "Internship",
-        location: "Chennai / Remote",
-        salary: "Stipend Based",
-        experience: intern.duration,
-        description: intern.desc,
-        questions: [],
-    }));
-
-    const allJobs = [...jobs, ...virtualInternships];
+    const regularJobs = jobs.filter(j => j.department !== 'Internship' && j.type !== 'Internship');
+    const allPositions: Job[] = [
+        ...regularJobs,
+        ...internships.map(intern => ({
+            id: intern.id,
+            title: intern.role,
+            department: "Internship",
+            type: "Internship",
+            location: intern.location || "Chennai / Remote",
+            salary: intern.stipend || "Stipend Based",
+            experience: intern.duration,
+            description: intern.description,
+            questions: [],
+        }))
+    ];
 
     const stats = [
         { label: "Total Events", value: events.length, icon: Calendar, color: "text-blue-400" },
-        { label: "Open Jobs", value: allJobs.length, icon: Briefcase, color: "text-green-400" },
+        { label: "Open Jobs", value: regularJobs.length, icon: Briefcase, color: "text-green-400" },
+        { label: "Internships", value: internships.length, icon: GraduationCap, color: "text-purple-400" },
         { label: "Applications", value: jobApplications.length, icon: FileText, color: "text-yellow-400" },
         { label: "Team Members", value: teamMembers.length, icon: Users, color: "text-purple-400" },
         { label: "Gallery Items", value: galleryItems.length, icon: ImageIcon, color: "text-pink-400" },
@@ -107,6 +111,7 @@ const AdminDashboard = () => {
                                 <div className="flex gap-4 flex-wrap">
                                     <Button variant="outline" onClick={() => setActiveTab('events')}>Manage Events</Button>
                                     <Button variant="outline" onClick={() => setActiveTab('careers')}>Post Job</Button>
+                                    <Button variant="outline" onClick={() => setActiveTab('internships')}>Manage Internships</Button>
                                     <Button variant="outline" onClick={() => setActiveTab('applications')}>View Applications</Button>
                                     <Button variant="outline" onClick={() => setActiveTab('gallery')}>Add Photo</Button>
                                 </div>
@@ -232,41 +237,111 @@ const AdminDashboard = () => {
                         <div className="flex justify-between items-center">
                             <div>
                                 <h2 className="text-3xl font-heading font-bold">Careers Portal</h2>
-                                <p className="text-muted-foreground">Manage job listings and applications.</p>
+                                <p className="text-muted-foreground">Manage full-time and regular job listings.</p>
                             </div>
                             <AddJobDialog onAdd={addJob} />
                         </div>
                         <div className="grid gap-4">
-                            {allJobs.length === 0 && (
+                            {regularJobs.length === 0 && (
                                 <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
                                     <p className="text-muted-foreground">No active job listings.</p>
                                 </div>
                             )}
-                            {allJobs.map(job => (
+                            {regularJobs.map(job => (
                                 <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-green-500/30 transition-colors">
                                     <div>
                                         <div className="flex items-center gap-3 mb-1">
                                             <h3 className="font-bold text-xl">{job.title}</h3>
-                                            {job.id.startsWith('intern-') && (
-                                                <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Internship</span>
-                                            )}
                                         </div>
                                         <p className="text-sm text-muted-foreground">{job.department} • {job.location} • {job.type}</p>
                                         <p className="mt-1 text-sm font-semibold text-green-400">{job.salary}</p>
                                     </div>
-                                    {!job.id.startsWith('intern-') && (
-                                        <Button variant="destructive" size="icon" onClick={() => deleteJob(job.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    )}
+                                    <Button variant="destructive" size="icon" onClick={() => deleteJob(job.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
                                 </GlassCard>
                             ))}
                         </div>
                     </div>
                 );
+            case "internships":
+                return (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h2 className="text-3xl font-heading font-bold">Internship Programs</h2>
+                                <p className="text-muted-foreground">Upload and manage internship opportunities displayed on the Careers page.</p>
+                            </div>
+                            <AddInternshipDialog onAdd={addInternship} />
+                        </div>
+                        <div className="grid gap-4">
+                            {internships.length === 0 && (
+                                <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
+                                    <GraduationCap className="w-12 h-12 mx-auto mb-3 text-metal-blue-400 opacity-60" />
+                                    <h3 className="font-bold text-lg mb-1">No Active Internships</h3>
+                                    <p className="text-muted-foreground text-sm">No internship programs uploaded yet. Click "Post Internship" to upload one.</p>
+                                </div>
+                            )}
+                            {internships.map(intern => {
+                                const IconComp = getInternshipIcon(intern.icon);
+                                return (
+                                    <GlassCard key={intern.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-metal-blue-500/30 transition-colors">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-metal-blue-500/10 border border-metal-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-metal-blue-500/20 transition-colors mt-0.5">
+                                                <IconComp className="w-6 h-6 text-metal-blue-400" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2.5 flex-wrap">
+                                                    <h3 className="font-bold text-xl">{intern.role}</h3>
+                                                    <span className="bg-purple-500/20 text-purple-400 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                                        {intern.duration}
+                                                    </span>
+                                                    {intern.stipend && (
+                                                        <span className="bg-green-500/20 text-green-400 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                                            {intern.stipend}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl">{intern.description}</p>
+                                                <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 flex-wrap">
+                                                    <span>📍 {intern.location || "Chennai / Remote"}</span>
+                                                    {intern.skills && intern.skills.length > 0 && (
+                                                        <div className="flex gap-1.5 flex-wrap">
+                                                            {intern.skills.map((skill, sIdx) => (
+                                                                <span key={sIdx} className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[11px]">
+                                                                    {skill}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 ml-auto md:ml-0">
+                                            <Button
+                                                variant="destructive"
+                                                size="icon"
+                                                onClick={async () => {
+                                                    if (window.confirm(`Are you sure you want to delete the internship for "${intern.role}"? It will be removed immediately from the database and careers page.`)) {
+                                                        await deleteInternship(intern.id);
+                                                        toast.success("Internship deleted successfully");
+                                                    }
+                                                }}
+                                                className="opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Delete internship"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </GlassCard>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
             case "applications":
                 if (selectedJobId) {
-                    const selectedJob = allJobs.find(j => j.id === selectedJobId);
+                    const selectedJob = allPositions.find(j => j.id === selectedJobId);
                     const applications = jobApplications.filter(app => app.job_id === selectedJobId);
 
                     return (
@@ -351,24 +426,25 @@ const AdminDashboard = () => {
                     <div className="space-y-6">
                         <div className="flex justify-between items-center">
                             <div>
-                                <h2 className="text-3xl font-heading font-bold">Job Applications</h2>
-                                <p className="text-muted-foreground">Select a job to view its applicants.</p>
+                                <h2 className="text-3xl font-heading font-bold">Applications Portal</h2>
+                                <p className="text-muted-foreground">Select a job or internship to view candidates.</p>
                             </div>
                         </div>
                         <div className="grid gap-4">
-                            {allJobs.length === 0 && (
+                            {allPositions.length === 0 && (
                                 <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
-                                    <p className="text-muted-foreground">No active jobs found.</p>
+                                    <p className="text-muted-foreground">No active positions found.</p>
                                 </div>
                             )}
-                            {allJobs.map(job => {
+                            {allPositions.map(job => {
                                 const applicantCount = jobApplications.filter(app => app.job_id === job.id).length;
+                                const isInternship = job.department === 'Internship' || job.type === 'Internship';
                                 return (
                                     <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
                                                 <h3 className="font-bold text-xl">{job.title}</h3>
-                                                {job.id.startsWith('intern-') && (
+                                                {isInternship && (
                                                     <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Internship</span>
                                                 )}
                                             </div>
@@ -486,6 +562,7 @@ const AdminDashboard = () => {
                         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
                         { id: 'events', label: 'Events', icon: Calendar },
                         { id: 'careers', label: 'Jobs', icon: Briefcase },
+                        { id: 'internships', label: 'Internships', icon: GraduationCap },
                         { id: 'applications', label: 'Applications', icon: FileText },
                         { id: 'team', label: 'Team', icon: Users },
                         { id: 'gallery', label: 'Gallery', icon: ImageIcon },
@@ -1940,6 +2017,266 @@ const AddGalleryDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                             <span className="flex items-center gap-2">
                                 <Plus className="w-5 h-5" />
                                 Add Gallery Item
+                            </span>
+                        )}
+                    </Button>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | void }) => {
+    const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [durationChoice, setDurationChoice] = useState("3–6 Months");
+    const [customDuration, setCustomDuration] = useState("");
+    const [selectedIcon, setSelectedIcon] = useState("Cpu");
+    const [skillsInput, setSkillsInput] = useState("");
+    const [skillsList, setSkillsList] = useState<string[]>(["Python", "Supabase"]);
+
+    const addSkill = (skill: string) => {
+        const trimmed = skill.trim();
+        if (trimmed && !skillsList.includes(trimmed)) {
+            setSkillsList([...skillsList, trimmed]);
+            setSkillsInput("");
+        }
+    };
+
+    const removeSkill = (index: number) => {
+        setSkillsList(skillsList.filter((_, i) => i !== index));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            addSkill(skillsInput);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const formData = new FormData(e.target as HTMLFormElement);
+        const role = (formData.get("role") as string)?.trim();
+        const description = (formData.get("description") as string)?.trim();
+        const location = (formData.get("location") as string)?.trim() || "Chennai / Remote";
+        const stipend = (formData.get("stipend") as string)?.trim() || "Stipend Based";
+
+        const duration = durationChoice === "Other" ? customDuration.trim() : durationChoice;
+
+        if (!role) return toast.error("Please enter an internship role title");
+        if (!duration) return toast.error("Please enter internship duration");
+        if (!description) return toast.error("Please enter a description");
+
+        // Merge any trailing comma-separated skills in skillsInput
+        let finalSkills = [...skillsList];
+        if (skillsInput.trim()) {
+            skillsInput.split(",").forEach(s => {
+                const t = s.trim();
+                if (t && !finalSkills.includes(t)) finalSkills.push(t);
+            });
+        }
+
+        setIsSubmitting(true);
+        try {
+            await onAdd({
+                role,
+                duration,
+                description,
+                skills: finalSkills,
+                icon: selectedIcon,
+                location,
+                stipend
+            });
+            toast.success("Internship program posted successfully!");
+            setOpen(false);
+            setDurationChoice("3–6 Months");
+            setCustomDuration("");
+            setSelectedIcon("Cpu");
+            setSkillsList(["Python", "Supabase"]);
+            setSkillsInput("");
+        } catch (error) {
+            console.error("Error creating internship:", error);
+            toast.error("Failed to post internship. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="hero">
+                    <Plus className="w-4 h-4 mr-2" /> Post Internship
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[700px] bg-background border-primary/10 text-foreground max-h-[85vh] overflow-y-auto custom-scrollbar" data-lenis-prevent>
+                <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-gradient-blue flex items-center gap-2">
+                        <GraduationCap className="w-6 h-6 text-metal-blue-400" /> Post New Internship
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground text-sm">
+                        Create an internship program that will appear live in the Careers page Internship section.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+                    {/* Role Title */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-primary">Internship Role Title *</label>
+                        <Input
+                            name="role"
+                            placeholder="e.g., AI / ML Engineer Intern"
+                            required
+                            className="bg-primary/5 border-primary/10 focus:border-metal-blue-500"
+                        />
+                    </div>
+
+                    {/* Duration & Stipend */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Duration *</label>
+                            <Select value={durationChoice} onValueChange={setDurationChoice}>
+                                <SelectTrigger className="bg-primary/5 border-primary/10">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border-primary/10">
+                                    <SelectItem value="2–3 Months">2–3 Months</SelectItem>
+                                    <SelectItem value="3–6 Months">3–6 Months</SelectItem>
+                                    <SelectItem value="2–4 Months">2–4 Months</SelectItem>
+                                    <SelectItem value="6 Months">6 Months</SelectItem>
+                                    <SelectItem value="Other">Custom Duration</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {durationChoice === "Other" && (
+                                <Input
+                                    placeholder="e.g., 4–8 Weeks"
+                                    value={customDuration}
+                                    onChange={(e) => setCustomDuration(e.target.value)}
+                                    className="bg-primary/5 border-primary/10 mt-2"
+                                    required
+                                />
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-primary">Stipend / Compensation</label>
+                            <Input
+                                name="stipend"
+                                defaultValue="Stipend Based"
+                                placeholder="e.g., Stipend Based or ₹15,000 / month"
+                                className="bg-primary/5 border-primary/10"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Location */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-primary">Location</label>
+                        <Input
+                            name="location"
+                            defaultValue="Chennai / Remote"
+                            placeholder="e.g., Chennai / Remote"
+                            className="bg-primary/5 border-primary/10"
+                        />
+                    </div>
+
+                    {/* Icon Picker */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-purple-400 flex items-center justify-between">
+                            <span>Select Badge Icon</span>
+                            <span className="text-xs text-muted-foreground">Selected: {selectedIcon}</span>
+                        </label>
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 max-h-48 overflow-y-auto custom-scrollbar">
+                            {INTERNSHIP_ICON_OPTIONS.map((opt) => {
+                                const Icon = opt.icon;
+                                const isSelected = selectedIcon === opt.id;
+                                return (
+                                    <button
+                                        type="button"
+                                        key={opt.id}
+                                        onClick={() => setSelectedIcon(opt.id)}
+                                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-xs transition-all ${
+                                            isSelected
+                                                ? "bg-metal-blue-500/20 border-metal-blue-500 text-metal-blue-300 shadow-md shadow-metal-blue-500/20"
+                                                : "bg-background/50 border-primary/10 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+                                        }`}
+                                    >
+                                        <Icon className="w-5 h-5 mb-1" />
+                                        <span className="text-[10px] truncate max-w-full">{opt.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-primary">Description *</label>
+                        <Textarea
+                            name="description"
+                            placeholder="Describe what the intern will work on, goals, datasets or tools used..."
+                            required
+                            className="bg-primary/5 border-primary/10 min-h-[110px]"
+                        />
+                    </div>
+
+                    {/* Skills Tags */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-primary">Key Skills / Technologies</label>
+                        <div className="flex gap-2">
+                            <Input
+                                value={skillsInput}
+                                onChange={(e) => setSkillsInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Type a skill and press Enter (e.g., Python, React Native)"
+                                className="bg-primary/5 border-primary/10"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => addSkill(skillsInput)}
+                                className="border-primary/20 shrink-0"
+                            >
+                                Add
+                            </Button>
+                        </div>
+                        {skillsList.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-2">
+                                {skillsList.map((skill, idx) => (
+                                    <span
+                                        key={idx}
+                                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-metal-blue-500/10 border border-metal-blue-500/20 text-metal-blue-400"
+                                    >
+                                        {skill}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeSkill(idx)}
+                                            className="hover:text-red-400 ml-0.5"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 hover:from-metal-blue-600 hover:to-metal-purple-600 text-white font-semibold py-6 text-lg shadow-lg shadow-metal-blue-500/20 mt-4"
+                    >
+                        {isSubmitting ? (
+                            <span className="flex items-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Uploading Internship...
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                <Plus className="w-5 h-5" />
+                                Post Internship
                             </span>
                         )}
                     </Button>
