@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.internships (
     skills text[] DEFAULT '{}'::text[],
     icon text DEFAULT 'Cpu',
     location text DEFAULT 'Chennai / Remote',
-    stipend text DEFAULT 'Stipend Based',
+    stipend text DEFAULT '',
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

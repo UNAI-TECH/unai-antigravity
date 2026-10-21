@@ -175,7 +175,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     skills: Array.isArray(item.skills) ? item.skills : (item.questions?.skills || []),
                     icon: item.icon || item.questions?.icon || "Cpu",
                     location: item.location || "Chennai / Remote",
-                    stipend: item.stipend || item.salary || "Stipend Based",
+                    stipend: item.stipend !== undefined && item.stipend !== null ? item.stipend : "",
                     created_at: item.created_at
                 }));
             } else {
@@ -200,7 +200,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             skills: Array.isArray(extra.skills) ? extra.skills : (Array.isArray(item.skills) ? item.skills : []),
                             icon: extra.icon || "Cpu",
                             location: item.location || "Chennai / Remote",
-                            stipend: item.salary || "Stipend Based",
+                            stipend: extra.stipend !== undefined && extra.stipend !== null ? extra.stipend : (item.salary || ""),
                             created_at: item.created_at
                         };
                     });
@@ -325,7 +325,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 skills: internship.skills || [],
                 icon: internship.icon || 'Cpu',
                 location: internship.location || 'Chennai / Remote',
-                stipend: internship.stipend || 'Stipend Based'
+                stipend: internship.stipend || ''
             }])
             .select();
 
@@ -338,7 +338,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 skills: internData[0].skills || [],
                 icon: internData[0].icon || 'Cpu',
                 location: internData[0].location,
-                stipend: internData[0].stipend,
+                stipend: internData[0].stipend || '',
                 created_at: internData[0].created_at
             };
 
@@ -349,10 +349,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 department: 'Internship',
                 type: 'Internship',
                 location: internship.location || 'Chennai / Remote',
-                salary: internship.stipend || 'Stipend Based',
+                salary: internship.stipend || '',
                 experience: internship.duration,
                 description: internship.description,
-                questions: { skills: internship.skills || [], icon: internship.icon || 'Cpu' }
+                questions: { skills: internship.skills || [], icon: internship.icon || 'Cpu', stipend: internship.stipend || '' }
             }]);
 
             setInternships(prev => [newIntern, ...prev]);
@@ -367,10 +367,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 department: 'Internship',
                 type: 'Internship',
                 location: internship.location || 'Chennai / Remote',
-                salary: internship.stipend || 'Stipend Based',
+                salary: internship.stipend || '',
                 experience: internship.duration,
                 description: internship.description,
-                questions: { skills: internship.skills || [], icon: internship.icon || 'Cpu' }
+                questions: { skills: internship.skills || [], icon: internship.icon || 'Cpu', stipend: internship.stipend || '' }
             }])
             .select();
 
@@ -383,7 +383,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 skills: internship.skills || [],
                 icon: internship.icon || 'Cpu',
                 location: jobData[0].location,
-                stipend: jobData[0].salary,
+                stipend: jobData[0].salary || '',
                 created_at: jobData[0].created_at
             };
             setInternships(prev => [newIntern, ...prev]);

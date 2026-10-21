@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock } from "lucide-react";
+import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock, IndianRupee } from "lucide-react";
 import { toast } from "sonner";
 import {
     Dialog,
@@ -17,6 +17,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
             department: "Internship",
             type: "Internship",
             location: intern.location || "Chennai / Remote",
-            salary: intern.stipend || "Stipend Based",
+            salary: intern.stipend || "",
             experience: intern.duration,
             description: intern.description,
             questions: [],
@@ -296,7 +297,7 @@ const AdminDashboard = () => {
                                                     <span className="bg-purple-500/20 text-purple-400 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                                                         {intern.duration}
                                                     </span>
-                                                    {intern.stipend && (
+                                                    {intern.stipend && intern.stipend.trim() !== "" && (
                                                         <span className="bg-green-500/20 text-green-400 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                                                             {intern.stipend}
                                                         </span>
@@ -2032,6 +2033,8 @@ const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | v
     const [durationChoice, setDurationChoice] = useState("3–6 Months");
     const [customDuration, setCustomDuration] = useState("");
     const [selectedIcon, setSelectedIcon] = useState("Cpu");
+    const [hasStipend, setHasStipend] = useState(false);
+    const [stipendAmount, setStipendAmount] = useState("");
     const [skillsInput, setSkillsInput] = useState("");
     const [skillsList, setSkillsList] = useState<string[]>(["Python", "Supabase"]);
 
@@ -2060,12 +2063,15 @@ const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | v
         const role = (formData.get("role") as string)?.trim();
         const description = (formData.get("description") as string)?.trim();
         const location = (formData.get("location") as string)?.trim() || "Chennai / Remote";
-        const stipend = (formData.get("stipend") as string)?.trim() || "Stipend Based";
+        const stipend = hasStipend ? (stipendAmount.trim() || "Stipend Based") : "";
 
         const duration = durationChoice === "Other" ? customDuration.trim() : durationChoice;
 
         if (!role) return toast.error("Please enter an internship role title");
         if (!duration) return toast.error("Please enter internship duration");
+        if (hasStipend && !stipendAmount.trim()) {
+            return toast.error("Please enter the stipend amount or toggle it off");
+        }
         if (!description) return toast.error("Please enter a description");
 
         // Merge any trailing comma-separated skills in skillsInput
@@ -2093,6 +2099,8 @@ const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | v
             setDurationChoice("3–6 Months");
             setCustomDuration("");
             setSelectedIcon("Cpu");
+            setHasStipend(false);
+            setStipendAmount("");
             setSkillsList(["Python", "Supabase"]);
             setSkillsInput("");
         } catch (error) {
@@ -2132,7 +2140,7 @@ const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | v
                         />
                     </div>
 
-                    {/* Duration & Stipend */}
+                    {/* Duration & Location */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-primary">Duration *</label>
@@ -2160,25 +2168,55 @@ const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | v
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-primary">Stipend / Compensation</label>
+                            <label className="text-sm font-medium text-primary">Location</label>
                             <Input
-                                name="stipend"
-                                defaultValue="Stipend Based"
-                                placeholder="e.g., Stipend Based or ₹15,000 / month"
+                                name="location"
+                                defaultValue="Chennai / Remote"
+                                placeholder="e.g., Chennai / Remote"
                                 className="bg-primary/5 border-primary/10"
                             />
                         </div>
                     </div>
 
-                    {/* Location */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-primary">Location</label>
-                        <Input
-                            name="location"
-                            defaultValue="Chennai / Remote"
-                            placeholder="e.g., Chennai / Remote"
-                            className="bg-primary/5 border-primary/10"
-                        />
+                    {/* Stipend Toggle & Conditional Input */}
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="space-y-0.5">
+                                <label
+                                    htmlFor="stipend-toggle"
+                                    className="text-sm font-medium text-foreground flex items-center gap-2 cursor-pointer"
+                                >
+                                    <IndianRupee className="w-4 h-4 text-green-400" />
+                                    <span>Provide Stipend</span>
+                                </label>
+                                <p className="text-xs text-muted-foreground">
+                                    {hasStipend
+                                        ? "Toggle is ON: Amount will be shown on the Careers page"
+                                        : "Toggle is OFF: No stipend will be shown on the Careers page"}
+                                </p>
+                            </div>
+                            <Switch
+                                id="stipend-toggle"
+                                checked={hasStipend}
+                                onCheckedChange={setHasStipend}
+                                className="data-[state=checked]:bg-green-500"
+                            />
+                        </div>
+
+                        {hasStipend && (
+                            <div className="pt-3 border-t border-primary/10 space-y-1.5 animate-in fade-in duration-200">
+                                <label className="text-xs font-medium text-green-400">
+                                    Stipend Amount / Compensation *
+                                </label>
+                                <Input
+                                    value={stipendAmount}
+                                    onChange={(e) => setStipendAmount(e.target.value)}
+                                    placeholder="e.g., ₹15,000 / month, ₹10,000 - ₹20,000, or Stipend Based"
+                                    className="bg-background/80 border-primary/10 text-sm focus:border-green-500"
+                                    required={hasStipend}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Icon Picker */}

@@ -141,7 +141,7 @@ const Careers = () => {
                                                                 <Clock className="w-3 h-3 text-purple-400" />
                                                                 {intern.duration}
                                                             </span>
-                                                            {intern.stipend && (
+                                                            {intern.stipend && intern.stipend.trim() !== "" && (
                                                                 <span className="inline-flex items-center gap-1 text-green-400">
                                                                     <IndianRupee className="w-3 h-3" />
                                                                     {intern.stipend}
@@ -178,7 +178,7 @@ const Careers = () => {
                                                             department: "Internship",
                                                             type: "Internship",
                                                             location: intern.location || "Chennai / Remote",
-                                                            salary: intern.stipend || "Stipend Based",
+                                                            salary: intern.stipend || "",
                                                             experience: intern.duration,
                                                             description: intern.description,
                                                             questions: [],
@@ -379,10 +379,12 @@ const JobApplicationOverlay = ({ job, onClose, isApplying, onStartApply, onSubmi
                                     <MapPin className="w-4 h-4 text-metal-blue-400" />
                                     {job.location}
                                 </span>
-                                <span className="flex items-center gap-2">
-                                    <IndianRupee className="w-4 h-4 text-green-400" />
-                                    {job.salary}
-                                </span>
+                                {job.salary && job.salary.trim() !== "" && (
+                                    <span className="flex items-center gap-2">
+                                        <IndianRupee className="w-4 h-4 text-green-400" />
+                                        {job.salary}
+                                    </span>
+                                )}
                                 {job.experience && (
                                     <span className="flex items-center gap-2">
                                         <Clock className="w-4 h-4 text-purple-400" />
