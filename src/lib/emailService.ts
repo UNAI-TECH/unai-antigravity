@@ -32,16 +32,16 @@ export const sendStatusEmail = async (
 
     switch (status) {
         case 'received':
-            subject = 'Application Received - UNAI Antigravity';
-            message = `Dear ${cleanName},\n\nThank you for applying for the ${cleanJobTitle} position at UNAI Antigravity.\n\nWe have received your application and it is currently being processed by our team. We will review your qualifications and get back to you shortly.\n\nBest regards,\nUNAI Team\n\n---\nThis email was sent from unai.technology@gmail.com`;
+            subject = `Application Received: ${cleanJobTitle} - UNAI Technology`;
+            message = `Dear ${cleanName},\n\nThank you for applying for the ${cleanJobTitle} position at UNAI Technology.\n\nWe have successfully received your application. Our recruitment team is currently reviewing your profile and qualifications.\n\nIf your experience matches our current requirements, we will reach out to you with information regarding the next steps.\n\nWarm regards,\nRecruitment Team\nUNAI Technology\ncontact@unaitech.com`;
             break;
         case 'approved':
-            subject = '🎉 Congratulations! Application Approved';
-            message = `Dear ${cleanName},\n\nWe are pleased to inform you that your application for the ${cleanJobTitle} position has been APPROVED!\n\nOur team will contact you shortly with the next steps regarding the interview process.\n\nCongratulations!\n\nBest regards,\nUNAI Team\n\n---\nThis email was sent from unai.technology@gmail.com`;
+            subject = `Application Update: Next Steps for ${cleanJobTitle} - UNAI Technology`;
+            message = `Dear ${cleanName},\n\nThank you for taking the time to apply for the ${cleanJobTitle} position at UNAI Technology.\n\nWe are pleased to inform you that your application has been shortlisted and approved for the next stage of our selection process.\n\nA member of our team will be in touch with you shortly with details regarding the interview schedule.\n\nWe look forward to speaking with you.\n\nWarm regards,\nRecruitment Team\nUNAI Technology\ncontact@unaitech.com`;
             break;
         case 'rejected':
-            subject = 'Application Status Update';
-            message = `Dear ${cleanName},\n\nThank you for your interest in the ${cleanJobTitle} position at UNAI Antigravity.\n\nAfter careful review, we regret to inform you that we will not be moving forward with your application at this time. We appreciate your time and wish you the best in your future endeavors.\n\nBest regards,\nUNAI Team\n\n---\nThis email was sent from unai.technology@gmail.com`;
+            subject = `Update on your application for ${cleanJobTitle} - UNAI Technology`;
+            message = `Dear ${cleanName},\n\nThank you for your interest in UNAI Technology and for applying for the ${cleanJobTitle} position.\n\nAfter careful consideration of all applications, we have decided to move forward with other candidates whose qualifications more closely align with our current needs.\n\nWe sincerely appreciate the time and effort you took to apply and wish you the best in your professional endeavors.\n\nSincerely,\nRecruitment Team\nUNAI Technology\ncontact@unaitech.com`;
             break;
     }
 
@@ -68,11 +68,15 @@ export const sendStatusEmail = async (
             title: cleanJobTitle,
             status: status,
 
-            // Sender & message
-            from_name: 'UNAI TECH Team',
+            // Sender, subject & message aliases
+            from_name: 'UNAI Technology',
+            company_name: 'UNAI Technology',
             reply_to: 'unai.technology@gmail.com',
             subject: subject,
-            message: message
+            email_subject: subject,
+            message: message,
+            content: message,
+            body: message
         };
 
         console.log('Sending email with params:', { toEmail: cleanEmail, toName: cleanName, status, jobTitle: cleanJobTitle });
