@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { sendStatusEmail } from "@/lib/emailService";
+import { toast } from "sonner";
 
 // Types
 export interface Event {
@@ -466,9 +467,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Send confirmation email
             try {
                 const job = jobs.find(j => j.id === app.job_id);
-                if (job) {
-                    await sendStatusEmail(app.email, app.applicant_name, 'received', job.title);
-                }
+                const intern = !job ? internships.find(i => i.id === app.job_id) : null;
+                const positionTitle = job?.title || intern?.role || "Position";
+                await sendStatusEmail(app.email, app.applicant_name, 'received', positionTitle);
             } catch (emailError) {
                 console.error("Failed to send confirmation email:", emailError);
                 // Don't fail the application submission if email fails
@@ -496,28 +497,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .update({ status })
             .eq('id', id);
 
-        if (!error) {
-            setJobApplications(prev => prev.map(app =>
-                app.id === id ? { ...app, status } : app
-            ));
-
-            // Send status update email
-            if (status !== 'pending') {
-                try {
-                    const application = jobApplications.find(app => app.id === id);
-                    if (application) {
-                        const job = jobs.find(j => j.id === application.job_id);
-                        if (job) {
-                            await sendStatusEmail(applicantEmail, application.applicant_name, status, job.title);
-                        }
-                    }
-                } catch (emailError) {
-                    console.error("Failed to send status email:", emailError);
-                    throw emailError; // Re-throw so the UI can show the error
-                }
-            }
-        } else {
+        if (error) {
             console.error("Error updating job application status:", error);
+            throw error;
+        }
+
+        setJobApplications(prev => prev.map(app =>
+            app.id === id ? { ...app, status } : app
+        ));
+
+        // 2. Send status update email
+        if (status !== 'pending') {
+            try {
+                const application = jobApplications.find(app => app.id === id);
+                const job = jobs.find(j => j.id === application?.job_id);
+                const intern = !job ? internships.find(i => i.id === application?.job_id) : null;
+                const positionTitle = job?.title || intern?.role || "Position";
+                const targetEmail = applicantEmail || application?.email || "";
+                const applicantName = application?.applicant_name || "Applicant";
+
+                if (targetEmail) {
+                    await sendStatusEmail(targetEmail, applicantName, status, positionTitle);
+                }
+            } catch (emailError) {
+                console.error("Failed to send status email:", emailError);
+                toast.warning("Status updated in database, but email notification could not be delivered.");
+            }
         }
     };
 
