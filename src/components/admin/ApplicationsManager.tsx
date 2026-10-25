@@ -40,6 +40,10 @@ import {
     Loader2,
     Calendar,
     Phone,
+    PhoneCall,
+    Eye,
+    RotateCcw,
+    Copy,
     Mail,
     ArrowLeft,
     Sparkles,
@@ -47,6 +51,7 @@ import {
     AlertTriangle,
     MapPin
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -88,15 +93,40 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
     const [isGeneratingZip, setIsGeneratingZip] = useState(false);
     const [singleDownloadingId, setSingleDownloadingId] = useState<string | null>(null);
 
+    // Call tracking state (persisted locally and synced with candidate answers)
+    const [callData, setCallData] = useState<Record<string, { count: number; lastCalled?: string }>>(() => {
+        try {
+            const saved = localStorage.getItem("unai_applicant_calls");
+            return saved ? JSON.parse(saved) : {};
+        } catch {
+            return {};
+        }
+    });
+
+    // Modal state for viewing applicant full profile
+    const [viewingApplicant, setViewingApplicant] = useState<JobApplication | null>(null);
+
     // Selected job object
     const selectedJob = useMemo(() => {
         if (!selectedJobId) return null;
+        if (selectedJobId === "all") {
+            return {
+                id: "all",
+                title: "All Applicants (Across All Positions)",
+                department: "All Departments",
+                location: "Company-Wide",
+                type: "All Positions",
+                salary: "Various",
+                description: "Comprehensive view of all candidate applications received across all open positions."
+            } as Job;
+        }
         return allPositions.find(j => j.id === selectedJobId) || null;
     }, [selectedJobId, allPositions]);
 
     // Applications for selected job
     const positionApplications = useMemo(() => {
         if (!selectedJobId) return [];
+        if (selectedJobId === "all") return jobApplications;
         return jobApplications.filter(app => app.job_id === selectedJobId);
     }, [selectedJobId, jobApplications]);
 
@@ -185,6 +215,98 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
         });
     };
 
+    // Helper: Retrieve call information for an applicant
+    const getApplicantCallInfo = (app: JobApplication) => {
+        const local = callData[app.id];
+        const serverCount = app.answers?.call_count !== undefined ? Number(app.answers.call_count) : 0;
+        const count = local?.count !== undefined ? Math.max(local.count, serverCount) : serverCount;
+        const lastCalled = local?.lastCalled || app.answers?.last_called_at;
+        return { count, lastCalled };
+    };
+
+    // Handler: Trigger phone call, increment counter, save to state, localStorage & Supabase
+    const handleCallApplicant = async (app: JobApplication) => {
+        if (!app.phone) {
+            toast.error("No phone number recorded for this applicant");
+            return;
+        }
+
+        const { count } = getApplicantCallInfo(app);
+        const newCount = count + 1;
+        const now = new Date().toISOString();
+
+        const updatedMap = {
+            ...callData,
+            [app.id]: {
+                count: newCount,
+                lastCalled: now
+            }
+        };
+        setCallData(updatedMap);
+
+        try {
+            localStorage.setItem("unai_applicant_calls", JSON.stringify(updatedMap));
+        } catch (e) {
+            console.warn("Could not cache call count to localStorage:", e);
+        }
+
+        // Persist to Supabase answers in background
+        try {
+            const currentAnswers = typeof app.answers === "object" && app.answers !== null ? { ...app.answers } : {};
+            await supabase
+                .from("job_applications")
+                .update({
+                    answers: {
+                        ...currentAnswers,
+                        call_count: newCount,
+                        last_called_at: now
+                    }
+                })
+                .eq("id", app.id);
+        } catch (dbErr) {
+            console.warn("Could not sync call count to Supabase:", dbErr);
+        }
+
+        // Initiate phone call
+        const cleanPhone = app.phone.trim().replace(/\s+/g, "");
+        window.location.href = `tel:${cleanPhone}`;
+        toast.success(`Calling ${app.applicant_name} (${app.phone}) — Call count: ${newCount}`);
+    };
+
+    // Handler: Reset call counter back to 0
+    const handleResetCallCount = async (appId: string) => {
+        const updatedMap = { ...callData };
+        delete updatedMap[appId];
+        setCallData(updatedMap);
+
+        try {
+            localStorage.setItem("unai_applicant_calls", JSON.stringify(updatedMap));
+        } catch {}
+
+        try {
+            const app = jobApplications.find(a => a.id === appId);
+            if (app) {
+                const currentAnswers = typeof app.answers === "object" && app.answers !== null ? { ...app.answers } : {};
+                delete currentAnswers.call_count;
+                delete currentAnswers.last_called_at;
+                await supabase
+                    .from("job_applications")
+                    .update({ answers: currentAnswers })
+                    .eq("id", appId);
+            }
+        } catch (err) {
+            console.warn("Could not reset call count in Supabase:", err);
+        }
+        toast.info("Call counter reset to 0");
+    };
+
+    // Helper: Copy text to clipboard with notification
+    const copyToClipboard = (text: string, label: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        toast.success(`Copied ${label} to clipboard: ${text}`);
+    };
+
     // Handler: Master CSV Export (All applications across all positions)
     const handleExportAllCSV = () => {
         if (jobApplications.length === 0) {
@@ -230,13 +352,13 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
     // Handler: Export current position applications to CSV
     const handleExportPositionCSV = (jobId: string, customTitle?: string) => {
-        const apps = jobApplications.filter(a => a.job_id === jobId);
+        const apps = jobId === "all" ? jobApplications : jobApplications.filter(a => a.job_id === jobId);
         if (apps.length === 0) {
             toast.error("No applications found for this position");
             return;
         }
         const job = allPositions.find(j => j.id === jobId);
-        const title = customTitle || job?.title || "Position";
+        const title = customTitle || (jobId === "all" ? "All Positions" : job?.title) || "Position";
         exportJobApplicationsCSV(
             apps,
             allPositions,
@@ -247,13 +369,13 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
     // Handler: Download current position resumes ZIP
     const handleDownloadPositionZip = async (jobId: string, customTitle?: string) => {
-        const apps = jobApplications.filter(a => a.job_id === jobId);
+        const apps = jobId === "all" ? jobApplications : jobApplications.filter(a => a.job_id === jobId);
         if (apps.length === 0) {
             toast.error("No applications found for this position");
             return;
         }
         const job = allPositions.find(j => j.id === jobId);
-        const title = customTitle || job?.title || "Position";
+        const title = customTitle || (jobId === "all" ? "All Positions" : job?.title) || "Position";
 
         setZipProgress({ current: 0, total: apps.length, message: `Preparing resumes for ${title}...` });
         setZipModalOpen(true);
@@ -382,6 +504,370 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
         } finally {
             setSingleDownloadingId(null);
         }
+    };
+
+    // Render Full Applicant Profile Dialog Modal
+    const renderViewApplicantModal = () => {
+        if (!viewingApplicant) return null;
+        const app = viewingApplicant;
+        const appJob = allPositions.find(p => p.id === app.job_id) || selectedJob;
+        const isIntern = appJob?.department === "Internship" || appJob?.type === "Internship";
+        const isDup = duplicateIds.has(app.id);
+        const { count: callCount, lastCalled } = getApplicantCallInfo(app);
+
+        // Education & Location fields
+        const institution = app.answers?.["Educational Institution"] || app.answers?.institution;
+        const qualification = app.answers?.["Qualification"] || app.answers?.qualification;
+        const gradYear = app.answers?.["Year of Graduation"] || app.answers?.graduation_year;
+        const city = app.answers?.["City of Residence"] || app.answers?.city;
+        const country = app.answers?.["Country"] || app.answers?.country;
+        const source = app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us;
+
+        // General questionnaire answers (excluding education/system keys)
+        const systemKeys = new Set([
+            "call_count",
+            "last_called_at",
+            "institution",
+            "qualification",
+            "graduation_year",
+            "city",
+            "country",
+            "hear_about_us",
+            "Educational Institution",
+            "Qualification",
+            "Year of Graduation",
+            "City of Residence",
+            "Country",
+            "Where did you hear about us?"
+        ]);
+        const questionnaireEntries =
+            typeof app.answers === "object" && app.answers !== null
+                ? Object.entries(app.answers).filter(([k]) => !systemKeys.has(k))
+                : [];
+
+        return (
+            <Dialog open={!!viewingApplicant} onOpenChange={(open) => !open && setViewingApplicant(null)}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-2xl border-primary/20 text-foreground p-6 sm:p-8">
+                    <DialogHeader className="pb-4 border-b border-primary/10">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                            <div className="flex items-start gap-3.5">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-metal-blue-500/20 to-metal-purple-500/20 border border-metal-blue-500/30 flex items-center justify-center font-bold text-lg text-metal-blue-300 shrink-0">
+                                    {app.applicant_name ? app.applicant_name.charAt(0).toUpperCase() : "A"}
+                                </div>
+                                <div>
+                                    <DialogTitle className="text-2xl font-bold font-heading text-foreground flex items-center gap-2.5 flex-wrap">
+                                        <span>{app.applicant_name}</span>
+                                        <span
+                                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border ${
+                                                app.status === "approved"
+                                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                                    : app.status === "rejected"
+                                                    ? "bg-red-500/20 text-red-400 border-red-500/30"
+                                                    : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"
+                                            }`}
+                                        >
+                                            {app.status}
+                                        </span>
+                                        {isDup && (
+                                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                                                <AlertTriangle className="w-3 h-3" /> Duplicate
+                                            </span>
+                                        )}
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                                        <span>Applied for:</span>
+                                        <span className="font-semibold text-metal-blue-300">
+                                            {appJob?.title || "Position"}
+                                        </span>
+                                        {isIntern ? (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/20">
+                                                Internship
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20">
+                                                Job
+                                            </span>
+                                        )}
+                                        <span className="text-muted-foreground/60">•</span>
+                                        <span className="flex items-center gap-1 text-muted-foreground">
+                                            <Clock className="w-3 h-3 text-metal-blue-400" />
+                                            {app.created_at ? new Date(app.created_at).toLocaleString() : "Date not recorded"}
+                                        </span>
+                                    </DialogDescription>
+                                </div>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="space-y-6 pt-4">
+                        {/* Contact & Calling Hub */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Phone Card with Call Button & Counter */}
+                            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                                <span className="text-xs uppercase font-semibold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                                    <Phone className="w-3.5 h-3.5 text-emerald-400" /> Phone Contact & Calling
+                                </span>
+                                {app.phone ? (
+                                    <div className="space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-mono text-base font-bold text-foreground">
+                                                {app.phone}
+                                            </span>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                                onClick={() => copyToClipboard(app.phone, "phone number")}
+                                                title="Copy phone number"
+                                            >
+                                                <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                                            </Button>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleCallApplicant(app)}
+                                                className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs h-8 gap-1.5 shadow-md shadow-emerald-500/20"
+                                            >
+                                                <PhoneCall className="w-3.5 h-3.5" />
+                                                <span>Call {app.phone}</span>
+                                                {callCount > 0 && (
+                                                    <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-white text-[10px] font-bold">
+                                                        ({callCount})
+                                                    </span>
+                                                )}
+                                            </Button>
+                                            {callCount > 0 && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => handleResetCallCount(app.id)}
+                                                    className="h-8 px-2 text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 gap-1"
+                                                    title="Reset call counter to 0"
+                                                >
+                                                    <RotateCcw className="w-3 h-3" /> Reset
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground pt-1 border-t border-primary/10">
+                                            <div className="flex items-center justify-between">
+                                                <span>Total Calls Placed:</span>
+                                                <span className={`font-semibold ${callCount > 0 ? "text-emerald-400" : "text-muted-foreground"}`}>
+                                                    {callCount} call{callCount !== 1 ? "s" : ""}
+                                                </span>
+                                            </div>
+                                            {lastCalled && (
+                                                <div className="flex items-center justify-between mt-0.5 text-[11px] text-muted-foreground/80">
+                                                    <span>Last Call:</span>
+                                                    <span>{new Date(lastCalled).toLocaleString()}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground italic">No phone number recorded</p>
+                                )}
+                            </div>
+
+                            {/* Email & Location Card */}
+                            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                                <span className="text-xs uppercase font-semibold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                                    <Mail className="w-3.5 h-3.5 text-blue-400" /> Email & Location
+                                </span>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <a
+                                            href={`mailto:${app.email}`}
+                                            className="font-medium text-sm text-primary hover:underline truncate"
+                                        >
+                                            {app.email}
+                                        </a>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                            onClick={() => copyToClipboard(app.email, "email address")}
+                                            title="Copy email address"
+                                        >
+                                            <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                                        </Button>
+                                    </div>
+                                    {(city || country) && (
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1 border-t border-primary/10">
+                                            <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                                            <span>{[city, country].filter(Boolean).join(", ")}</span>
+                                        </div>
+                                    )}
+                                    {source && (
+                                        <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                            <Sparkles className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+                                            <span>Via {source}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Education & Qualifications */}
+                        {(institution || qualification) && (
+                            <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-2">
+                                <span className="text-xs uppercase font-semibold text-purple-300 tracking-wider flex items-center gap-1.5">
+                                    <GraduationCap className="w-3.5 h-3.5 text-purple-400" /> Education & Qualifications
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                                    {institution && (
+                                        <div>
+                                            <p className="text-muted-foreground">Educational Institution</p>
+                                            <p className="font-semibold text-foreground text-sm mt-0.5">{institution}</p>
+                                        </div>
+                                    )}
+                                    {qualification && (
+                                        <div>
+                                            <p className="text-muted-foreground">Qualification & Graduation Year</p>
+                                            <p className="font-semibold text-foreground text-sm mt-0.5">
+                                                {qualification} {gradYear ? `(Graduated: ${gradYear})` : ""}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Resume Attachment Section */}
+                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-2.5">
+                            <span className="text-xs uppercase font-semibold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-metal-blue-400" /> Resume / CV Attachment
+                            </span>
+                            {app.resume_url ? (
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                                    <div className="text-xs text-foreground font-medium truncate max-w-sm">
+                                        📄 {app.resume_url.split("/").pop() || "Candidate_Resume"}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 text-xs gap-1.5 border-primary/20 hover:bg-primary/10"
+                                            onClick={() => window.open(app.resume_url, "_blank")}
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" /> View in Tab
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="h-8 text-xs gap-1.5 bg-metal-blue-500/20 hover:bg-metal-blue-500/30 text-metal-blue-300 border border-metal-blue-500/30"
+                                            onClick={() => handleDownloadSingleResume(app)}
+                                            disabled={singleDownloadingId === app.id}
+                                        >
+                                            {singleDownloadingId === app.id ? (
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            ) : (
+                                                <Download className="w-3.5 h-3.5" />
+                                            )}
+                                            <span>Download Resume</span>
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No resume file attached with this application.</p>
+                            )}
+                        </div>
+
+                        {/* Questionnaire Responses */}
+                        {questionnaireEntries.length > 0 && (
+                            <div className="space-y-3 pt-2">
+                                <h4 className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">
+                                    Candidate Questionnaire Responses ({questionnaireEntries.length})
+                                </h4>
+                                <div className="grid gap-2.5 max-h-60 overflow-y-auto pr-1">
+                                    {questionnaireEntries.map(([q, ans], idx) => (
+                                        <div key={idx} className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-xs">
+                                            <p className="font-semibold text-muted-foreground mb-1">{q}</p>
+                                            <p className="text-foreground font-medium pl-2.5 border-l-2 border-metal-blue-500">
+                                                {Array.isArray(ans) ? ans.join(", ") : String(ans)}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Bottom Actions Bar */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-primary/10">
+                            {/* Status Change Buttons */}
+                            <div className="flex items-center gap-2">
+                                {app.status !== "approved" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 text-xs h-9 gap-1.5"
+                                        onClick={async () => {
+                                            try {
+                                                await updateJobApplicationStatus(app.id, "approved", app.email);
+                                                setViewingApplicant(prev => prev ? { ...prev, status: "approved" } : null);
+                                                toast.success(`Approved application for ${app.applicant_name}`);
+                                            } catch (err) {
+                                                toast.error("Failed to approve application");
+                                            }
+                                        }}
+                                    >
+                                        <CheckCircle className="w-3.5 h-3.5" /> Approve Candidate
+                                    </Button>
+                                )}
+                                {app.status !== "rejected" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 text-xs h-9 gap-1.5"
+                                        onClick={async () => {
+                                            try {
+                                                await updateJobApplicationStatus(app.id, "rejected", app.email);
+                                                setViewingApplicant(prev => prev ? { ...prev, status: "rejected" } : null);
+                                                toast.success(`Rejected application for ${app.applicant_name}`);
+                                            } catch (err) {
+                                                toast.error("Failed to reject application");
+                                            }
+                                        }}
+                                    >
+                                        <X className="w-3.5 h-3.5" /> Reject Candidate
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Export, Print & Close */}
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-primary/20 hover:bg-primary/10 text-foreground text-xs h-9 gap-1.5"
+                                    onClick={() => printOrDownloadApplicationProfile(app, appJob)}
+                                >
+                                    <Printer className="w-3.5 h-3.5 text-metal-blue-400" />
+                                    <span>Print / PDF</span>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-primary/20 hover:bg-primary/10 text-foreground text-xs h-9 gap-1.5"
+                                    onClick={() => {
+                                        exportJobApplicationsCSV([app], allPositions, `Application_${sanitizeFileName(app.applicant_name)}.csv`);
+                                        toast.success(`Exported application to CSV`);
+                                    }}
+                                >
+                                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>CSV</span>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-foreground text-xs h-9"
+                                    onClick={() => setViewingApplicant(null)}
+                                >
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
     };
 
     // =========================================================================
@@ -608,6 +1094,8 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                             Object.keys(app.answers).length > 0;
                         const answersExpanded = expandedAnswers.has(app.id);
                         const isDownloadingThis = singleDownloadingId === app.id;
+                        const { count: callCount, lastCalled } = getApplicantCallInfo(app);
+                        const candidateJob = allPositions.find(p => p.id === app.job_id);
 
                         // Education & Location fields
                         const institution = app.answers?.["Educational Institution"] || app.answers?.institution;
@@ -646,6 +1134,11 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                     <h3 className="font-bold text-xl text-foreground truncate">
                                                         {app.applicant_name}
                                                     </h3>
+                                                    {selectedJobId === "all" && candidateJob && (
+                                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-metal-blue-500/15 text-metal-blue-300 border border-metal-blue-500/30">
+                                                            {candidateJob.title}
+                                                        </span>
+                                                    )}
                                                     <span
                                                         className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border ${
                                                             app.status === "approved"
@@ -674,14 +1167,33 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                         <Mail className="w-3.5 h-3.5" />
                                                         <span>{app.email}</span>
                                                     </a>
-                                                    {app.phone && (
-                                                        <a
-                                                            href={`tel:${app.phone}`}
-                                                            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-                                                        >
-                                                            <Phone className="w-3.5 h-3.5" />
-                                                            <span>{app.phone}</span>
-                                                        </a>
+                                                    {app.phone ? (
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleCallApplicant(app)}
+                                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-all hover:scale-105 active:scale-95 shadow-sm group"
+                                                                title={`Call ${app.phone} (Clicked ${callCount} time${callCount === 1 ? '' : 's'}${lastCalled ? ` • Last: ${new Date(lastCalled).toLocaleTimeString()}` : ''})`}
+                                                            >
+                                                                <PhoneCall className="w-3.5 h-3.5 text-emerald-400 group-hover:animate-pulse" />
+                                                                <span className="font-mono">{app.phone}</span>
+                                                                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-bold">
+                                                                    Call {callCount > 0 && `(${callCount})`}
+                                                                </span>
+                                                            </button>
+                                                            {callCount > 0 && (
+                                                                <span
+                                                                    className="text-[11px] text-emerald-400/90 font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20"
+                                                                    title={lastCalled ? `Last called on: ${new Date(lastCalled).toLocaleString()}` : undefined}
+                                                                >
+                                                                    Called {callCount}x
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground italic flex items-center gap-1">
+                                                            <Phone className="w-3.5 h-3.5 opacity-50" /> No phone provided
+                                                        </span>
                                                     )}
                                                     <span
                                                         className="flex items-center gap-1.5 text-muted-foreground"
@@ -844,56 +1356,68 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                 </span>
                                             )}
 
-                                            {/* Download / Print Candidate Application Summary */}
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="border-primary/15 hover:bg-primary/5 text-foreground text-xs h-8 gap-1.5 ml-auto"
-                                                    >
-                                                        <FileText className="w-3.5 h-3.5 text-yellow-400" />
-                                                        <span>Download Application</span>
-                                                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-xl border-primary/20">
-                                                    <DropdownMenuLabel className="text-xs text-muted-foreground">
-                                                        Export Candidate Record
-                                                    </DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        onClick={() => printOrDownloadApplicationProfile(app, selectedJob)}
-                                                        className="cursor-pointer text-xs flex items-center gap-2"
-                                                    >
-                                                        <Printer className="w-4 h-4 text-metal-blue-400" />
-                                                        <span>Print / Save as PDF</span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() => {
-                                                            exportJobApplicationsCSV(
-                                                                [app],
-                                                                allPositions,
-                                                                `Application_${sanitizeFileName(app.applicant_name)}.csv`
-                                                            );
-                                                            toast.success(`Exported application for ${app.applicant_name} to CSV`);
-                                                        }}
-                                                        className="cursor-pointer text-xs flex items-center gap-2"
-                                                    >
-                                                        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                                                        <span>Export Application to CSV</span>
-                                                    </DropdownMenuItem>
-                                                    {app.resume_url && (
+                                            {/* VIEW APPLICANT BUTTON & EXPORT ACTIONS */}
+                                            <div className="flex items-center gap-2 ml-auto">
+                                                <Button
+                                                    variant="default"
+                                                    size="sm"
+                                                    onClick={() => setViewingApplicant(app)}
+                                                    className="bg-metal-blue-500/20 hover:bg-metal-blue-500/30 text-metal-blue-300 border border-metal-blue-500/30 text-xs h-8 gap-1.5 font-medium shadow-sm transition-all hover:scale-105"
+                                                    title={`View full applicant details for ${app.applicant_name}`}
+                                                >
+                                                    <Eye className="w-3.5 h-3.5 text-metal-blue-400" />
+                                                    <span>View Applicant</span>
+                                                </Button>
+
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 border-primary/15 hover:bg-primary/5 text-muted-foreground hover:text-foreground"
+                                                            title="Export / Download options"
+                                                        >
+                                                            <Download className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-xl border-primary/20">
+                                                        <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                                            Export Candidate Record
+                                                        </DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
                                                         <DropdownMenuItem
-                                                            onClick={() => handleDownloadSingleResume(app)}
+                                                            onClick={() => printOrDownloadApplicationProfile(app, candidateJob || selectedJob)}
                                                             className="cursor-pointer text-xs flex items-center gap-2"
                                                         >
-                                                            <Download className="w-4 h-4 text-blue-400" />
-                                                            <span>Download Resume File</span>
+                                                            <Printer className="w-4 h-4 text-metal-blue-400" />
+                                                            <span>Print / Save as PDF</span>
                                                         </DropdownMenuItem>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                                        <DropdownMenuItem
+                                                            onClick={() => {
+                                                                exportJobApplicationsCSV(
+                                                                    [app],
+                                                                    allPositions,
+                                                                    `Application_${sanitizeFileName(app.applicant_name)}.csv`
+                                                                );
+                                                                toast.success(`Exported application for ${app.applicant_name} to CSV`);
+                                                            }}
+                                                            className="cursor-pointer text-xs flex items-center gap-2"
+                                                        >
+                                                            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                                                            <span>Export Application to CSV</span>
+                                                        </DropdownMenuItem>
+                                                        {app.resume_url && (
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDownloadSingleResume(app)}
+                                                                className="cursor-pointer text-xs flex items-center gap-2"
+                                                            >
+                                                                <Download className="w-4 h-4 text-blue-400" />
+                                                                <span>Download Resume File</span>
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -931,6 +1455,9 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                         </div>
                     </DialogContent>
                 </Dialog>
+
+                {/* View Applicant Full Profile Modal */}
+                {renderViewApplicantModal()}
             </div>
         );
     }
@@ -958,6 +1485,16 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                 <div className="flex items-center gap-2.5 flex-wrap">
                     <Button
                         variant="outline"
+                        onClick={() => setSelectedJobId("all")}
+                        disabled={totalAppsCount === 0}
+                        className="border-metal-blue-500/30 text-metal-blue-300 hover:bg-metal-blue-500/10 text-sm font-medium gap-2"
+                        title="View all applications across all positions in a single list"
+                    >
+                        <Eye className="w-4 h-4 text-metal-blue-400" />
+                        <span>View All Candidates ({totalAppsCount})</span>
+                    </Button>
+                    <Button
+                        variant="outline"
                         onClick={handleExportAllCSV}
                         disabled={totalAppsCount === 0}
                         className="border-primary/20 hover:bg-primary/10 text-foreground text-sm font-medium gap-2"
@@ -980,9 +1517,21 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
             {/* Quick Metrics Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <GlassCard className="p-4 border-primary/10">
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Received</p>
+                <GlassCard
+                    onClick={() => totalAppsCount > 0 && setSelectedJobId("all")}
+                    className={`p-4 border-primary/10 transition-all ${
+                        totalAppsCount > 0 ? "hover:border-metal-blue-500/40 cursor-pointer hover:scale-[1.02]" : ""
+                    }`}
+                    title={totalAppsCount > 0 ? "Click to view all applications across all positions" : undefined}
+                >
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Received</p>
+                        <Eye className="w-3.5 h-3.5 text-metal-blue-400" />
+                    </div>
                     <p className="text-3xl font-bold text-foreground mt-1">{totalAppsCount}</p>
+                    {totalAppsCount > 0 && (
+                        <p className="text-[11px] text-metal-blue-400 font-medium mt-1">View all applicants →</p>
+                    )}
                 </GlassCard>
                 <GlassCard className="p-4 border-yellow-500/20 bg-yellow-500/[0.02]">
                     <p className="text-xs text-yellow-400/90 font-medium uppercase tracking-wider">Pending Review</p>
@@ -1170,6 +1719,9 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* View Applicant Full Profile Modal */}
+            {renderViewApplicantModal()}
         </div>
     );
 };
