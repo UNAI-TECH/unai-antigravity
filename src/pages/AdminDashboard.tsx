@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock, IndianRupee } from "lucide-react";
+import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock, IndianRupee, FileSpreadsheet, Download, Archive } from "lucide-react";
 import { toast } from "sonner";
+import { ApplicationsManager } from "@/components/admin/ApplicationsManager";
+import { exportEventRegistrationsCSV } from "@/utils/downloadHelpers";
 import {
     Dialog,
     DialogContent,
@@ -127,14 +129,26 @@ const AdminDashboard = () => {
 
                     return (
                         <div className="space-y-6">
-                            <div className="flex items-center gap-4">
-                                <Button variant="outline" onClick={() => setSelectedEventId(null)} className="border-primary/10 hover:bg-primary/5">
-                                    ← Back
-                                </Button>
-                                <div>
-                                    <h2 className="text-3xl font-heading font-bold">Registrations for {selectedEvent?.title}</h2>
-                                    <p className="text-muted-foreground">Reviewing {registrations.length} registrations.</p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-primary/10">
+                                <div className="flex items-center gap-4">
+                                    <Button variant="outline" onClick={() => setSelectedEventId(null)} className="border-primary/10 hover:bg-primary/5">
+                                        ← Back
+                                    </Button>
+                                    <div>
+                                        <h2 className="text-3xl font-heading font-bold">Registrations for {selectedEvent?.title}</h2>
+                                        <p className="text-muted-foreground">Reviewing {registrations.length} registrations.</p>
+                                    </div>
                                 </div>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => exportEventRegistrationsCSV(registrations, selectedEvent?.title)}
+                                    disabled={registrations.length === 0}
+                                    className="border-primary/20 hover:bg-primary/10 text-foreground text-sm font-medium gap-2 self-start sm:self-auto"
+                                    title="Export all registrations for this event to CSV"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                                    <span>Export to CSV</span>
+                                </Button>
                             </div>
                             <div className="grid gap-4">
                                 {registrations.length === 0 && (
@@ -213,13 +227,29 @@ const AdminDashboard = () => {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {event.registration_type === 'manual' && (
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => setSelectedEventId(event.id)}
-                                                    className="bg-primary/5 hover:bg-primary/10 text-foreground"
-                                                >
-                                                    View Registrations
-                                                </Button>
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            const regs = eventRegistrations.filter(r => r.event_id === event.id);
+                                                            exportEventRegistrationsCSV(regs, event.title);
+                                                        }}
+                                                        disabled={regCount === 0}
+                                                        className="border-primary/15 hover:bg-primary/10 text-foreground text-xs gap-1.5"
+                                                        title="Export registrations to CSV"
+                                                    >
+                                                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                                                        <span>CSV</span>
+                                                    </Button>
+                                                    <Button
+                                                        variant="secondary"
+                                                        onClick={() => setSelectedEventId(event.id)}
+                                                        className="bg-primary/5 hover:bg-primary/10 text-foreground"
+                                                    >
+                                                        View Registrations
+                                                    </Button>
+                                                </>
                                             )}
                                             <EditEventDialog event={event} onEdit={(id, data) => updateEvent(id, data)} />
                                             <Button variant="destructive" size="icon" onClick={() => deleteEvent(event.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -341,131 +371,14 @@ const AdminDashboard = () => {
                     </div>
                 );
             case "applications":
-                if (selectedJobId) {
-                    const selectedJob = allPositions.find(j => j.id === selectedJobId);
-                    const applications = jobApplications.filter(app => app.job_id === selectedJobId);
-
-                    return (
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-4">
-                                <Button variant="outline" onClick={() => setSelectedJobId(null)} className="border-primary/10 hover:bg-primary/5">
-                                    ← Back
-                                </Button>
-                                <div>
-                                    <h2 className="text-3xl font-heading font-bold">Applications for {selectedJob?.title}</h2>
-                                    <p className="text-muted-foreground">Reviewing {applications.length} applications.</p>
-                                </div>
-                            </div>
-                            <div className="grid gap-4">
-                                {applications.length === 0 && (
-                                    <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
-                                        <p className="text-muted-foreground">No applications for this job yet.</p>
-                                    </div>
-                                )}
-                                {applications.map(app => (
-                                    <GlassCard key={app.id} className="p-6 hover:border-primary/30 transition-colors">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 className="font-bold text-xl">{app.applicant_name}</h3>
-                                                <p className="text-sm text-primary">{app.email}</p>
-                                            </div>
-                                            <span className="bg-yellow-500/10 text-yellow-400 px-3 py-1 rounded-full text-xs uppercase tracking-wider font-semibold border border-yellow-500/20">
-                                                {app.status}
-                                            </span>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground mb-4">
-                                            <p>Phone: <span className="text-foreground">{app.phone}</span></p>
-                                            <p>Applied: <span className="text-foreground">{new Date(app.created_at).toLocaleDateString()}</span></p>
-                                        </div>
-
-                                        <div className="flex gap-3 mt-4">
-                                            {app.resume_url && (
-                                                <Button variant="outline" size="sm" onClick={() => window.open(app.resume_url, '_blank')} className="border-primary/10 hover:bg-primary/5">
-                                                    <FileText className="w-4 h-4 mr-2" /> View Resume
-                                                </Button>
-                                            )}
-
-                                            {app.status === 'pending' && (
-                                                <div className="flex gap-2 ml-auto">
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:text-green-300 border border-green-500/20"
-                                                        onClick={() => {
-                                                            toast.promise(updateJobApplicationStatus(app.id, 'approved', app.email), {
-                                                                loading: 'Approving...',
-                                                                success: 'Application Approved & Email Sent',
-                                                                error: 'Failed to approve'
-                                                            });
-                                                        }}
-                                                    >
-                                                        <CheckCircle className="w-4 h-4 mr-2" /> Approve
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 border border-red-500/20"
-                                                        onClick={() => {
-                                                            toast.promise(updateJobApplicationStatus(app.id, 'rejected', app.email), {
-                                                                loading: 'Rejecting...',
-                                                                success: 'Application Rejected & Email Sent',
-                                                                error: 'Failed to reject'
-                                                            });
-                                                        }}
-                                                    >
-                                                        <X className="w-4 h-4 mr-2" /> Reject
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </GlassCard>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                }
-
                 return (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h2 className="text-3xl font-heading font-bold">Applications Portal</h2>
-                                <p className="text-muted-foreground">Select a job or internship to view candidates.</p>
-                            </div>
-                        </div>
-                        <div className="grid gap-4">
-                            {allPositions.length === 0 && (
-                                <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
-                                    <p className="text-muted-foreground">No active positions found.</p>
-                                </div>
-                            )}
-                            {allPositions.map(job => {
-                                const applicantCount = jobApplications.filter(app => app.job_id === job.id).length;
-                                const isInternship = job.department === 'Internship' || job.type === 'Internship';
-                                return (
-                                    <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <h3 className="font-bold text-xl">{job.title}</h3>
-                                                {isInternship && (
-                                                    <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Internship</span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">{job.department} • {job.location}</p>
-                                            <p className="mt-2 text-sm font-medium text-primary/80">
-                                                {applicantCount} Applicant{applicantCount !== 1 ? 's' : ''}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => setSelectedJobId(job.id)}
-                                            className="bg-primary/5 hover:bg-primary/10 text-foreground"
-                                        >
-                                            View Applications
-                                        </Button>
-                                    </GlassCard>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <ApplicationsManager
+                        allPositions={allPositions}
+                        jobApplications={jobApplications}
+                        selectedJobId={selectedJobId}
+                        setSelectedJobId={setSelectedJobId}
+                        updateJobApplicationStatus={updateJobApplicationStatus}
+                    />
                 );
             case "team":
                 return (
