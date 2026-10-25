@@ -42,7 +42,9 @@ import {
     Phone,
     Mail,
     ArrowLeft,
-    Sparkles
+    Sparkles,
+    Clock,
+    AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -110,6 +112,25 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
             return matchesStatus && matchesSearch;
         });
     }, [positionApplications, statusFilter, candidateSearch]);
+
+    // Detect duplicate applications within this position by matching normalized name & phone
+    const duplicateIds = useMemo(() => {
+        const map = new Map<string, string[]>();
+        positionApplications.forEach(app => {
+            const normName = app.applicant_name?.trim().toLowerCase();
+            const normPhone = app.phone ? app.phone.replace(/\D/g, "") : "";
+            const key = `${normName}___${normPhone || app.phone?.trim()}`;
+            if (!map.has(key)) map.set(key, []);
+            map.get(key)!.push(app.id);
+        });
+        const dups = new Set<string>();
+        map.forEach(ids => {
+            if (ids.length > 1) {
+                ids.forEach(id => dups.add(id));
+            }
+        });
+        return dups;
+    }, [positionApplications]);
 
     // Overall portal filtered positions
     const filteredPositions = useMemo(() => {
@@ -627,6 +648,14 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                     >
                                                         {app.status}
                                                     </span>
+                                                    {duplicateIds.has(app.id) && (
+                                                        <span
+                                                            className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1"
+                                                            title="Multiple applications detected with this same name and contact number"
+                                                        >
+                                                            <AlertTriangle className="w-3 h-3" /> Duplicate Detected
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-4 text-xs md:text-sm text-muted-foreground mt-1 flex-wrap">
                                                     <a
@@ -645,9 +674,23 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                             <span>{app.phone}</span>
                                                         </a>
                                                     )}
-                                                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                                                        <Calendar className="w-3.5 h-3.5" />
-                                                        <span>{app.created_at ? new Date(app.created_at).toLocaleDateString() : "N/A"}</span>
+                                                    <span
+                                                        className="flex items-center gap-1.5 text-muted-foreground"
+                                                        title={app.created_at ? `Full Timestamp: ${app.created_at}` : "No timestamp recorded"}
+                                                    >
+                                                        <Clock className="w-3.5 h-3.5 text-metal-blue-400" />
+                                                        <span>
+                                                            {app.created_at
+                                                                ? new Date(app.created_at).toLocaleString('en-US', {
+                                                                      month: 'short',
+                                                                      day: 'numeric',
+                                                                      year: 'numeric',
+                                                                      hour: 'numeric',
+                                                                      minute: '2-digit',
+                                                                      hour12: true
+                                                                  })
+                                                                : "N/A"}
+                                                        </span>
                                                     </span>
                                                 </div>
                                             </div>

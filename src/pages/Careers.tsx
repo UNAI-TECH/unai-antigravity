@@ -453,6 +453,33 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
             // Submit
             setIsSubmitting(true);
             try {
+                // Pre-check for duplicate application before uploading resume file to storage
+                const normName = formData.applicant_name?.trim().toLowerCase();
+                const normPhone = formData.phone ? formData.phone.replace(/\D/g, "") : "";
+
+                const { data: existingApps } = await supabase
+                    .from('job_applications')
+                    .select('id, applicant_name, phone')
+                    .eq('job_id', job.id);
+
+                if (existingApps && existingApps.length > 0) {
+                    const isDup = existingApps.some(ex => {
+                        const exName = ex.applicant_name?.trim().toLowerCase();
+                        const exPhone = ex.phone ? ex.phone.replace(/\D/g, "") : "";
+                        const isNameMatch = exName === normName;
+                        const isPhoneMatch = normPhone.length > 0 && exPhone.length > 0
+                            ? (exPhone === normPhone || exPhone.endsWith(normPhone) || normPhone.endsWith(exPhone))
+                            : ex.phone?.trim() === formData.phone?.trim();
+                        return isNameMatch && isPhoneMatch;
+                    });
+
+                    if (isDup) {
+                        toast.error(`You have already applied for "${job.title}" with contact number "${formData.phone}". Duplicate applications are not allowed.`);
+                        setIsSubmitting(false);
+                        return;
+                    }
+                }
+
                 // 1. Upload Resume
                 let resumeUrl = "";
                 if (resumeFile) {
@@ -481,9 +508,9 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                 toast.success("Application submitted successfully!");
                 onClose();
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Submission error:", error);
-                toast.error("Failed to submit application. Please try again.");
+                toast.error(error?.message || "Failed to submit application. Please try again.");
             } finally {
                 setIsSubmitting(false);
             }

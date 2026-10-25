@@ -456,12 +456,68 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const addJobApplication = async (app: Omit<JobApplication, "id" | "created_at" | "status">) => {
+        // 1. Verify against duplicate applications by applicant name & contact number for this position
+        const normalizedName = app.applicant_name?.trim().toLowerCase();
+        const normalizedPhone = app.phone ? app.phone.replace(/\D/g, "") : "";
+
+        // Check local state cache
+        const localDuplicate = jobApplications.find(existing => {
+            if (existing.job_id !== app.job_id) return false;
+            const exName = existing.applicant_name?.trim().toLowerCase();
+            const exPhone = existing.phone ? existing.phone.replace(/\D/g, "") : "";
+            const isNameMatch = exName === normalizedName;
+            const isPhoneMatch = normalizedPhone.length > 0 && exPhone.length > 0
+                ? (exPhone === normalizedPhone || exPhone.endsWith(normalizedPhone) || normalizedPhone.endsWith(exPhone))
+                : existing.phone?.trim() === app.phone?.trim();
+            return isNameMatch && isPhoneMatch;
+        });
+
+        if (localDuplicate) {
+            throw new Error(`An application for this position has already been submitted under "${app.applicant_name}" with contact number "${app.phone}". Duplicate submissions are not allowed.`);
+        }
+
+        // Query database to ensure no duplicate exists on the server
+        const { data: dbRecords, error: checkError } = await supabase
+            .from('job_applications')
+            .select('id, applicant_name, phone, created_at')
+            .eq('job_id', app.job_id);
+
+        if (!checkError && dbRecords && dbRecords.length > 0) {
+            const dbDuplicate = dbRecords.find(existing => {
+                const exName = existing.applicant_name?.trim().toLowerCase();
+                const exPhone = existing.phone ? existing.phone.replace(/\D/g, "") : "";
+                const isNameMatch = exName === normalizedName;
+                const isPhoneMatch = normalizedPhone.length > 0 && exPhone.length > 0
+                    ? (exPhone === normalizedPhone || exPhone.endsWith(normalizedPhone) || normalizedPhone.endsWith(exPhone))
+                    : existing.phone?.trim() === app.phone?.trim();
+                return isNameMatch && isPhoneMatch;
+            });
+
+            if (dbDuplicate) {
+                const appliedDate = dbDuplicate.created_at ? new Date(dbDuplicate.created_at).toLocaleString() : "";
+                throw new Error(`An application for this position has already been submitted under "${app.applicant_name}" with contact number "${app.phone}"${appliedDate ? ` on ${appliedDate}` : ""}. Duplicate submissions are not allowed.`);
+            }
+        }
+
+        // 2. Capture exact application timestamp
+        const appliedTimestamp = new Date().toISOString();
+        const applicationToInsert = {
+            ...app,
+            created_at: appliedTimestamp,
+            status: 'pending' as const
+        };
+
         const { data, error } = await supabase
             .from('job_applications')
-            .insert([app])
+            .insert([applicationToInsert])
             .select();
 
-        if (data) {
+        if (error) {
+            console.error("Error adding job application:", error);
+            throw error;
+        }
+
+        if (data && data.length > 0) {
             setJobApplications(prev => [data[0] as JobApplication, ...prev]);
 
             // Send confirmation email
@@ -475,19 +531,52 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Don't fail the application submission if email fails
             }
         }
-        if (error) console.error("Error adding job application:", error);
     };
 
     const addEventRegistration = async (app: Omit<EventRegistration, "id" | "created_at">) => {
+        // Verify against duplicate event registrations
+        const normalizedName = app.applicant_name?.trim().toLowerCase();
+        const normalizedPhone = app.phone ? app.phone.replace(/\D/g, "") : "";
+
+        const { data: dbRecords } = await supabase
+            .from('event_registrations')
+            .select('id, applicant_name, phone, created_at')
+            .eq('event_id', app.event_id);
+
+        if (dbRecords && dbRecords.length > 0) {
+            const dbDuplicate = dbRecords.find(existing => {
+                const exName = existing.applicant_name?.trim().toLowerCase();
+                const exPhone = existing.phone ? existing.phone.replace(/\D/g, "") : "";
+                const isNameMatch = exName === normalizedName;
+                const isPhoneMatch = normalizedPhone.length > 0 && exPhone.length > 0
+                    ? (exPhone === normalizedPhone || exPhone.endsWith(normalizedPhone) || normalizedPhone.endsWith(exPhone))
+                    : existing.phone?.trim() === app.phone?.trim();
+                return isNameMatch && isPhoneMatch;
+            });
+
+            if (dbDuplicate) {
+                throw new Error(`A registration for this event has already been submitted under "${app.applicant_name}" with contact number "${app.phone}". Duplicate registrations are not allowed.`);
+            }
+        }
+
+        const registrationToInsert = {
+            ...app,
+            created_at: new Date().toISOString()
+        };
+
         const { data, error } = await supabase
             .from('event_registrations')
-            .insert([app])
+            .insert([registrationToInsert])
             .select();
 
-        if (data) {
+        if (error) {
+            console.error("Error adding event registration:", error);
+            throw error;
+        }
+
+        if (data && data.length > 0) {
             setEventRegistrations(prev => [data[0] as EventRegistration, ...prev]);
         }
-        if (error) console.error("Error adding event registration:", error);
     };
 
     const updateJobApplicationStatus = async (id: string, status: "pending" | "approved" | "rejected", applicantEmail: string) => {

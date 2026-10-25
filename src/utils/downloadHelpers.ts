@@ -113,7 +113,8 @@ export const exportJobApplicationsCSV = (
         "Position / Role",
         "Department / Type",
         "Status",
-        "Applied Date",
+        "Applied Timestamp",
+        "Applied Timestamp (ISO)",
         "Resume URL",
         "Questionnaire Responses"
     ];
@@ -123,6 +124,7 @@ export const exportJobApplicationsCSV = (
         const positionTitle = position?.title || "Unknown Position";
         const positionDept = position?.department || position?.type || "General";
         const appliedDate = app.created_at ? new Date(app.created_at).toLocaleString() : "N/A";
+        const appliedISO = app.created_at || "N/A";
         const answersStr = formatAnswersToString(app.answers);
 
         return [
@@ -134,6 +136,7 @@ export const exportJobApplicationsCSV = (
             positionDept,
             app.status.toUpperCase(),
             appliedDate,
+            appliedISO,
             app.resume_url || "No Resume Provided",
             answersStr
         ];
@@ -160,12 +163,14 @@ export const exportEventRegistrationsCSV = (
         "Attendee Name",
         "Email",
         "Phone",
-        "Registered Date",
+        "Registered Timestamp",
+        "Registered Timestamp (ISO)",
         "Form Responses"
     ];
 
     const rows = registrations.map(reg => {
         const regDate = reg.created_at ? new Date(reg.created_at).toLocaleString() : "N/A";
+        const regISO = reg.created_at || "N/A";
         const answersStr = formatAnswersToString(reg.answers);
 
         return [
@@ -175,6 +180,7 @@ export const exportEventRegistrationsCSV = (
             reg.email,
             reg.phone,
             regDate,
+            regISO,
             answersStr
         ];
     });
