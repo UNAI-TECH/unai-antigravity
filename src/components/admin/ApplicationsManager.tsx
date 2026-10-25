@@ -44,7 +44,8 @@ import {
     ArrowLeft,
     Sparkles,
     Clock,
-    AlertTriangle
+    AlertTriangle,
+    MapPin
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -608,6 +609,14 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                         const answersExpanded = expandedAnswers.has(app.id);
                         const isDownloadingThis = singleDownloadingId === app.id;
 
+                        // Education & Location fields
+                        const institution = app.answers?.["Educational Institution"] || app.answers?.institution;
+                        const qualification = app.answers?.["Qualification"] || app.answers?.qualification;
+                        const gradYear = app.answers?.["Year of Graduation"] || app.answers?.graduation_year;
+                        const city = app.answers?.["City of Residence"] || app.answers?.city;
+                        const country = app.answers?.["Country"] || app.answers?.country;
+                        const source = app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us;
+
                         return (
                             <GlassCard
                                 key={app.id}
@@ -693,6 +702,32 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                         </span>
                                                     </span>
                                                 </div>
+
+                                                {/* Education & Location Summary */}
+                                                {(institution || qualification || city || country || source) && (
+                                                    <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap pt-2">
+                                                        {institution && (
+                                                            <span className="flex items-center gap-1.5 text-foreground/90 font-medium">
+                                                                <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
+                                                                <span>{institution}</span>
+                                                                {qualification && (
+                                                                    <span className="text-muted-foreground">({qualification}{gradYear ? `, '${gradYear.slice(-2)}` : ""})</span>
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                        {(city || country) && (
+                                                            <span className="flex items-center gap-1 text-muted-foreground">
+                                                                <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                                                                <span>{[city, country].filter(Boolean).join(", ")}</span>
+                                                            </span>
+                                                        )}
+                                                        {source && (
+                                                            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-metal-blue-300 text-[11px] border border-primary/10">
+                                                                Via {source}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Status Update Actions for Pending Candidates */}

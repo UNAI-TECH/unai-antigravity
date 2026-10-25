@@ -5,7 +5,7 @@ import { GlowOrb } from "@/components/effects/GlowOrb";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, MapPin, Clock, IndianRupee, Briefcase, X, Upload, CheckCircle, ChevronLeft, ChevronRight, FileText, Loader2, GraduationCap } from "lucide-react";
+import { ArrowRight, MapPin, Clock, IndianRupee, Briefcase, X, Upload, CheckCircle, ChevronLeft, ChevronRight, FileText, Loader2, GraduationCap, Calendar } from "lucide-react";
 import { useData, Job } from "@/context/DataContext";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -419,7 +419,12 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
         applicant_name: "",
         email: "",
         phone: "",
-        resume_url: "",
+        institution: "",
+        qualification: "",
+        graduation_year: "",
+        city: "",
+        country: "",
+        hear_about_us: "",
         answers: {} as Record<string, string>
     });
     const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -427,7 +432,7 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const hasQuestions = job.questions && job.questions.length > 0;
-    const totalSteps = hasQuestions ? 4 : 3;
+    const totalSteps = hasQuestions ? 5 : 4;
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -442,8 +447,19 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
             toast.error("Please upload your resume");
             return;
         }
-        if (step === 2 && (!formData.applicant_name || !formData.email || !formData.phone)) {
+        if (step === 2 && (!formData.applicant_name.trim() || !formData.email.trim() || !formData.phone.trim())) {
             toast.error("Please fill in all personal fields");
+            return;
+        }
+        if (step === 3 && (
+            !formData.institution.trim() ||
+            !formData.qualification.trim() ||
+            !formData.graduation_year.trim() ||
+            !formData.city.trim() ||
+            !formData.country.trim() ||
+            !formData.hear_about_us.trim()
+        )) {
+            toast.error("Please fill in all education, location, and referral fields");
             return;
         }
 
@@ -500,9 +516,22 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                 }
 
                 // 2. Submit Application
+                const combinedAnswers: Record<string, string> = {
+                    "Educational Institution": formData.institution.trim(),
+                    "Qualification": formData.qualification.trim(),
+                    "Year of Graduation": formData.graduation_year.trim(),
+                    "City of Residence": formData.city.trim(),
+                    "Country": formData.country.trim(),
+                    "Where did you hear about us?": formData.hear_about_us.trim(),
+                    ...formData.answers
+                };
+
                 await onSubmit({
-                    ...formData,
-                    resume_url: resumeUrl
+                    applicant_name: formData.applicant_name.trim(),
+                    email: formData.email.trim(),
+                    phone: formData.phone.trim(),
+                    resume_url: resumeUrl,
+                    answers: combinedAnswers
                 });
 
                 toast.success("Application submitted successfully!");
@@ -570,38 +599,147 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                         <h3 className="text-2xl font-bold text-white">Personal Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-metal-blue-300">Full Name</label>
+                                <label className="text-sm font-medium text-metal-blue-300">Full Name <span className="text-red-400">*</span></label>
                                 <Input
                                     value={formData.applicant_name}
                                     onChange={(e) => setFormData({ ...formData, applicant_name: e.target.value })}
                                     className="bg-white/5 border-white/10 text-white"
                                     placeholder="John Doe"
+                                    required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-metal-blue-300">Email Address</label>
+                                <label className="text-sm font-medium text-metal-blue-300">Email Address <span className="text-red-400">*</span></label>
                                 <Input
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="bg-white/5 border-white/10 text-white"
                                     placeholder="john@example.com"
+                                    required
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                                <label className="text-sm font-medium text-metal-blue-300">Phone Number</label>
+                                <label className="text-sm font-medium text-metal-blue-300">Phone Number <span className="text-red-400">*</span></label>
                                 <Input
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     className="bg-white/5 border-white/10 text-white"
                                     placeholder="+1 (555) 000-0000"
+                                    required
                                 />
                             </div>
                         </div>
                     </div>
                 )}
 
-                {(step === 3 && hasQuestions) && (
+                {step === 3 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div>
+                            <h3 className="text-2xl font-bold text-white">Education & Background</h3>
+                            <p className="text-sm text-muted-foreground mt-1">Please provide your educational details, location, and where you found this opportunity.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {/* 1. Name of the educational Institution */}
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-sm font-medium text-metal-blue-300 flex items-center gap-1.5">
+                                    <GraduationCap className="w-4 h-4 text-metal-blue-400" />
+                                    <span>Name of the Educational Institution <span className="text-red-400">*</span></span>
+                                </label>
+                                <Input
+                                    value={formData.institution}
+                                    onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-metal-blue-500"
+                                    placeholder="e.g. Anna University, IIT Madras, Delhi University"
+                                    required
+                                />
+                            </div>
+
+                            {/* 2. Qualification */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-metal-blue-300">
+                                    Qualification / Degree <span className="text-red-400">*</span>
+                                </label>
+                                <Input
+                                    value={formData.qualification}
+                                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-metal-blue-500"
+                                    placeholder="e.g. B.Tech Computer Science, BCA, MCA, M.S"
+                                    required
+                                />
+                            </div>
+
+                            {/* 2b. Years of graduation */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-metal-blue-300 flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5 text-metal-blue-400" />
+                                    <span>Year of Graduation <span className="text-red-400">*</span></span>
+                                </label>
+                                <Input
+                                    value={formData.graduation_year}
+                                    onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value })}
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-metal-blue-500"
+                                    placeholder="e.g. 2024, 2025, 2026"
+                                    required
+                                />
+                            </div>
+
+                            {/* 3. City of residence */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-metal-blue-300 flex items-center gap-1.5">
+                                    <MapPin className="w-3.5 h-3.5 text-metal-blue-400" />
+                                    <span>City of Residence <span className="text-red-400">*</span></span>
+                                </label>
+                                <Input
+                                    value={formData.city}
+                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-metal-blue-500"
+                                    placeholder="e.g. Chennai, Bangalore, Hyderabad"
+                                    required
+                                />
+                            </div>
+
+                            {/* 3b. Country */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-metal-blue-300">
+                                    Country <span className="text-red-400">*</span>
+                                </label>
+                                <Input
+                                    value={formData.country}
+                                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-metal-blue-500"
+                                    placeholder="e.g. India, United States"
+                                    required
+                                />
+                            </div>
+
+                            {/* 4. Where did you hear about us ? */}
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-sm font-medium text-metal-blue-300">
+                                    Where did you hear about us? <span className="text-red-400">*</span>
+                                </label>
+                                <select
+                                    value={formData.hear_about_us}
+                                    onChange={(e) => setFormData({ ...formData, hear_about_us: e.target.value })}
+                                    className="w-full bg-[#0f172a] border border-white/10 text-white rounded-md p-2.5 text-sm focus:border-metal-blue-500 focus:outline-none transition-colors"
+                                    required
+                                >
+                                    <option value="" disabled className="text-gray-400">Select an option</option>
+                                    <option value="LinkedIn">LinkedIn</option>
+                                    <option value="Campus / College Placement">Campus / College Placement</option>
+                                    <option value="Instagram / Social Media">Instagram / Social Media</option>
+                                    <option value="Friend or Colleague Referral">Friend or Colleague Referral</option>
+                                    <option value="Google / Web Search">Google / Web Search</option>
+                                    <option value="Tech Event / Workshop / Hackathon">Tech Event / Workshop / Hackathon</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {(step === 4 && hasQuestions) && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <h3 className="text-2xl font-bold text-white">Additional Questions</h3>
                         <div className="space-y-8">
@@ -632,7 +770,7 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                     </div>
                 )}
 
-                {(step === totalSteps && (step === 4 || (step === 3 && !hasQuestions))) && (
+                {step === totalSteps && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <h3 className="text-2xl font-bold text-white">Review & Submit</h3>
                         <div className="bg-white/5 rounded-xl p-6 space-y-4 border border-white/10">
@@ -641,6 +779,29 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                                 <p className="text-lg font-bold text-white">{formData.applicant_name}</p>
                                 <p className="text-sm text-gray-400">{formData.email} • {formData.phone}</p>
                             </div>
+
+                            <div className="border-t border-white/10 pt-4">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Education & Background</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p className="text-gray-400 text-xs">Institution</p>
+                                        <p className="text-white font-medium">{formData.institution || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400 text-xs">Qualification & Year</p>
+                                        <p className="text-white font-medium">{formData.qualification} ({formData.graduation_year})</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400 text-xs">Residence</p>
+                                        <p className="text-white font-medium">{formData.city}, {formData.country}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400 text-xs">Where did you hear about us?</p>
+                                        <p className="text-white font-medium">{formData.hear_about_us || "N/A"}</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="border-t border-white/10 pt-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Resume</p>
                                 <div className="flex items-center gap-2 text-green-400 bg-green-400/10 px-3 py-2 rounded-lg inline-flex">
@@ -648,6 +809,7 @@ const ApplicationWizard = ({ job, onSubmit, onClose }: { job: Job, onSubmit: (da
                                     <span className="text-sm truncate max-w-[200px]">{resumeFile?.name}</span>
                                 </div>
                             </div>
+
                             {Object.keys(formData.answers).length > 0 && (
                                 <div className="border-t border-white/10 pt-4">
                                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Questionnaire</p>

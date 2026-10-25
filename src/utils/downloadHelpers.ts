@@ -115,6 +115,12 @@ export const exportJobApplicationsCSV = (
         "Status",
         "Applied Timestamp",
         "Applied Timestamp (ISO)",
+        "Educational Institution",
+        "Qualification",
+        "Year of Graduation",
+        "City of Residence",
+        "Country",
+        "Where did you hear about us?",
         "Resume URL",
         "Questionnaire Responses"
     ];
@@ -125,6 +131,15 @@ export const exportJobApplicationsCSV = (
         const positionDept = position?.department || position?.type || "General";
         const appliedDate = app.created_at ? new Date(app.created_at).toLocaleString() : "N/A";
         const appliedISO = app.created_at || "N/A";
+        
+        // Extract education and location fields from answers
+        const institution = app.answers?.["Educational Institution"] || app.answers?.institution || "N/A";
+        const qualification = app.answers?.["Qualification"] || app.answers?.qualification || "N/A";
+        const gradYear = app.answers?.["Year of Graduation"] || app.answers?.graduation_year || "N/A";
+        const city = app.answers?.["City of Residence"] || app.answers?.city || "N/A";
+        const country = app.answers?.["Country"] || app.answers?.country || "N/A";
+        const source = app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us || "N/A";
+
         const answersStr = formatAnswersToString(app.answers);
 
         return [
@@ -137,6 +152,12 @@ export const exportJobApplicationsCSV = (
             app.status.toUpperCase(),
             appliedDate,
             appliedISO,
+            institution,
+            qualification,
+            gradYear,
+            city,
+            country,
+            source,
             app.resume_url || "No Resume Provided",
             answersStr
         ];
@@ -195,6 +216,14 @@ export const exportEventRegistrationsCSV = (
  * Generates an applicant profile text card
  */
 const generateApplicantProfileText = (app: JobApplication, position?: Job): string => {
+    const institution = app.answers?.["Educational Institution"] || app.answers?.institution || "N/A";
+    const qualification = app.answers?.["Qualification"] || app.answers?.qualification || "N/A";
+    const gradYear = app.answers?.["Year of Graduation"] || app.answers?.graduation_year || "N/A";
+    const city = app.answers?.["City of Residence"] || app.answers?.city || "";
+    const country = app.answers?.["Country"] || app.answers?.country || "";
+    const residence = city && country ? `${city}, ${country}` : (city || country || app.answers?.["Residence"] || "N/A");
+    const source = app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us || "N/A";
+
     const lines = [
         "==================================================",
         "          UNAI APPLICATION DETAILS                ",
@@ -207,19 +236,31 @@ const generateApplicantProfileText = (app: JobApplication, position?: Job): stri
         `Application ID : ${app.id}`,
         `Submission Date: ${app.created_at ? new Date(app.created_at).toLocaleString() : "N/A"}`,
         `Current Status : ${app.status.toUpperCase()}`,
+        `Institution    : ${institution}`,
+        `Qualification  : ${qualification} (${gradYear})`,
+        `Residence      : ${residence}`,
+        `Referral Source: ${source}`,
         `Resume URL     : ${app.resume_url || "None provided"}`,
         "",
         "---------------- QUESTIONNAIRE RESPONSES ----------------",
     ];
 
     if (app.answers && typeof app.answers === "object") {
-        Object.entries(app.answers).forEach(([q, a], idx) => {
-            lines.push(`Q${idx + 1}: ${q}`);
+        Object.entries(app.answers).forEach(([q, a]) => {
+            if ([
+                "Educational Institution",
+                "Qualification",
+                "Year of Graduation",
+                "City of Residence",
+                "Country",
+                "Where did you hear about us?"
+            ].includes(q)) return; // Already in top section
+            lines.push(`Q: ${q}`);
             lines.push(`A: ${Array.isArray(a) ? a.join(", ") : String(a)}`);
             lines.push("");
         });
     } else {
-        lines.push("No questionnaire responses provided.");
+        lines.push("No additional questionnaire responses provided.");
     }
 
     lines.push("==================================================");
@@ -235,15 +276,34 @@ export const printOrDownloadApplicationProfile = (app: JobApplication, position?
     const positionDept = position?.department || position?.type || "General";
     const dateStr = app.created_at ? new Date(app.created_at).toLocaleString() : "N/A";
     
+    const institution = app.answers?.["Educational Institution"] || app.answers?.institution || "N/A";
+    const qualification = app.answers?.["Qualification"] || app.answers?.qualification || "N/A";
+    const gradYear = app.answers?.["Year of Graduation"] || app.answers?.graduation_year || "N/A";
+    const city = app.answers?.["City of Residence"] || app.answers?.city || "";
+    const country = app.answers?.["Country"] || app.answers?.country || "";
+    const residence = city && country ? `${city}, ${country}` : (city || country || app.answers?.["Residence"] || "N/A");
+    const source = app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us || "N/A";
+
     // Answers formatted HTML
     let answersHtml = "<p style='color: #64748b;'>No additional questions answered.</p>";
     if (app.answers && typeof app.answers === "object" && Object.keys(app.answers).length > 0) {
-        answersHtml = Object.entries(app.answers).map(([q, a]) => `
-            <div style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px;">
-                <p style="margin: 0 0 6px 0; font-weight: 600; color: #1e293b; font-size: 14px;">${escapeHtml(q)}</p>
-                <p style="margin: 0; color: #334155; font-size: 14px;">${escapeHtml(Array.isArray(a) ? a.join(", ") : String(a))}</p>
-            </div>
-        `).join("");
+        const extraAnswers = Object.entries(app.answers).filter(([q]) => ![
+            "Educational Institution",
+            "Qualification",
+            "Year of Graduation",
+            "City of Residence",
+            "Country",
+            "Where did you hear about us?"
+        ].includes(q));
+
+        if (extraAnswers.length > 0) {
+            answersHtml = extraAnswers.map(([q, a]) => `
+                <div style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                    <p style="margin: 0 0 6px 0; font-weight: 600; color: #1e293b; font-size: 14px;">${escapeHtml(q)}</p>
+                    <p style="margin: 0; color: #334155; font-size: 14px;">${escapeHtml(Array.isArray(a) ? a.join(", ") : String(a))}</p>
+                </div>
+            `).join("");
+        }
     }
 
     const htmlContent = `
@@ -312,7 +372,29 @@ export const printOrDownloadApplicationProfile = (app: JobApplication, position?
         </div>
 
         <div class="section">
-            <div class="section-title">Questionnaire & Candidate Responses</div>
+            <div class="section-title">Education & Location</div>
+            <div class="grid">
+                <div>
+                    <div class="field-label">Educational Institution</div>
+                    <div class="field-value">${escapeHtml(institution)}</div>
+                </div>
+                <div>
+                    <div class="field-label">Qualification & Year of Graduation</div>
+                    <div class="field-value">${escapeHtml(qualification)} (${escapeHtml(gradYear)})</div>
+                </div>
+                <div>
+                    <div class="field-label">City & Country of Residence</div>
+                    <div class="field-value">${escapeHtml(residence)}</div>
+                </div>
+                <div>
+                    <div class="field-label">Where did you hear about us?</div>
+                    <div class="field-value">${escapeHtml(source)}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Questionnaire & Additional Responses</div>
             ${answersHtml}
         </div>
 
@@ -371,7 +453,12 @@ export const downloadApplicationsZip = async (
         "Phone",
         "Position",
         "Status",
-        "Applied Date",
+        "Applied Timestamp",
+        "Educational Institution",
+        "Qualification",
+        "Year of Graduation",
+        "Residence",
+        "Where did you hear about us?",
         "Resume Filename",
         "Resume URL"
     ];
@@ -390,6 +477,14 @@ export const downloadApplicationsZip = async (
         const positionTitle = position?.title || "Position";
         const cleanName = sanitizeFileName(app.applicant_name) || `Applicant_${i + 1}`;
         const appliedDate = app.created_at ? new Date(app.created_at).toLocaleString() : "N/A";
+
+        const institution = app.answers?.["Educational Institution"] || app.answers?.institution || "N/A";
+        const qualification = app.answers?.["Qualification"] || app.answers?.qualification || "N/A";
+        const gradYear = app.answers?.["Year of Graduation"] || app.answers?.graduation_year || "N/A";
+        const city = app.answers?.["City of Residence"] || app.answers?.city || "";
+        const country = app.answers?.["Country"] || app.answers?.country || "";
+        const residence = city && country ? `${city}, ${country}` : (city || country || app.answers?.["Residence"] || "N/A");
+        const source = app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us || "N/A";
 
         onProgress?.(i + 1, total, `Processing ${app.applicant_name} (${i + 1}/${total})...`);
 
@@ -437,6 +532,11 @@ export const downloadApplicationsZip = async (
             positionTitle,
             app.status.toUpperCase(),
             appliedDate,
+            institution,
+            qualification,
+            gradYear,
+            residence,
+            source,
             resumeFileNameInZip,
             app.resume_url || "N/A"
         ]);
