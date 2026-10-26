@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { JobApplication, Job } from "@/context/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -49,7 +50,12 @@ import {
     Sparkles,
     Clock,
     AlertTriangle,
-    MapPin
+    MapPin,
+    Pencil,
+    Plus,
+    Trash2,
+    Save,
+    AlertCircle
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -68,6 +74,7 @@ interface ApplicationsManagerProps {
     selectedJobId: string | null;
     setSelectedJobId: (id: string | null) => void;
     updateJobApplicationStatus: (id: string, status: "pending" | "approved" | "rejected", email?: string) => Promise<void>;
+    updateJobApplicationDetails?: (id: string, updates: { applicant_name?: string; email?: string; phone?: string; answers?: any; status?: "pending" | "approved" | "rejected"; }) => Promise<void>;
 }
 
 export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
@@ -75,7 +82,8 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
     jobApplications,
     selectedJobId,
     setSelectedJobId,
-    updateJobApplicationStatus
+    updateJobApplicationStatus,
+    updateJobApplicationDetails
 }) => {
     // Portal-level state
     const [portalSearch, setPortalSearch] = useState("");
@@ -84,6 +92,12 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
     // Drill-down level state
     const [candidateSearch, setCandidateSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+    const [detailsFilter, setDetailsFilter] = useState<"all" | "missing" | "complete">("all");
+    const [resumeFilter, setResumeFilter] = useState<"all" | "has_resume" | "no_resume">("all");
+    const [callFilter, setCallFilter] = useState<"all" | "called" | "not_called">("all");
+    const [duplicateFilter, setDuplicateFilter] = useState<"all" | "duplicates_only">("all");
+    const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name_asc" | "name_desc" | "most_called">("newest");
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
     const [expandedAnswers, setExpandedAnswers] = useState<Set<string>>(new Set());
 
@@ -105,6 +119,24 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
     // Modal state for viewing applicant full profile
     const [viewingApplicant, setViewingApplicant] = useState<JobApplication | null>(null);
+
+    // State for editing questionnaire responses & applicant details
+    const [editingApplicant, setEditingApplicant] = useState<JobApplication | null>(null);
+    const [editForm, setEditForm] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        institution: "",
+        qualification: "",
+        gradYear: "",
+        city: "",
+        country: "",
+        source: "",
+        positionAnswers: {} as Record<string, string>,
+        customQuestions: [] as Array<{ id: string; question: string; answer: string }>
+    });
+    const [editInitialCustomKeys, setEditInitialCustomKeys] = useState<string[]>([]);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     // Selected job object
     const selectedJob = useMemo(() => {
@@ -130,20 +162,6 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
         return jobApplications.filter(app => app.job_id === selectedJobId);
     }, [selectedJobId, jobApplications]);
 
-    // Filtered applications within selected job
-    const filteredApplications = useMemo(() => {
-        return positionApplications.filter(app => {
-            const matchesStatus = statusFilter === "all" || app.status === statusFilter;
-            const searchLower = candidateSearch.trim().toLowerCase();
-            const matchesSearch =
-                !searchLower ||
-                app.applicant_name?.toLowerCase().includes(searchLower) ||
-                app.email?.toLowerCase().includes(searchLower) ||
-                app.phone?.toLowerCase().includes(searchLower);
-            return matchesStatus && matchesSearch;
-        });
-    }, [positionApplications, statusFilter, candidateSearch]);
-
     // Detect duplicate applications within this position by matching normalized name & phone
     const duplicateIds = useMemo(() => {
         const map = new Map<string, string[]>();
@@ -162,6 +180,125 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
         });
         return dups;
     }, [positionApplications]);
+
+    // Filtered and sorted applications within selected job
+    const filteredApplications = useMemo(() => {
+        const list = positionApplications.filter(app => {
+            // Status filter
+            if (statusFilter !== "all" && app.status !== statusFilter) {
+                return false;
+            }
+
+            // Details / Questionnaire filter (crucial for finding 180+ previous applicants missing details)
+            const hasAnswers =
+                app.answers &&
+                typeof app.answers === "object" &&
+                Object.keys(app.answers).length > 0;
+            const institution = app.answers?.["Educational Institution"] || app.answers?.institution;
+
+            if (detailsFilter === "missing") {
+                // Either no questionnaire answers recorded or missing institution
+                if (hasAnswers && institution) return false;
+            } else if (detailsFilter === "complete") {
+                if (!hasAnswers || !institution) return false;
+            }
+
+            // Resume filter
+            const hasResume = Boolean(app.resume_url && app.resume_url.trim() !== "");
+            if (resumeFilter === "has_resume" && !hasResume) return false;
+            if (resumeFilter === "no_resume" && hasResume) return false;
+
+            // Call filter
+            const { count: callCount } = getApplicantCallInfo(app);
+            if (callFilter === "called" && callCount === 0) return false;
+            if (callFilter === "not_called" && callCount > 0) return false;
+
+            // Duplicates filter
+            if (duplicateFilter === "duplicates_only" && !duplicateIds.has(app.id)) {
+                return false;
+            }
+
+            // Search query across all candidate attributes
+            const searchLower = candidateSearch.trim().toLowerCase();
+            if (!searchLower) return true;
+
+            const nameMatch = app.applicant_name?.toLowerCase().includes(searchLower);
+            const emailMatch = app.email?.toLowerCase().includes(searchLower);
+            const phoneMatch = app.phone?.toLowerCase().includes(searchLower);
+
+            // Match position title
+            const job = allPositions.find(j => j.id === app.job_id);
+            const jobMatch = job?.title?.toLowerCase().includes(searchLower);
+
+            // Match education & location
+            const instMatch = String(app.answers?.["Educational Institution"] || app.answers?.institution || "").toLowerCase().includes(searchLower);
+            const qualMatch = String(app.answers?.["Qualification"] || app.answers?.qualification || "").toLowerCase().includes(searchLower);
+            const cityMatch = String(app.answers?.["City of Residence"] || app.answers?.city || "").toLowerCase().includes(searchLower);
+            const countryMatch = String(app.answers?.["Country"] || app.answers?.country || "").toLowerCase().includes(searchLower);
+            const sourceMatch = String(app.answers?.["Where did you hear about us?"] || app.answers?.hear_about_us || "").toLowerCase().includes(searchLower);
+
+            // Match any questionnaire answer text
+            let answersMatch = false;
+            if (app.answers && typeof app.answers === "object") {
+                answersMatch = Object.entries(app.answers).some(([q, a]) => {
+                    const qLower = String(q).toLowerCase();
+                    const aLower = Array.isArray(a) ? a.join(" ").toLowerCase() : String(a).toLowerCase();
+                    return qLower.includes(searchLower) || aLower.includes(searchLower);
+                });
+            }
+
+            return (
+                nameMatch ||
+                emailMatch ||
+                phoneMatch ||
+                jobMatch ||
+                instMatch ||
+                qualMatch ||
+                cityMatch ||
+                countryMatch ||
+                sourceMatch ||
+                answersMatch
+            );
+        });
+
+        // Sorting
+        return list.sort((a, b) => {
+            if (sortBy === "newest") {
+                const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return timeB - timeA;
+            }
+            if (sortBy === "oldest") {
+                const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return timeA - timeB;
+            }
+            if (sortBy === "name_asc") {
+                return (a.applicant_name || "").localeCompare(b.applicant_name || "");
+            }
+            if (sortBy === "name_desc") {
+                return (b.applicant_name || "").localeCompare(a.applicant_name || "");
+            }
+            if (sortBy === "most_called") {
+                const callA = getApplicantCallInfo(a).count;
+                const callB = getApplicantCallInfo(b).count;
+                return callB - callA;
+            }
+            return 0;
+        });
+    }, [
+        positionApplications,
+        statusFilter,
+        candidateSearch,
+        detailsFilter,
+        resumeFilter,
+        callFilter,
+        duplicateFilter,
+        sortBy,
+        duplicateIds,
+        allPositions,
+        callData
+    ]);
 
     // Overall portal filtered positions
     const filteredPositions = useMemo(() => {
@@ -305,6 +442,242 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
         if (!text) return;
         navigator.clipboard.writeText(text);
         toast.success(`Copied ${label} to clipboard: ${text}`);
+    };
+
+    // Helper: Open Edit Modal and pre-populate all fields and questionnaire responses
+    const handleOpenEditModal = (app: JobApplication) => {
+        let rawAnswers = app.answers;
+        if (typeof rawAnswers === "string") {
+            try {
+                rawAnswers = JSON.parse(rawAnswers);
+            } catch {
+                rawAnswers = {};
+            }
+        }
+        if (!rawAnswers || typeof rawAnswers !== "object") {
+            rawAnswers = {};
+        }
+
+        const institution = rawAnswers["Educational Institution"] || rawAnswers.institution || "";
+        const qualification = rawAnswers["Qualification"] || rawAnswers.qualification || "";
+        const gradYear = rawAnswers["Year of Graduation"] || rawAnswers.graduation_year || "";
+        const city = rawAnswers["City of Residence"] || rawAnswers.city || "";
+        const country = rawAnswers["Country"] || rawAnswers.country || "";
+        const source = rawAnswers["Where did you hear about us?"] || rawAnswers.hear_about_us || "";
+
+        const systemKeys = new Set([
+            "call_count",
+            "last_called_at",
+            "institution",
+            "qualification",
+            "graduation_year",
+            "city",
+            "country",
+            "hear_about_us",
+            "Educational Institution",
+            "Qualification",
+            "Year of Graduation",
+            "City of Residence",
+            "Country",
+            "Where did you hear about us?"
+        ]);
+
+        const appJob = allPositions.find(p => p.id === app.job_id);
+        const positionAnswers: Record<string, string> = {};
+        const handledKeys = new Set<string>();
+
+        if (appJob?.questions && appJob.questions.length > 0) {
+            appJob.questions.forEach(q => {
+                const val = rawAnswers[q.question] ?? "";
+                positionAnswers[q.question] = Array.isArray(val) ? val.join(", ") : String(val);
+                handledKeys.add(q.question);
+            });
+        }
+
+        const initialCustomKeys: string[] = [];
+        const customQuestions: Array<{ id: string; question: string; answer: string }> = [];
+
+        Object.entries(rawAnswers).forEach(([k, v], idx) => {
+            if (!systemKeys.has(k) && !handledKeys.has(k)) {
+                initialCustomKeys.push(k);
+                customQuestions.push({
+                    id: `field_${idx}_${Date.now()}`,
+                    question: k,
+                    answer: Array.isArray(v) ? v.join(", ") : String(v)
+                });
+            }
+        });
+
+        setEditInitialCustomKeys(initialCustomKeys);
+        setEditForm({
+            name: app.applicant_name || "",
+            email: app.email || "",
+            phone: app.phone || "",
+            institution,
+            qualification,
+            gradYear,
+            city,
+            country,
+            source,
+            positionAnswers,
+            customQuestions
+        });
+        setEditingApplicant(app);
+    };
+
+    const handleAddCustomQuestion = () => {
+        setEditForm(prev => ({
+            ...prev,
+            customQuestions: [
+                ...prev.customQuestions,
+                { id: `custom_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`, question: "", answer: "" }
+            ]
+        }));
+    };
+
+    const handleUpdateCustomQuestion = (id: string, field: "question" | "answer", val: string) => {
+        setEditForm(prev => ({
+            ...prev,
+            customQuestions: prev.customQuestions.map(item =>
+                item.id === id ? { ...item, [field]: val } : item
+            )
+        }));
+    };
+
+    const handleRemoveCustomQuestion = (id: string) => {
+        setEditForm(prev => ({
+            ...prev,
+            customQuestions: prev.customQuestions.filter(item => item.id !== id)
+        }));
+    };
+
+    // Handler: Save updated questionnaire answers and applicant details
+    const handleSaveApplicantDetails = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingApplicant) return;
+
+        setIsSavingEdit(true);
+        const toastId = toast.loading(`Saving details for ${editForm.name || editingApplicant.applicant_name}...`);
+
+        try {
+            let currentAnswers = editingApplicant.answers;
+            if (typeof currentAnswers === "string") {
+                try {
+                    currentAnswers = JSON.parse(currentAnswers);
+                } catch {
+                    currentAnswers = {};
+                }
+            }
+            if (!currentAnswers || typeof currentAnswers !== "object") {
+                currentAnswers = {};
+            }
+
+            const updatedAnswers: Record<string, any> = {
+                ...currentAnswers
+            };
+
+            // Standard education and location fields
+            if (editForm.institution.trim()) updatedAnswers["Educational Institution"] = editForm.institution.trim();
+            else {
+                delete updatedAnswers["Educational Institution"];
+                delete updatedAnswers["institution"];
+            }
+
+            if (editForm.qualification.trim()) updatedAnswers["Qualification"] = editForm.qualification.trim();
+            else {
+                delete updatedAnswers["Qualification"];
+                delete updatedAnswers["qualification"];
+            }
+
+            if (editForm.gradYear.trim()) updatedAnswers["Year of Graduation"] = editForm.gradYear.trim();
+            else {
+                delete updatedAnswers["Year of Graduation"];
+                delete updatedAnswers["graduation_year"];
+            }
+
+            if (editForm.city.trim()) updatedAnswers["City of Residence"] = editForm.city.trim();
+            else {
+                delete updatedAnswers["City of Residence"];
+                delete updatedAnswers["city"];
+            }
+
+            if (editForm.country.trim()) updatedAnswers["Country"] = editForm.country.trim();
+            else {
+                delete updatedAnswers["Country"];
+                delete updatedAnswers["country"];
+            }
+
+            if (editForm.source.trim()) updatedAnswers["Where did you hear about us?"] = editForm.source.trim();
+            else {
+                delete updatedAnswers["Where did you hear about us?"];
+                delete updatedAnswers["hear_about_us"];
+            }
+
+            // Role-specific questionnaire questions
+            Object.entries(editForm.positionAnswers).forEach(([q, a]) => {
+                if (a.trim()) {
+                    updatedAnswers[q] = a.trim();
+                } else {
+                    delete updatedAnswers[q];
+                }
+            });
+
+            // Delete previous custom keys to handle renames/removals
+            editInitialCustomKeys.forEach(k => {
+                delete updatedAnswers[k];
+            });
+
+            // Re-add current custom questions
+            editForm.customQuestions.forEach(({ question, answer }) => {
+                if (question.trim()) {
+                    updatedAnswers[question.trim()] = answer.trim();
+                }
+            });
+
+            // Contact info
+            const updatedName = editForm.name.trim() || editingApplicant.applicant_name;
+            const updatedEmail = editForm.email.trim() || editingApplicant.email;
+            const updatedPhone = editForm.phone.trim() || editingApplicant.phone;
+
+            const updatePayload = {
+                applicant_name: updatedName,
+                email: updatedEmail,
+                phone: updatedPhone,
+                answers: updatedAnswers
+            };
+
+            if (updateJobApplicationDetails) {
+                await updateJobApplicationDetails(editingApplicant.id, updatePayload);
+            } else {
+                const { error } = await supabase
+                    .from("job_applications")
+                    .update(updatePayload)
+                    .eq("id", editingApplicant.id);
+                if (error) throw error;
+            }
+
+            // If viewingApplicant is open, update its state
+            if (viewingApplicant?.id === editingApplicant.id) {
+                setViewingApplicant(prev =>
+                    prev
+                        ? {
+                              ...prev,
+                              ...updatePayload
+                          }
+                        : null
+                );
+            }
+
+            toast.dismiss(toastId);
+            toast.success(`Updated details for ${updatedName}`);
+            setEditingApplicant(null);
+        } catch (err: any) {
+            console.error("Error saving applicant details:", err);
+            toast.dismiss(toastId);
+            toast.error(`Failed to save details: ${err?.message || "Database error"}`);
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
 
     // Handler: Master CSV Export (All applications across all positions)
@@ -709,11 +1082,23 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                         </div>
 
                         {/* Education & Qualifications */}
-                        {(institution || qualification) && (
-                            <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-2">
+                        <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
                                 <span className="text-xs uppercase font-semibold text-purple-300 tracking-wider flex items-center gap-1.5">
                                     <GraduationCap className="w-3.5 h-3.5 text-purple-400" /> Education & Qualifications
                                 </span>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleOpenEditModal(app)}
+                                    className="h-6 px-2 text-[11px] text-purple-300 hover:text-white hover:bg-purple-500/20 gap-1 font-medium"
+                                >
+                                    <Pencil className="w-3 h-3" />
+                                    <span>{institution || qualification ? "Edit Education" : "Add Education"}</span>
+                                </Button>
+                            </div>
+                            {institution || qualification ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
                                     {institution && (
                                         <div>
@@ -730,8 +1115,12 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic pt-1">
+                                    No education details recorded. Click &quot;Add Education&quot; to update institution and qualification.
+                                </p>
+                            )}
+                        </div>
 
                         {/* Resume Attachment Section */}
                         <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-2.5">
@@ -773,11 +1162,24 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                         </div>
 
                         {/* Questionnaire Responses */}
-                        {questionnaireEntries.length > 0 && (
-                            <div className="space-y-3 pt-2">
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center justify-between gap-2">
                                 <h4 className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">
                                     Candidate Questionnaire Responses ({questionnaireEntries.length})
                                 </h4>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleOpenEditModal(app)}
+                                    className="h-7 text-xs border-metal-blue-500/30 text-metal-blue-300 hover:bg-metal-blue-500/15 gap-1 font-medium"
+                                >
+                                    <Pencil className="w-3 h-3 text-metal-blue-400" />
+                                    <span>{questionnaireEntries.length > 0 ? "Edit Responses" : "Add Responses"}</span>
+                                </Button>
+                            </div>
+
+                            {questionnaireEntries.length > 0 ? (
                                 <div className="grid gap-2.5 max-h-60 overflow-y-auto pr-1">
                                     {questionnaireEntries.map(([q, ans], idx) => (
                                         <div key={idx} className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-xs">
@@ -788,8 +1190,22 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="p-4 rounded-xl bg-primary/5 border border-dashed border-primary/15 text-center text-xs text-muted-foreground py-6">
+                                    <p className="mb-2">No additional questionnaire responses recorded yet.</p>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleOpenEditModal(app)}
+                                        className="border-metal-blue-500/30 text-metal-blue-300 hover:bg-metal-blue-500/15 gap-1.5 text-xs font-medium"
+                                    >
+                                        <Plus className="w-3.5 h-3.5 text-metal-blue-400" />
+                                        <span>Add Questionnaire Responses</span>
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Bottom Actions Bar */}
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-primary/10">
@@ -831,8 +1247,17 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                 )}
                             </div>
 
-                            {/* Export, Print & Close */}
-                            <div className="flex items-center gap-2">
+                            {/* Edit Details, Export, Print & Close */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-metal-blue-500/30 hover:bg-metal-blue-500/15 text-metal-blue-300 text-xs h-9 gap-1.5 font-medium"
+                                    onClick={() => handleOpenEditModal(app)}
+                                >
+                                    <Pencil className="w-3.5 h-3.5 text-metal-blue-400" />
+                                    <span>Edit Details</span>
+                                </Button>
                                 <Button
                                     size="sm"
                                     variant="outline"
@@ -865,6 +1290,286 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                             </div>
                         </div>
                     </div>
+                </DialogContent>
+            </Dialog>
+        );
+    };
+
+    // Render Modal for Editing Questionnaire Responses and Missing Details
+    const renderEditApplicantModal = () => {
+        if (!editingApplicant) return null;
+        const appJob = allPositions.find(p => p.id === editingApplicant.job_id);
+
+        return (
+            <Dialog open={!!editingApplicant} onOpenChange={(open) => !open && setEditingApplicant(null)}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-2xl border-primary/20 text-foreground p-6 sm:p-8">
+                    <DialogHeader className="pb-4 border-b border-primary/10">
+                        <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-metal-blue-500/15 border border-metal-blue-500/30 flex items-center justify-center text-metal-blue-300 shrink-0">
+                                <Pencil className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl sm:text-2xl font-bold font-heading text-foreground">
+                                    Edit Questionnaire & Missing Details
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                                    Candidate: <span className="font-semibold text-foreground">{editingApplicant.applicant_name}</span> • Role: <span className="text-metal-blue-300 font-medium">{appJob?.title || "Position"}</span>
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <form onSubmit={handleSaveApplicantDetails} className="space-y-6 pt-2">
+                        {/* Notice Banner */}
+                        <div className="p-3.5 rounded-xl bg-metal-blue-500/10 border border-metal-blue-500/20 text-xs text-metal-blue-200 flex items-start gap-2.5">
+                            <Sparkles className="w-4 h-4 text-metal-blue-400 shrink-0 mt-0.5" />
+                            <p>
+                                Update or complete missing educational background, residence location, application source, and questionnaire responses. All updates are synchronized to the live applicant database and PDF/CSV records.
+                            </p>
+                        </div>
+
+                        {/* Section 1: Education & Qualifications */}
+                        <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-3.5">
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-300">
+                                <GraduationCap className="w-4 h-4 text-purple-400" />
+                                <span>1. Educational Institution & Qualifications</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="sm:col-span-2 space-y-1.5">
+                                    <label className="text-xs font-medium text-foreground">
+                                        Name of Educational Institution
+                                    </label>
+                                    <Input
+                                        value={editForm.institution}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, institution: e.target.value }))}
+                                        placeholder="e.g. Anna University, IIT Madras, SRM, etc."
+                                        className="bg-primary/5 border-primary/10 text-xs h-9"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-foreground">
+                                        Graduation Year
+                                    </label>
+                                    <Input
+                                        value={editForm.gradYear}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, gradYear: e.target.value }))}
+                                        placeholder="e.g. 2024"
+                                        className="bg-primary/5 border-primary/10 text-xs h-9"
+                                    />
+                                </div>
+                                <div className="sm:col-span-3 space-y-1.5">
+                                    <label className="text-xs font-medium text-foreground">
+                                        Qualification / Degree
+                                    </label>
+                                    <Input
+                                        value={editForm.qualification}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, qualification: e.target.value }))}
+                                        placeholder="e.g. B.Tech Computer Science, B.E. ECE, MCA, etc."
+                                        className="bg-primary/5 border-primary/10 text-xs h-9"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Location & Discovery Source */}
+                        <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/15 space-y-3.5">
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-300">
+                                <MapPin className="w-4 h-4 text-blue-400" />
+                                <span>2. Residence Location & Discovery Source</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-foreground">
+                                        City of Residence
+                                    </label>
+                                    <Input
+                                        value={editForm.city}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))}
+                                        placeholder="e.g. Chennai, Bangalore"
+                                        className="bg-primary/5 border-primary/10 text-xs h-9"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-foreground">
+                                        Country
+                                    </label>
+                                    <Input
+                                        value={editForm.country}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, country: e.target.value }))}
+                                        placeholder="e.g. India"
+                                        className="bg-primary/5 border-primary/10 text-xs h-9"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-foreground">
+                                        Where did you hear about us?
+                                    </label>
+                                    <Input
+                                        value={editForm.source}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, source: e.target.value }))}
+                                        placeholder="e.g. LinkedIn, Referral, College"
+                                        className="bg-primary/5 border-primary/10 text-xs h-9"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 3: Position-Specific Questionnaire (if role has questions) */}
+                        {appJob?.questions && appJob.questions.length > 0 && (
+                            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3.5">
+                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-metal-blue-300">
+                                    <Briefcase className="w-4 h-4 text-metal-blue-400" />
+                                    <span>3. Role-Specific Questions ({appJob.questions.length})</span>
+                                </div>
+                                <div className="space-y-3">
+                                    {appJob.questions.map((q, qIdx) => (
+                                        <div key={q.id || qIdx} className="space-y-1.5">
+                                            <label className="text-xs font-medium text-foreground">
+                                                {q.question}
+                                            </label>
+                                            <Textarea
+                                                value={editForm.positionAnswers[q.question] || ""}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setEditForm(prev => ({
+                                                        ...prev,
+                                                        positionAnswers: {
+                                                            ...prev.positionAnswers,
+                                                            [q.question]: val
+                                                        }
+                                                    }));
+                                                }}
+                                                placeholder="Enter or update candidate's answer..."
+                                                className="bg-primary/5 border-primary/10 text-xs min-h-[64px]"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Section 4: Other Questionnaire Responses & Custom Fields */}
+                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3.5">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    <FileText className="w-4 h-4 text-metal-blue-400" />
+                                    <span>{appJob?.questions && appJob.questions.length > 0 ? "4." : "3."} Custom Questionnaire & Screening Responses</span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleAddCustomQuestion}
+                                    className="h-7 text-xs border-metal-blue-500/30 text-metal-blue-300 hover:bg-metal-blue-500/10 gap-1"
+                                >
+                                    <Plus className="w-3 h-3" /> Add Custom Field
+                                </Button>
+                            </div>
+
+                            {editForm.customQuestions.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic py-2">
+                                    No custom questionnaire fields added yet. Click &quot;Add Custom Field&quot; above to add any screening answers, notice period, CTC, or interview notes.
+                                </p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {editForm.customQuestions.map((item) => (
+                                        <div key={item.id} className="p-3 rounded-lg bg-background/50 border border-primary/10 space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <Input
+                                                    value={item.question}
+                                                    onChange={(e) => handleUpdateCustomQuestion(item.id, "question", e.target.value)}
+                                                    placeholder="Field / Question Title (e.g. Notice Period, GitHub, Portfolio)"
+                                                    className="bg-primary/5 border-primary/10 text-xs h-8 font-medium"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => handleRemoveCustomQuestion(item.id)}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 shrink-0"
+                                                    title="Remove this field"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+                                            <Textarea
+                                                value={item.answer}
+                                                onChange={(e) => handleUpdateCustomQuestion(item.id, "answer", e.target.value)}
+                                                placeholder="Candidate's answer or notes..."
+                                                className="bg-primary/5 border-primary/10 text-xs min-h-[50px]"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Section 5: Candidate Basic Info (Optional Corrections) */}
+                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <span>Candidate Contact Corrections (Optional)</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[11px] text-muted-foreground">Full Name</label>
+                                    <Input
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="Applicant Name"
+                                        className="bg-primary/5 border-primary/10 text-xs h-8"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[11px] text-muted-foreground">Email Address</label>
+                                    <Input
+                                        value={editForm.email}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                        placeholder="Email"
+                                        className="bg-primary/5 border-primary/10 text-xs h-8"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[11px] text-muted-foreground">Contact Phone</label>
+                                    <Input
+                                        value={editForm.phone}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                                        placeholder="Phone"
+                                        className="bg-primary/5 border-primary/10 text-xs h-8"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Dialog Footer Actions */}
+                        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-primary/10">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setEditingApplicant(null)}
+                                disabled={isSavingEdit}
+                                className="text-xs h-9 text-muted-foreground hover:text-foreground"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSavingEdit}
+                                className="bg-gradient-to-r from-metal-blue-600 to-metal-purple-600 hover:from-metal-blue-500 hover:to-metal-purple-500 text-white text-xs h-9 gap-2 shadow-md hover:shadow-metal-blue-500/20 font-semibold"
+                            >
+                                {isSavingEdit ? (
+                                    <>
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        <span>Saving Changes...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-3.5 h-3.5" />
+                                        <span>Save Responses & Details</span>
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
         );
@@ -940,59 +1645,242 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                 </div>
 
                 {/* Filter and Search Bar */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                    {/* Status Filter Tabs */}
-                    <div className="flex items-center gap-1.5 p-1 bg-primary/5 border border-primary/10 rounded-xl overflow-x-auto">
-                        {(["all", "pending", "approved", "rejected"] as const).map(tab => {
-                            const count =
-                                tab === "all"
-                                    ? positionApplications.length
-                                    : positionApplications.filter(a => a.status === tab).length;
-                            const isActive = statusFilter === tab;
+                <div className="space-y-3">
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                        {/* Status Filter Tabs */}
+                        <div className="flex items-center gap-1.5 p-1 bg-primary/5 border border-primary/10 rounded-xl overflow-x-auto">
+                            {(["all", "pending", "approved", "rejected"] as const).map(tab => {
+                                const count =
+                                    tab === "all"
+                                        ? positionApplications.length
+                                        : positionApplications.filter(a => a.status === tab).length;
+                                const isActive = statusFilter === tab;
 
-                            return (
-                                <button
-                                    key={tab}
-                                    onClick={() => setStatusFilter(tab)}
-                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                                        isActive
-                                            ? "bg-metal-blue-500/20 text-metal-blue-300 border border-metal-blue-500/30 shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
-                                    }`}
-                                >
-                                    <span>{tab}</span>
-                                    <span
-                                        className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                                return (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setStatusFilter(tab)}
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all flex items-center gap-1.5 whitespace-nowrap ${
                                             isActive
-                                                ? "bg-metal-blue-500/30 text-white"
-                                                : "bg-primary/10 text-muted-foreground"
+                                                ? "bg-metal-blue-500/20 text-metal-blue-300 border border-metal-blue-500/30 shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
                                         }`}
                                     >
-                                        {count}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                        <span>{tab}</span>
+                                        <span
+                                            className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                                                isActive
+                                                    ? "bg-metal-blue-500/30 text-white"
+                                                    : "bg-primary/10 text-muted-foreground"
+                                            }`}
+                                        >
+                                            {count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Search Input & Filter Options Button */}
+                        <div className="flex items-center gap-2 flex-1 max-w-xl">
+                            <div className="relative flex-1">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={candidateSearch}
+                                    onChange={e => setCandidateSearch(e.target.value)}
+                                    placeholder="Search name, email, phone, institution, city, answers..."
+                                    className="pl-9 pr-14 bg-primary/5 border-primary/10 text-foreground text-sm h-10"
+                                />
+                                {candidateSearch && (
+                                    <button
+                                        onClick={() => setCandidateSearch("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                                    >
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Filter Options Toggle Button */}
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                className={`h-10 px-3.5 border-primary/15 text-xs font-medium gap-2 shrink-0 transition-all ${
+                                    showAdvancedFilters || (detailsFilter !== "all" || resumeFilter !== "all" || callFilter !== "all" || duplicateFilter !== "all" || sortBy !== "newest")
+                                        ? "bg-metal-blue-500/20 text-metal-blue-300 border-metal-blue-500/40 shadow-sm"
+                                        : "hover:bg-primary/5 text-foreground"
+                                }`}
+                                title="Toggle search filter options"
+                            >
+                                <Filter className="w-3.5 h-3.5 text-metal-blue-400" />
+                                <span>Filter Options</span>
+                                {(detailsFilter !== "all" || resumeFilter !== "all" || callFilter !== "all" || duplicateFilter !== "all" || sortBy !== "newest") && (
+                                    <span className="w-2 h-2 rounded-full bg-metal-blue-400 animate-pulse" />
+                                )}
+                            </Button>
+                        </div>
                     </div>
 
-                    {/* Search Candidate */}
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            value={candidateSearch}
-                            onChange={e => setCandidateSearch(e.target.value)}
-                            placeholder="Search applicant name, email, or phone..."
-                            className="pl-9 bg-primary/5 border-primary/10 text-foreground text-sm"
-                        />
-                        {candidateSearch && (
-                            <button
-                                onClick={() => setCandidateSearch("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                    {/* Filter Options Panel */}
+                    <AnimatePresence>
+                        {showAdvancedFilters && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
                             >
-                                Clear
-                            </button>
+                                <div className="p-4 rounded-xl bg-primary/[0.03] border border-primary/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                                    {/* 1. Details Filter */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Questionnaire & Details
+                                        </label>
+                                        <select
+                                            value={detailsFilter}
+                                            onChange={(e) => setDetailsFilter(e.target.value as any)}
+                                            className="w-full bg-background/80 border border-primary/15 rounded-lg px-2.5 py-2 text-foreground text-xs focus:outline-none focus:border-metal-blue-500"
+                                        >
+                                            <option value="all">All Applicants</option>
+                                            <option value="missing">⚠️ Missing Details / Previous</option>
+                                            <option value="complete">✅ Has Questionnaire Details</option>
+                                        </select>
+                                    </div>
+
+                                    {/* 2. Resume Filter */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Resume Attachment
+                                        </label>
+                                        <select
+                                            value={resumeFilter}
+                                            onChange={(e) => setResumeFilter(e.target.value as any)}
+                                            className="w-full bg-background/80 border border-primary/15 rounded-lg px-2.5 py-2 text-foreground text-xs focus:outline-none focus:border-metal-blue-500"
+                                        >
+                                            <option value="all">All Resumes</option>
+                                            <option value="has_resume">📄 Has Resume Attached</option>
+                                            <option value="no_resume">❌ No Resume Uploaded</option>
+                                        </select>
+                                    </div>
+
+                                    {/* 3. Call Status Filter */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Call Status
+                                        </label>
+                                        <select
+                                            value={callFilter}
+                                            onChange={(e) => setCallFilter(e.target.value as any)}
+                                            className="w-full bg-background/80 border border-primary/15 rounded-lg px-2.5 py-2 text-foreground text-xs focus:outline-none focus:border-metal-blue-500"
+                                        >
+                                            <option value="all">All Call Statuses</option>
+                                            <option value="called">📞 Called (≥ 1 time)</option>
+                                            <option value="not_called">⏳ Not Called Yet</option>
+                                        </select>
+                                    </div>
+
+                                    {/* 4. Duplicates Filter */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Duplicate Verification
+                                        </label>
+                                        <select
+                                            value={duplicateFilter}
+                                            onChange={(e) => setDuplicateFilter(e.target.value as any)}
+                                            className="w-full bg-background/80 border border-primary/15 rounded-lg px-2.5 py-2 text-foreground text-xs focus:outline-none focus:border-metal-blue-500"
+                                        >
+                                            <option value="all">All Applicants</option>
+                                            <option value="duplicates_only">⚠️ Duplicates Only ({duplicateIds.size})</option>
+                                        </select>
+                                    </div>
+
+                                    {/* 5. Sort By */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Sort Results By
+                                        </label>
+                                        <select
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value as any)}
+                                            className="w-full bg-background/80 border border-primary/15 rounded-lg px-2.5 py-2 text-foreground text-xs focus:outline-none focus:border-metal-blue-500"
+                                        >
+                                            <option value="newest">🕒 Newest Applied</option>
+                                            <option value="oldest">🕒 Oldest Applied</option>
+                                            <option value="name_asc">🔤 Name (A → Z)</option>
+                                            <option value="name_desc">🔤 Name (Z → A)</option>
+                                            <option value="most_called">📞 Most Called First</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </motion.div>
                         )}
-                    </div>
+                    </AnimatePresence>
+
+                    {/* Active Filter Chips Bar & Reset */}
+                    {(candidateSearch || detailsFilter !== "all" || resumeFilter !== "all" || callFilter !== "all" || duplicateFilter !== "all" || sortBy !== "newest" || statusFilter !== "all") && (
+                        <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
+                            <span className="text-muted-foreground font-medium">Active Filters:</span>
+                            {candidateSearch && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-metal-blue-500/15 text-metal-blue-300 border border-metal-blue-500/30">
+                                    Search: &quot;{candidateSearch}&quot;
+                                    <button onClick={() => setCandidateSearch("")} className="hover:text-white">×</button>
+                                </span>
+                            )}
+                            {statusFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-foreground border border-primary/20 capitalize">
+                                    Status: {statusFilter}
+                                    <button onClick={() => setStatusFilter("all")} className="hover:text-primary">×</button>
+                                </span>
+                            )}
+                            {detailsFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                    {detailsFilter === "missing" ? "Missing Details" : "Has Questionnaire"}
+                                    <button onClick={() => setDetailsFilter("all")} className="hover:text-white">×</button>
+                                </span>
+                            )}
+                            {resumeFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                                    {resumeFilter === "has_resume" ? "Has Resume" : "No Resume"}
+                                    <button onClick={() => setResumeFilter("all")} className="hover:text-white">×</button>
+                                </span>
+                            )}
+                            {callFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                    {callFilter === "called" ? "Called" : "Not Called"}
+                                    <button onClick={() => setCallFilter("all")} className="hover:text-white">×</button>
+                                </span>
+                            )}
+                            {duplicateFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                    Duplicates Only
+                                    <button onClick={() => setDuplicateFilter("all")} className="hover:text-white">×</button>
+                                </span>
+                            )}
+                            {sortBy !== "newest" && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                                    Sort: {sortBy.replace("_", " ")}
+                                    <button onClick={() => setSortBy("newest")} className="hover:text-white">×</button>
+                                </span>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setCandidateSearch("");
+                                    setStatusFilter("all");
+                                    setDetailsFilter("all");
+                                    setResumeFilter("all");
+                                    setCallFilter("all");
+                                    setDuplicateFilter("all");
+                                    setSortBy("newest");
+                                }}
+                                className="text-muted-foreground hover:text-red-400 transition-colors ml-1 underline text-[11px]"
+                            >
+                                Reset All
+                            </button>
+                            <span className="text-muted-foreground/70 ml-auto">
+                                Showing <strong className="text-foreground">{filteredApplications.length}</strong> of {positionApplications.length} candidate{positionApplications.length !== 1 ? "s" : ""}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Selection & Bulk Action Banner */}
@@ -1197,7 +2085,7 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                     )}
                                                     <span
                                                         className="flex items-center gap-1.5 text-muted-foreground"
-                                                        title={app.created_at ? `Full Timestamp: ${app.created_at}` : "No timestamp recorded"}
+                                                        title={app.created_at ? `Applied: ${new Date(app.created_at).toLocaleString()}` : "No timestamp recorded"}
                                                     >
                                                         <Clock className="w-3.5 h-3.5 text-metal-blue-400" />
                                                         <span>
@@ -1276,19 +2164,32 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                         </div>
 
                                         {/* Questionnaire Responses Accordion */}
-                                        {hasAnswers && (
+                                        {hasAnswers ? (
                                             <div className="pt-2 border-t border-primary/10">
-                                                <button
-                                                    onClick={() => toggleAnswers(app.id)}
-                                                    className="flex items-center gap-2 text-xs font-semibold text-metal-blue-400 hover:text-metal-blue-300 transition-colors"
-                                                >
-                                                    <span>Questionnaire Responses ({Object.keys(app.answers).length})</span>
-                                                    {answersExpanded ? (
-                                                        <ChevronUp className="w-3.5 h-3.5" />
-                                                    ) : (
-                                                        <ChevronDown className="w-3.5 h-3.5" />
-                                                    )}
-                                                </button>
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <button
+                                                        onClick={() => toggleAnswers(app.id)}
+                                                        className="flex items-center gap-2 text-xs font-semibold text-metal-blue-400 hover:text-metal-blue-300 transition-colors"
+                                                    >
+                                                        <span>Questionnaire Responses ({Object.keys(app.answers).length})</span>
+                                                        {answersExpanded ? (
+                                                            <ChevronUp className="w-3.5 h-3.5" />
+                                                        ) : (
+                                                            <ChevronDown className="w-3.5 h-3.5" />
+                                                        )}
+                                                    </button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleOpenEditModal(app)}
+                                                        className="h-6 px-2 text-xs text-metal-blue-400 hover:text-metal-blue-300 hover:bg-metal-blue-500/10 gap-1.5 font-medium"
+                                                        title="Edit questionnaire responses and education details"
+                                                    >
+                                                        <Pencil className="w-3 h-3" />
+                                                        <span>Edit Responses</span>
+                                                    </Button>
+                                                </div>
 
                                                 <AnimatePresence>
                                                     {answersExpanded && (
@@ -1316,6 +2217,24 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
+                                            </div>
+                                        ) : (
+                                            <div className="pt-2 border-t border-primary/10 flex items-center justify-between gap-2 flex-wrap">
+                                                <div className="flex items-center gap-1.5 text-xs text-amber-400/90 font-medium">
+                                                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                                    <span>Missing questionnaire & education details (Previous applicant)</span>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleOpenEditModal(app)}
+                                                    className="border-amber-500/30 text-amber-400 hover:bg-amber-500/15 hover:text-amber-300 text-xs h-7 px-2.5 gap-1.5 font-medium shadow-sm"
+                                                    title="Add missing questionnaire responses, education, and location details for this applicant"
+                                                >
+                                                    <Plus className="w-3 h-3" />
+                                                    <span>Add Missing Details</span>
+                                                </Button>
                                             </div>
                                         )}
 
@@ -1358,6 +2277,17 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
                                             {/* VIEW APPLICANT BUTTON & EXPORT ACTIONS */}
                                             <div className="flex items-center gap-2 ml-auto">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleOpenEditModal(app)}
+                                                    className="border-primary/20 hover:bg-primary/10 text-foreground text-xs h-8 gap-1.5 font-medium shadow-sm transition-all hover:scale-105"
+                                                    title={`Edit questionnaire responses and details for ${app.applicant_name}`}
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5 text-metal-blue-400" />
+                                                    <span>Edit Details</span>
+                                                </Button>
+
                                                 <Button
                                                     variant="default"
                                                     size="sm"
@@ -1458,6 +2388,9 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
                 {/* View Applicant Full Profile Modal */}
                 {renderViewApplicantModal()}
+
+                {/* Edit Applicant Details & Questionnaire Modal */}
+                {renderEditApplicantModal()}
             </div>
         );
     }
@@ -1722,6 +2655,9 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
 
             {/* View Applicant Full Profile Modal */}
             {renderViewApplicantModal()}
+
+            {/* Edit Applicant Details & Questionnaire Modal */}
+            {renderEditApplicantModal()}
         </div>
     );
 };

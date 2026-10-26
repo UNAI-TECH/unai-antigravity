@@ -120,6 +120,7 @@ interface DataContextType {
     addJobApplication: (app: Omit<JobApplication, "id" | "created_at" | "status">) => Promise<void>;
     addEventRegistration: (app: Omit<EventRegistration, "id" | "created_at">) => Promise<void>;
     updateJobApplicationStatus: (id: string, status: "pending" | "approved" | "rejected", applicantEmail: string) => Promise<void>;
+    updateJobApplicationDetails: (id: string, updates: { applicant_name?: string; email?: string; phone?: string; answers?: any; status?: "pending" | "approved" | "rejected"; }) => Promise<void>;
     isAuthenticated: boolean;
     login: () => void;
     logout: () => void;
@@ -615,6 +616,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const updateJobApplicationDetails = async (
+        id: string,
+        updates: {
+            applicant_name?: string;
+            email?: string;
+            phone?: string;
+            answers?: any;
+            status?: "pending" | "approved" | "rejected";
+        }
+    ) => {
+        const { error } = await supabase
+            .from('job_applications')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error updating job application details:", error);
+            throw error;
+        }
+
+        setJobApplications(prev => prev.map(app =>
+            app.id === id ? { ...app, ...updates } : app
+        ));
+    };
+
     const login = () => setIsAuthenticated(true);
     const logout = () => setIsAuthenticated(false);
 
@@ -642,6 +668,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 addJobApplication,
                 addEventRegistration,
                 updateJobApplicationStatus,
+                updateJobApplicationDetails,
                 isAuthenticated,
                 login,
                 logout,

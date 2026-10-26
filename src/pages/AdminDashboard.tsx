@@ -35,7 +35,8 @@ const AdminDashboard = () => {
         galleryItems, addGalleryItem, deleteGalleryItem,
         jobApplications,
         eventRegistrations,
-        updateJobApplicationStatus
+        updateJobApplicationStatus,
+        updateJobApplicationDetails
     } = useData();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("overview");
@@ -378,6 +379,7 @@ const AdminDashboard = () => {
                         selectedJobId={selectedJobId}
                         setSelectedJobId={setSelectedJobId}
                         updateJobApplicationStatus={updateJobApplicationStatus}
+                        updateJobApplicationDetails={updateJobApplicationDetails}
                     />
                 );
             case "team":
