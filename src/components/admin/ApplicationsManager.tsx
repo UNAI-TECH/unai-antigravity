@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { JobApplication, Job } from "@/context/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +116,15 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
             return {};
         }
     });
+
+    // Helper: Retrieve call information for an applicant (declared before filteredApplications useMemo)
+    const getApplicantCallInfo = useCallback((app: JobApplication) => {
+        const local = callData[app.id];
+        const serverCount = app.answers?.call_count !== undefined ? Number(app.answers.call_count) : 0;
+        const count = local?.count !== undefined ? Math.max(local.count, serverCount) : serverCount;
+        const lastCalled = local?.lastCalled || app.answers?.last_called_at;
+        return { count, lastCalled };
+    }, [callData]);
 
     // Modal state for viewing applicant full profile
     const [viewingApplicant, setViewingApplicant] = useState<JobApplication | null>(null);
@@ -350,15 +359,6 @@ export const ApplicationsManager: React.FC<ApplicationsManagerProps> = ({
             else next.add(id);
             return next;
         });
-    };
-
-    // Helper: Retrieve call information for an applicant
-    const getApplicantCallInfo = (app: JobApplication) => {
-        const local = callData[app.id];
-        const serverCount = app.answers?.call_count !== undefined ? Number(app.answers.call_count) : 0;
-        const count = local?.count !== undefined ? Math.max(local.count, serverCount) : serverCount;
-        const lastCalled = local?.lastCalled || app.answers?.last_called_at;
-        return { count, lastCalled };
     };
 
     // Handler: Trigger phone call, increment counter, save to state, localStorage & Supabase

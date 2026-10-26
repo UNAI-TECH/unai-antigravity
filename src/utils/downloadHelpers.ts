@@ -78,7 +78,25 @@ const formatAnswersToString = (answers: any): string => {
     if (typeof answers === "string") return answers;
     if (typeof answers === "object") {
         try {
-            return Object.entries(answers)
+            const systemKeys = new Set([
+                "call_count",
+                "last_called_at",
+                "Educational Institution",
+                "Qualification",
+                "Year of Graduation",
+                "City of Residence",
+                "Country",
+                "Where did you hear about us?",
+                "institution",
+                "qualification",
+                "graduation_year",
+                "city",
+                "country",
+                "hear_about_us"
+            ]);
+            const filtered = Object.entries(answers).filter(([q]) => !systemKeys.has(q));
+            if (filtered.length === 0) return "None";
+            return filtered
                 .map(([q, a]) => `${q}: ${Array.isArray(a) ? a.join(", ") : String(a)}`)
                 .join(" | ");
         } catch {
