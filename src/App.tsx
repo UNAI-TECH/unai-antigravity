@@ -20,6 +20,7 @@ import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import ResponsiveTest from "./pages/ResponsiveTest";
 import Education from "./pages/Education";
 import UnaiPac from "./pages/UnaiPac";
@@ -65,7 +66,22 @@ const App = () => {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/admin" element={<AdminLogin />} />
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <AdminProtectedRoute>
+                      <AdminDashboard />
+                    </AdminProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/*"
+                  element={
+                    <AdminProtectedRoute>
+                      <AdminDashboard />
+                    </AdminProtectedRoute>
+                  }
+                />
                 <Route path="/responsive-test" element={<ResponsiveTest />} />
                 <Route path="/education" element={<Education />} />
                 <Route path="/unai-pac" element={<UnaiPac />} />

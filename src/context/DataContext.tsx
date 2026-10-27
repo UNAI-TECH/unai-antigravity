@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { sendStatusEmail } from "@/lib/emailService";
 import { toast } from "sonner";
+import { validateAdminSessionSync, destroyAdminSession } from "@/lib/authSecurity";
 
 // Types
 export interface Event {
@@ -138,7 +139,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>([]);
 
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return localStorage.getItem("unai_auth") === "true";
+        return validateAdminSessionSync().isValid;
     });
 
     // Fetch Initial Data
@@ -247,10 +248,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchData();
     }, [isAuthenticated]);
 
-    // Auth Persistence
-    useEffect(() => {
-        localStorage.setItem("unai_auth", String(isAuthenticated));
-    }, [isAuthenticated]);
 
     // Actions
     const addEvent = async (event: Omit<Event, "id">) => {
@@ -642,7 +639,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const login = () => setIsAuthenticated(true);
-    const logout = () => setIsAuthenticated(false);
+    const logout = () => {
+        destroyAdminSession();
+        setIsAuthenticated(false);
+        setJobApplications([]);
+        setEventRegistrations([]);
+    };
 
     return (
         <DataContext.Provider
