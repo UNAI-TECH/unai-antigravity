@@ -17,10 +17,27 @@ const RegistrationModal = ({ event }: { event: any }) => {
   const { addEventRegistration } = useData();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [selectedRadio, setSelectedRadio] = useState<{ [fieldId: string]: string }>({});
+  const [otherTextValues, setOtherTextValues] = useState<{ [fieldId: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate any selected "Other" fields that are required
+    if (event.form_fields && Array.isArray(event.form_fields)) {
+      for (const field of event.form_fields) {
+        if (field.type === 'multiple_choice' && field.required) {
+          const selected = selectedRadio[field.id];
+          const isOther = selected && (selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others');
+          if (isOther && (!otherTextValues[field.id] || !otherTextValues[field.id].trim())) {
+            toast.error(`Please specify your answer for "${field.label}"`);
+            return;
+          }
+        }
+      }
+    }
+
     setIsSubmitting(true);
     
     // Extract default fields
@@ -43,6 +60,9 @@ const RegistrationModal = ({ event }: { event: any }) => {
         answers,
       });
       toast.success("Registration Successful!");
+      setFormData({});
+      setSelectedRadio({});
+      setOtherTextValues({});
       setOpen(false);
     } catch (error) {
       toast.error("Registration failed. Please try again.");
@@ -55,13 +75,29 @@ const RegistrationModal = ({ event }: { event: any }) => {
     setFormData((prev: any) => ({ ...prev, [key]: value }));
   };
 
-  const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
+  const handleRadioChange = (field: any, opt: string) => {
+    setSelectedRadio(prev => ({ ...prev, [field.id]: opt }));
+    const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+    if (isOther) {
+      const custom = otherTextValues[field.id]?.trim();
+      handleFieldChange(field.label, custom ? `Other: ${custom}` : 'Other');
+    } else {
+      handleFieldChange(field.label, opt);
+    }
+  };
+
+  const handleOtherInputChange = (field: any, customText: string) => {
+    setOtherTextValues(prev => ({ ...prev, [field.id]: customText }));
+    handleFieldChange(field.label, customText.trim() ? `Other: ${customText.trim()}` : 'Other');
+  };
+
+  const handleCheckboxChange = (field: any, value: string, checked: boolean) => {
       setFormData((prev: any) => {
-          const current = prev[key] || [];
+          const current = prev[field.label] || [];
           if (checked) {
-              return { ...prev, [key]: [...current, value] };
+              return { ...prev, [field.label]: [...current, value] };
           } else {
-              return { ...prev, [key]: current.filter((v: string) => v !== value) };
+              return { ...prev, [field.label]: current.filter((v: string) => v !== value) };
           }
       });
   };
@@ -127,36 +163,104 @@ const RegistrationModal = ({ event }: { event: any }) => {
                         )}
 
                         {field.type === 'multiple_choice' && (
-                            <div className="space-y-2">
-                                {field.options.map((opt: string, i: number) => (
-                                    <label key={i} className="flex items-center gap-3 cursor-pointer">
-                                        <input 
-                                            type="radio" 
-                                            name={`field_${field.id}`} 
-                                            required={field.required}
-                                            value={opt}
-                                            onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                            className="w-4 h-4 accent-slate-900"
-                                        />
-                                        <span className="text-sm text-slate-600">{opt}</span>
-                                    </label>
-                                ))}
+                            <div className="space-y-2.5">
+                                {field.options.map((opt: string, i: number) => {
+                                    const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+                                    const isSelected = selectedRadio[field.id] === opt;
+
+                                    return (
+                                        <div key={i} className="space-y-2">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input 
+                                                    type="radio" 
+                                                    name={`field_${field.id}`} 
+                                                    required={field.required && !selectedRadio[field.id]}
+                                                    value={opt}
+                                                    checked={selectedRadio[field.id] === opt}
+                                                    onChange={() => handleRadioChange(field, opt)}
+                                                    className="w-4 h-4 accent-slate-900 cursor-pointer"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
+
+                                            {isOther && isSelected && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -4 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="pl-7 pt-1"
+                                                >
+                                                    <Input
+                                                        placeholder="Please specify your other answer..."
+                                                        required={field.required}
+                                                        value={otherTextValues[field.id] || ""}
+                                                        onChange={(e) => handleOtherInputChange(field, e.target.value)}
+                                                        className="bg-slate-50 border-slate-300 text-sm h-9 focus:border-slate-800 focus:bg-white"
+                                                        autoFocus
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
 
                         {field.type === 'checkboxes' && (
                             <div className="space-y-2">
-                                {field.options.map((opt: string, i: number) => (
-                                    <label key={i} className="flex items-center gap-3 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            value={opt}
-                                            onChange={(e) => handleCheckboxChange(field.label, opt, e.target.checked)}
-                                            className="w-4 h-4 rounded border-slate-300 accent-slate-900"
-                                        />
-                                        <span className="text-sm text-slate-600">{opt}</span>
-                                    </label>
-                                ))}
+                                {field.options.map((opt: string, i: number) => {
+                                    const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+                                    const checked = (formData[field.label] || []).some((v: string) => v === opt || v.startsWith(`Other:`));
+
+                                    return (
+                                        <div key={i} className="space-y-2">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    value={opt}
+                                                    checked={checked}
+                                                    onChange={(e) => {
+                                                        const isChecked = e.target.checked;
+                                                        if (isOther) {
+                                                            const custom = otherTextValues[field.id]?.trim();
+                                                            const val = custom ? `Other: ${custom}` : 'Other';
+                                                            handleCheckboxChange(field, val, isChecked);
+                                                        } else {
+                                                            handleCheckboxChange(field, opt, isChecked);
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 rounded border-slate-300 accent-slate-900 cursor-pointer"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
+
+                                            {isOther && checked && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -4 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="pl-7 pt-1"
+                                                >
+                                                    <Input
+                                                        placeholder="Please specify your other answer..."
+                                                        value={otherTextValues[field.id] || ""}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setOtherTextValues(prev => ({ ...prev, [field.id]: val }));
+                                                            // Update the checkbox list in formData
+                                                            setFormData((prev: any) => {
+                                                                const current: string[] = prev[field.label] || [];
+                                                                const filtered = current.filter(c => c !== 'Other' && !c.startsWith('Other:'));
+                                                                const newVal = val.trim() ? `Other: ${val.trim()}` : 'Other';
+                                                                return { ...prev, [field.label]: [...filtered, newVal] };
+                                                            });
+                                                        }}
+                                                        className="bg-slate-50 border-slate-300 text-sm h-9 focus:border-slate-800 focus:bg-white"
+                                                        autoFocus
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -523,6 +627,7 @@ const Events = () => {
 
   const filteredEvents = events
     .filter(event => {
+      if (event.status === "draft") return false;
       if (activeFilter === "All") return true;
       return event.type === activeFilter;
     })

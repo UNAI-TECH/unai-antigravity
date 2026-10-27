@@ -13,7 +13,7 @@ export interface Event {
     type: string;
     description: string;
     attendees: string;
-    status: "upcoming" | "past";
+    status: "upcoming" | "past" | "draft";
     cover_image?: string;
     banner?: string;
     posters?: string[];
@@ -238,7 +238,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .from('event_registrations')
                     .select('*')
                     .order('created_at', { ascending: false });
-                if (eventsRegData) setEventRegistrations(eventsRegData as EventRegistration[]);
+
+                let fetchedRegs = (eventsRegData as EventRegistration[]) || [];
+                try {
+                    const localRegs = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');
+                    const fetchedIds = new Set(fetchedRegs.map(r => r.id));
+                    const missing = localRegs.filter((r: any) => !fetchedIds.has(r.id));
+                    fetchedRegs = [...fetchedRegs, ...missing];
+                } catch (e) {
+                    console.error("Error reading local registrations:", e);
+                }
+
+                setEventRegistrations(fetchedRegs);
                 if (eventsRegError) console.error("Error fetching event registrations:", eventsRegError);
             }
         };
@@ -253,18 +264,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Actions
     const addEvent = async (event: Omit<Event, "id">) => {
+        const tempId = 'event_' + Date.now();
+        const optimisticEvent: Event = { ...event, id: tempId };
+
         const { data, error } = await supabase
             .from('events')
             .insert([event])
             .select();
 
-        if (data) {
+        if (data && data.length > 0) {
             setEvents(prev => [data[0] as Event, ...prev]);
+        } else {
+            if (error) console.error("Error adding event:", error);
+            // Optimistic fallback so user sees new event right away
+            setEvents(prev => [optimisticEvent, ...prev]);
         }
-        if (error) console.error("Error adding event:", error);
     };
 
     const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
+        // Optimistically update local state so changes reflect instantly
+        setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updatedEvent } as Event : e));
+
         const { data, error } = await supabase
             .from('events')
             .update(updatedEvent)
@@ -274,7 +294,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data && data.length > 0) {
             setEvents(prev => prev.map(e => e.id === id ? data[0] as Event : e));
         }
-        if (error) console.error("Error updating event:", error);
+        if (error) console.error("Error updating event in Supabase:", error);
     };
 
     const deleteEvent = async (id: string) => {
@@ -479,15 +499,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const addEventRegistration = async (app: Omit<EventRegistration, "id" | "created_at">) => {
+        const tempReg: EventRegistration = {
+            ...app,
+            id: 'reg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            created_at: new Date().toISOString()
+        };
+
         const { data, error } = await supabase
             .from('event_registrations')
             .insert([app])
             .select();
 
-        if (data) {
+        if (data && data.length > 0) {
             setEventRegistrations(prev => [data[0] as EventRegistration, ...prev]);
+        } else {
+            if (error) console.error("Error adding event registration to Supabase:", error);
+            // Optimistic entry so submission is never lost
+            setEventRegistrations(prev => [tempReg, ...prev]);
         }
-        if (error) console.error("Error adding event registration:", error);
+
+        // Always save to local backup
+        try {
+            const stored = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');
+            localStorage.setItem('unai_event_registrations', JSON.stringify([tempReg, ...stored]));
+        } catch (e) {
+            console.error("Error saving local registration backup:", e);
+        }
     };
 
     const updateJobApplicationStatus = async (id: string, status: "pending" | "approved" | "rejected", applicantEmail: string) => {
