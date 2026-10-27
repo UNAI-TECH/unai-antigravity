@@ -899,3 +899,28 @@ spline-viewer a#logo {
 .shadow-orbital {
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
+
+/* ============================================
+   PWA & STANDALONE APP DISPLAY OPTIMIZATIONS
+   ============================================ */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@media all and (display-mode: standalone) {
+  /* Prevent pull-to-refresh on standalone app feeling native */
+  body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Smooth touch scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}

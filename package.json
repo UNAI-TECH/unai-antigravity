@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "generate:pwa-icons": "node scripts/generate-pwa-icons.cjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -99,11 +100,13 @@
     "lovable-tagger": "^1.1.13",
     "netlify-cli": "^23.13.4",
     "postcss": "^8.5.6",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.17",
     "terser": "^5.46.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
+    "vite-plugin-pwa": "^2.0.0",
     "vitest": "^3.2.4"
   }
 }

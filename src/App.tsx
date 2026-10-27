@@ -26,16 +26,29 @@ import UnaiPac from "./pages/UnaiPac";
 import VidyoAI from "./pages/VidyoAI";
 import NotFound from "./pages/NotFound";
 import { DataProvider } from "@/context/DataContext";
+import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+import { PWAUpdateNotification } from "@/components/pwa/PWAUpdateNotification";
+import { usePWA } from "@/hooks/usePWA";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const { needRefresh, updateServiceWorker, setNeedRefresh } = usePWA();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <DataProvider>
+          <OfflineIndicator />
+          <PWAInstallPrompt />
+          <PWAUpdateNotification
+            needRefresh={needRefresh}
+            onUpdate={() => updateServiceWorker(true)}
+            onDismiss={() => setNeedRefresh(false)}
+          />
           <LenisSmoothScroll>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <FloatingNavbar />

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Download } from "lucide-react";
+import { usePWA } from "@/hooks/usePWA";
 
 export const FloatingNavbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { scrollY } = useScroll();
+  const { isInstallable, isInstalled, promptInstall } = usePWA();
 
   // Hide navbar on admin routes
   if (location.pathname.startsWith('/admin')) {
@@ -141,8 +143,18 @@ export const FloatingNavbar = () => {
             ))}
           </div>
 
-          {/* Contact Button */}
-          <div className="hidden lg:flex items-center">
+          {/* Action Buttons */}
+          <div className="hidden lg:flex items-center gap-3">
+            {isInstallable && !isInstalled && (
+              <button
+                onClick={() => promptInstall()}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 border border-indigo-200/60 shadow-sm"
+                title="Install UNAI TECH Progressive Web App"
+              >
+                <Download size={13} className="text-indigo-600 animate-bounce" />
+                <span>Install App</span>
+              </button>
+            )}
             <Link
               to="/contact"
               className="px-6 py-2 text-sm font-bold text-white bg-blue-600 rounded-full hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all duration-300 hover:scale-105 active:scale-95"
@@ -218,6 +230,26 @@ export const FloatingNavbar = () => {
                       Contact Us
                     </Link>
                   </motion.div>
+
+                  {isInstallable && !isInstalled && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.35 }}
+                    >
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          promptInstall();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 text-base font-bold text-indigo-600 bg-indigo-50 border border-indigo-200/60 rounded-xl hover:bg-indigo-100 transition-all shadow-sm"
+                      >
+                        <Download size={18} />
+                        Install UNAI App
+                      </button>
+                    </motion.div>
+                  )}
+
                 </div>
               </motion.div>
             </>
