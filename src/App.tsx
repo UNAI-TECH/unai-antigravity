@@ -20,22 +20,36 @@ import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import ResponsiveTest from "./pages/ResponsiveTest";
 import Education from "./pages/Education";
 import UnaiPac from "./pages/UnaiPac";
 import VidyoAI from "./pages/VidyoAI";
 import NotFound from "./pages/NotFound";
 import { DataProvider } from "@/context/DataContext";
+import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+import { PWAUpdateNotification } from "@/components/pwa/PWAUpdateNotification";
+import { usePWA } from "@/hooks/usePWA";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const { needRefresh, updateServiceWorker, setNeedRefresh } = usePWA();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <DataProvider>
+          <OfflineIndicator />
+          <PWAInstallPrompt />
+          <PWAUpdateNotification
+            needRefresh={needRefresh}
+            onUpdate={() => updateServiceWorker(true)}
+            onDismiss={() => setNeedRefresh(false)}
+          />
           <LenisSmoothScroll>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <FloatingNavbar />
@@ -52,7 +66,22 @@ const App = () => {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/admin" element={<AdminLogin />} />
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <AdminProtectedRoute>
+                      <AdminDashboard />
+                    </AdminProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/*"
+                  element={
+                    <AdminProtectedRoute>
+                      <AdminDashboard />
+                    </AdminProtectedRoute>
+                  }
+                />
                 <Route path="/responsive-test" element={<ResponsiveTest />} />
                 <Route path="/education" element={<Education />} />
                 <Route path="/unai-pac" element={<UnaiPac />} />

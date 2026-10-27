@@ -9,6 +9,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock, IndianRupee, Download, ClipboardList, FileSpreadsheet, Check } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { ApplicationsManager } from "@/components/admin/ApplicationsManager";
 import {
     Dialog,
     DialogContent,
@@ -100,7 +101,8 @@ const AdminDashboard = () => {
         galleryItems, addGalleryItem, deleteGalleryItem,
         jobApplications,
         eventRegistrations,
-        updateJobApplicationStatus
+        updateJobApplicationStatus,
+        updateJobApplicationDetails
     } = useData();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("overview");
@@ -235,7 +237,7 @@ const AdminDashboard = () => {
                                             </span>
                                         </div>
                                         <p className="text-sm text-muted-foreground mb-4">Phone: <span className="text-foreground">{reg.phone}</span></p>
-                                        
+
                                         <div className="space-y-3 pt-4 border-t border-primary/10">
                                             <h4 className="text-sm font-semibold text-primary mb-2">Form Responses</h4>
                                             {reg.answers && Object.entries(reg.answers).map(([question, answer]) => (
@@ -616,131 +618,15 @@ const AdminDashboard = () => {
                     </div>
                 );
             case "applications":
-                if (selectedJobId) {
-                    const selectedJob = allPositions.find(j => j.id === selectedJobId);
-                    const applications = jobApplications.filter(app => app.job_id === selectedJobId);
-
-                    return (
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-4">
-                                <Button variant="outline" onClick={() => setSelectedJobId(null)} className="border-primary/10 hover:bg-primary/5">
-                                    ← Back
-                                </Button>
-                                <div>
-                                    <h2 className="text-3xl font-heading font-bold">Applications for {selectedJob?.title}</h2>
-                                    <p className="text-muted-foreground">Reviewing {applications.length} applications.</p>
-                                </div>
-                            </div>
-                            <div className="grid gap-4">
-                                {applications.length === 0 && (
-                                    <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
-                                        <p className="text-muted-foreground">No applications for this job yet.</p>
-                                    </div>
-                                )}
-                                {applications.map(app => (
-                                    <GlassCard key={app.id} className="p-6 hover:border-primary/30 transition-colors">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 className="font-bold text-xl">{app.applicant_name}</h3>
-                                                <p className="text-sm text-primary">{app.email}</p>
-                                            </div>
-                                            <span className="bg-yellow-500/10 text-yellow-400 px-3 py-1 rounded-full text-xs uppercase tracking-wider font-semibold border border-yellow-500/20">
-                                                {app.status}
-                                            </span>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground mb-4">
-                                            <p>Phone: <span className="text-foreground">{app.phone}</span></p>
-                                            <p>Applied: <span className="text-foreground">{new Date(app.created_at).toLocaleDateString()}</span></p>
-                                        </div>
-
-                                        <div className="flex gap-3 mt-4">
-                                            {app.resume_url && (
-                                                <Button variant="outline" size="sm" onClick={() => window.open(app.resume_url, '_blank')} className="border-primary/10 hover:bg-primary/5">
-                                                    <FileText className="w-4 h-4 mr-2" /> View Resume
-                                                </Button>
-                                            )}
-
-                                            {app.status === 'pending' && (
-                                                <div className="flex gap-2 ml-auto">
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:text-green-300 border border-green-500/20"
-                                                        onClick={() => {
-                                                            toast.promise(updateJobApplicationStatus(app.id, 'approved', app.email), {
-                                                                loading: 'Approving...',
-                                                                success: 'Application Approved & Email Sent',
-                                                                error: 'Failed to approve'
-                                                            });
-                                                        }}
-                                                    >
-                                                        <CheckCircle className="w-4 h-4 mr-2" /> Approve
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 border border-red-500/20"
-                                                        onClick={() => {
-                                                            toast.promise(updateJobApplicationStatus(app.id, 'rejected', app.email), {
-                                                                loading: 'Rejecting...',
-                                                                success: 'Application Rejected & Email Sent',
-                                                                error: 'Failed to reject'
-                                                            });
-                                                        }}
-                                                    >
-                                                        <X className="w-4 h-4 mr-2" /> Reject
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </GlassCard>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                }
-
                 return (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h2 className="text-3xl font-heading font-bold">Applications Portal</h2>
-                                <p className="text-muted-foreground">Select a job or internship to view candidates.</p>
-                            </div>
-                        </div>
-                        <div className="grid gap-4">
-                            {allPositions.length === 0 && (
-                                <div className="text-center py-12 border border-dashed border-primary/10 rounded-xl">
-                                    <p className="text-muted-foreground">No active positions found.</p>
-                                </div>
-                            )}
-                            {allPositions.map(job => {
-                                const applicantCount = jobApplications.filter(app => app.job_id === job.id).length;
-                                const isInternship = job.department === 'Internship' || job.type === 'Internship';
-                                return (
-                                    <GlassCard key={job.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <h3 className="font-bold text-xl">{job.title}</h3>
-                                                {isInternship && (
-                                                    <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Internship</span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">{job.department} • {job.location}</p>
-                                            <p className="mt-2 text-sm font-medium text-primary/80">
-                                                {applicantCount} Applicant{applicantCount !== 1 ? 's' : ''}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => setSelectedJobId(job.id)}
-                                            className="bg-primary/5 hover:bg-primary/10 text-foreground"
-                                        >
-                                            View Applications
-                                        </Button>
-                                    </GlassCard>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <ApplicationsManager
+                        allPositions={allPositions}
+                        jobApplications={jobApplications}
+                        selectedJobId={selectedJobId}
+                        setSelectedJobId={setSelectedJobId}
+                        updateJobApplicationStatus={updateJobApplicationStatus}
+                        updateJobApplicationDetails={updateJobApplicationDetails}
+                    />
                 );
             case "team":
                 return (
@@ -880,13 +766,6 @@ const AdminDashboard = () => {
                 <header className="h-20 border-b border-primary/5 bg-background/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
                     <h2 className="font-semibold text-lg capitalize">{activeTab}</h2>
                     <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                            <input
-                                placeholder="Search..."
-                                className="bg-primary/5 border border-primary/10 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-primary"
-                            />
-                        </div>
                         <button className="w-10 h-10 rounded-full border border-primary/10 flex items-center justify-center hover:bg-primary/5">
                             <Bell className="w-4 h-4" />
                         </button>
@@ -1228,7 +1107,7 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                                     <Plus className="w-4 h-4 mr-1" /> Add Field
                                 </Button>
                             </div>
-                            
+
                             {formFields.length === 0 && (
                                 <p className="text-xs text-muted-foreground italic py-2">No custom fields added yet. Click "+ Add Field" above to customize questions.</p>
                             )}
@@ -1239,7 +1118,7 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                                         <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
                                             <div className="space-y-1">
                                                 <label className="text-xs text-muted-foreground">Field Label *</label>
@@ -1717,7 +1596,7 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                                     <Plus className="w-4 h-4 mr-1" /> Add Field
                                 </Button>
                             </div>
-                            
+
                             {formFields.length === 0 && (
                                 <p className="text-xs text-muted-foreground italic py-2">No custom fields added. Default fields (Name, Email, Phone) will always be included.</p>
                             )}
@@ -1728,7 +1607,7 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                                         <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
                                             <div className="space-y-1">
                                                 <label className="text-xs text-muted-foreground">Field Label *</label>
@@ -2535,11 +2414,10 @@ const AddInternshipDialog = ({ onAdd }: { onAdd: (data: any) => Promise<any> | v
                                         type="button"
                                         key={opt.id}
                                         onClick={() => setSelectedIcon(opt.id)}
-                                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-xs transition-all ${
-                                            isSelected
+                                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-xs transition-all ${isSelected
                                                 ? "bg-metal-blue-500/20 border-metal-blue-500 text-metal-blue-300 shadow-md shadow-metal-blue-500/20"
                                                 : "bg-background/50 border-primary/10 text-muted-foreground hover:bg-primary/10 hover:text-foreground"
-                                        }`}
+                                            }`}
                                     >
                                         <Icon className="w-5 h-5 mb-1" />
                                         <span className="text-[10px] truncate max-w-full">{opt.label}</span>
