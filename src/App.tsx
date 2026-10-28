@@ -44,7 +44,6 @@ const App = () => {
         <Sonner />
         <DataProvider>
           <OfflineIndicator />
-          <PWAInstallPrompt />
           <PWAUpdateNotification
             needRefresh={needRefresh}
             onUpdate={() => updateServiceWorker(true)}

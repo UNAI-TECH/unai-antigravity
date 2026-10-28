@@ -62,13 +62,14 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onInstalled 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 30, scale: 0.95 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 z-[990] w-[calc(100vw-2rem)] max-w-md p-5 rounded-3xl bg-[#0A0B10]/95 border border-indigo-500/30 backdrop-blur-2xl shadow-2xl shadow-indigo-950/50 text-white"
-        >
+        <div className="fixed bottom-4 sm:bottom-6 inset-x-0 px-3 sm:px-4 flex justify-center md:justify-end md:right-6 md:left-auto md:px-0 z-[990] pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="pointer-events-auto w-full max-w-sm sm:max-w-md p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-[#0A0B10]/95 border border-indigo-500/30 backdrop-blur-2xl shadow-2xl shadow-indigo-950/50 text-white relative overflow-hidden"
+          >
           {/* Ambient Glow */}
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -161,6 +162,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onInstalled 
             </div>
           </div>
         </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

@@ -136,7 +136,7 @@ export const HeroSection = () => {
           height="600"
           className="w-full h-auto object-cover opacity-80"
           loading="eager"
-          fetchPriority="high"
+          fetchpriority="high"
           style={{ contentVisibility: 'auto' }}
         />
       </div>

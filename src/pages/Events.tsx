@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { 
@@ -562,9 +562,6 @@ const Events = () => {
   const eventId = searchParams.get("id");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(eventId);
   const [activeFilter, setActiveFilter] = useState("All");
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
   useEffect(() => {
     setSelectedEventId(eventId || null);
@@ -589,13 +586,13 @@ const Events = () => {
         {/* Subtle Ambient Glow */}
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[500px] bg-gradient-to-b from-blue-100/60 via-indigo-50/40 to-transparent blur-[140px] pointer-events-none -z-10" />
 
-        {/* ── Separate Hero Section (ONLY for Banner Image, 3:1 Ratio) ──────── */}
-        <section className="relative w-full pt-24 sm:pt-28 bg-[#F8FAFC]">
+        {/* ── Separate Hero Section (ONLY for Banner Image) ──────── */}
+        <section className="relative w-full pt-20 sm:pt-28 bg-[#F8FAFC]">
           {/* Top Navigation & Share Toolbar */}
-          <div className="max-w-[1340px] mx-auto px-4 sm:px-8 md:px-12 mb-4 flex items-center justify-between">
+          <div className="max-w-[1340px] mx-auto px-4 sm:px-8 md:px-12 mb-3 sm:mb-4 flex items-center justify-between">
             <button
               onClick={handleCloseEvent}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm text-xs sm:text-sm font-semibold transition-all duration-300 group"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm text-xs sm:text-sm font-semibold transition-all duration-300 group"
             >
               <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               <span>Back to all Events</span>
@@ -607,25 +604,24 @@ const Events = () => {
                   navigator.clipboard.writeText(window.location.href);
                   toast.success("Event link copied to clipboard!");
                 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm text-xs sm:text-sm font-semibold transition-all duration-300"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm text-xs sm:text-sm font-semibold transition-all duration-300"
                 title="Copy event link"
               >
                 <Share2 className="w-3.5 h-3.5 text-primary" />
-                <span className="hidden sm:inline">Share</span>
+                <span>Share</span>
               </button>
             </div>
           </div>
 
-          {/* Ultra-Wide 3:1 Banner Container (No popup container, sleek cinematic aspect ratio) */}
+          {/* Ultra-Wide Banner Container (Responsive aspect ratio without obscuring overlay badges) */}
           <div 
-            className="relative w-full aspect-[3/1] max-w-[1920px] mx-auto overflow-hidden bg-slate-950 border-y border-slate-200/90 shadow-sm group"
-            style={{ aspectRatio: "3 / 1" }}
+            className="relative w-full aspect-[2.2/1] sm:aspect-[2.6/1] md:aspect-[3/1] max-w-[1920px] mx-auto overflow-hidden bg-slate-950 border-y border-slate-200/90 shadow-sm group"
           >
             {selectedEvent.banner ? (
               <img
                 src={selectedEvent.banner}
                 alt={selectedEvent.title}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.01]"
+                className="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-[1.01]"
               />
             ) : selectedEvent.cover_image ? (
               <img
@@ -639,61 +635,61 @@ const Events = () => {
                 <span className="text-sm font-semibold text-slate-600">UNAI TECH Special Event</span>
               </div>
             )}
-
-            {/* Badges on Banner corner */}
-            <div className="absolute top-4 left-4 sm:top-6 sm:left-8 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-xs font-bold uppercase tracking-wider text-slate-900 border border-slate-200 shadow-md">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {selectedEvent.type || "Conference"}
-              </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-600/90 backdrop-blur-md text-xs font-semibold text-white border border-white/20 shadow-sm">
-                {selectedEvent.status === 'past' ? 'Past Event' : 'Official Event'}
-              </span>
-            </div>
           </div>
         </section>
 
         {/* ── Main Content Section (Below the Separate Hero Section) ──────── */}
-        <main className="py-10 sm:py-14 px-4 sm:px-8 md:px-12 max-w-[1240px] mx-auto">
+        <main className="py-8 sm:py-14 px-4 sm:px-8 md:px-12 max-w-[1240px] mx-auto">
           {/* Event Header Block (Cleanly below the hero banner) */}
-          <div className="mb-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+          <div className="mb-8 sm:mb-10">
+            {/* Badges placed cleanly above title without overlaying banner */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-3 sm:mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white text-xs font-bold uppercase tracking-wider text-slate-900 border border-slate-200/90 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {selectedEvent.type || "Conference"}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-blue-600 text-xs font-semibold text-white shadow-sm">
+                {selectedEvent.status === 'past' ? 'Past Event' : 'Official Event'}
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
               {selectedEvent.title}
             </h1>
             {selectedEvent.caption && (
-              <p className="text-lg sm:text-xl text-primary font-semibold mt-3 leading-snug">
+              <p className="text-base sm:text-xl text-primary font-semibold mt-2.5 sm:mt-3 leading-snug">
                 {selectedEvent.caption}
               </p>
             )}
 
             {/* Key Info Cards Grid - Light Theme */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-6">
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-primary" /> Date
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mt-6">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-primary shrink-0" /> Date
                 </div>
-                <div className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{formattedDate}</div>
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">{formattedDate}</div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  <MapPin className="w-3.5 h-3.5 text-primary" /> Venue
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" /> Venue
                 </div>
-                <div className="text-sm sm:text-base font-extrabold text-slate-900 truncate" title={selectedEvent.location}>{selectedEvent.location || "TBA"}</div>
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 line-clamp-2 leading-tight" title={selectedEvent.location}>{selectedEvent.location || "TBA"}</div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  <Users className="w-3.5 h-3.5 text-primary" /> Capacity
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <Users className="w-3.5 h-3.5 text-primary shrink-0" /> Capacity
                 </div>
-                <div className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{selectedEvent.attendees || "Open Access"}</div>
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">{selectedEvent.attendees || "Open Access"}</div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  <Ticket className="w-3.5 h-3.5 text-primary" /> Admission
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <Ticket className="w-3.5 h-3.5 text-primary shrink-0" /> Admission
                 </div>
-                <div className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">
                   {selectedEvent.registration_type === 'manual' ? "Direct Entry" : "Online Pass"}
                 </div>
               </div>
@@ -867,7 +863,7 @@ const Events = () => {
       <main className="pt-0 min-h-screen">
 
         {/* ── Hero Section ──────────────────────────────────────────────────── */}
-        <section ref={heroRef} className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-28 px-4 sm:px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
+        <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-28 px-4 sm:px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
 
           {/* Animated grid overlay */}
           <div className="absolute inset-0 pointer-events-none" style={{
