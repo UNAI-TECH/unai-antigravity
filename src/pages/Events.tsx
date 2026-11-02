@@ -1006,7 +1006,7 @@ const Events = () => {
                     {[
                       "/Madhan_Kumar_P.JPG.jpeg",
                       "/Kamalesh_S.JPG.jpeg",
-                      "/Kishore_K.jpg.jpeg",
+                      "/1776426332350.png",
                       "/Anjali_M.JPG.jpeg"
                     ].map((img, i) => (
                       <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0f1e] overflow-hidden bg-slate-800">

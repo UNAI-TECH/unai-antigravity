@@ -29,14 +29,6 @@ const teamMembers: Array<{
             bio: "Neethi combines data-driven insights with creative storytelling to bridge the gap between complex engineering and market needs. He drives our global growth and brand recognition."
         },
         {
-            name: "Kishore",
-            role: "Marketing",
-            image: "/Kishore_K.jpg.jpeg",
-            imageClass: "object-cover object-top",
-            shortNote: "Dynamic marketing lead expertise in digital growth, community engagement, and strategic positioning of AI-native solutions.",
-            bio: "Kishore focuses on the intersection of community and technology. He ensures that our AI solutions resonate with users and build lasting value through strategic digital positioning."
-        },
-        {
             name: "Anjali Patel",
             role: "COO",
             image: "/Anjali_M.JPG.jpeg",
