@@ -14,8 +14,12 @@ CREATE TABLE IF NOT EXISTS public.internships (
     icon text DEFAULT 'Cpu',
     location text DEFAULT 'Chennai / Remote',
     stipend text DEFAULT '',
+    is_paused boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Ensure column exists if table is already created
+ALTER TABLE public.internships ADD COLUMN IF NOT EXISTS is_paused boolean DEFAULT false;
 
 -- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.internships ENABLE ROW LEVEL SECURITY;

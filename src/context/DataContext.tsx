@@ -14,6 +14,7 @@ export interface Event {
     type: string;
     description: string;
     attendees: string;
+    max_registrations?: number | string;
     status: "upcoming" | "past" | "draft";
     cover_image?: string;
     banner?: string;
@@ -96,6 +97,7 @@ export interface Internship {
     icon?: string;
     location?: string;
     stipend?: string;
+    is_paused?: boolean;
     created_at?: string;
 }
 
@@ -112,6 +114,7 @@ interface DataContextType {
     deleteJob: (id: string) => void;
     addInternship: (internship: Omit<Internship, "id" | "created_at">) => Promise<Internship | void>;
     deleteInternship: (id: string) => Promise<void>;
+    togglePauseInternship: (id: string) => Promise<void>;
     addTeamMember: (member: Omit<TeamMember, "id">) => void;
     deleteTeamMember: (id: string) => void;
     addGalleryItem: (item: Omit<GalleryItem, "id">) => void;
@@ -151,7 +154,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .from('events')
                 .select('*')
                 .order('created_at', { ascending: false });
-            if (eventsData) setEvents(eventsData as Event[]);
+
+            let loadedEvents = (eventsData as Event[]) || [];
+            try {
+                const localCustomEvents = JSON.parse(localStorage.getItem('unai_events_custom') || '[]');
+                if (Array.isArray(localCustomEvents) && localCustomEvents.length > 0) {
+                    const localMap = new Map(localCustomEvents.map((e: any) => [e.id, e]));
+                    loadedEvents = loadedEvents.map(e => localMap.has(e.id) ? { ...e, ...localMap.get(e.id) } : e);
+                    const loadedIds = new Set(loadedEvents.map(e => e.id));
+                    const missing = localCustomEvents.filter((e: any) => !loadedIds.has(e.id));
+                    loadedEvents = [...loadedEvents, ...missing];
+                }
+            } catch (e) {
+                console.error("Error reading local events:", e);
+            }
+
+            if (loadedEvents.length > 0) setEvents(loadedEvents);
+            else if (eventsData) setEvents(eventsData as Event[]);
             if (eventsError) console.error("Error fetching events:", eventsError);
 
             // Jobs
@@ -164,6 +183,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Internships
             let loadedInternships: Internship[] = [];
+            const pausedMap = (() => {
+                try {
+                    return JSON.parse(localStorage.getItem('unai_internships_paused') || '{}');
+                } catch {
+                    return {};
+                }
+            })();
+
             const { data: internData, error: internError } = await supabase
                 .from('internships')
                 .select('*')
@@ -179,6 +206,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     icon: item.icon || item.questions?.icon || "Cpu",
                     location: item.location || "Chennai / Remote",
                     stipend: item.stipend !== undefined && item.stipend !== null ? item.stipend : "",
+                    is_paused: item.is_paused !== undefined && item.is_paused !== null ? Boolean(item.is_paused) : Boolean(pausedMap[item.id]),
                     created_at: item.created_at
                 }));
             } else {
@@ -204,6 +232,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             icon: extra.icon || "Cpu",
                             location: item.location || "Chennai / Remote",
                             stipend: extra.stipend !== undefined && extra.stipend !== null ? extra.stipend : (item.salary || ""),
+                            is_paused: extra.is_paused !== undefined ? Boolean(extra.is_paused) : Boolean(pausedMap[item.id]),
                             created_at: item.created_at
                         };
                     });
@@ -227,7 +256,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (galleryData) setGalleryItems(galleryData as GalleryItem[]);
             if (galleryError) console.error("Error fetching gallery:", galleryError);
 
-            // Job Applications
+            // Event Registrations (Fetched for both public visitors and admins so capacity can auto-close registration live)
+            const { data: eventsRegData, error: eventsRegError } = await supabase
+                .from('event_registrations')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            let fetchedRegs = (eventsRegData as EventRegistration[]) || [];
+            try {
+                const localRegs = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');
+                const fetchedIds = new Set(fetchedRegs.map(r => r.id));
+                const missing = localRegs.filter((r: any) => !fetchedIds.has(r.id));
+                fetchedRegs = [...fetchedRegs, ...missing];
+            } catch (e) {
+                console.error("Error reading local registrations:", e);
+            }
+
+            setEventRegistrations(fetchedRegs);
+            if (eventsRegError) console.error("Error fetching event registrations:", eventsRegError);
+
+            // Job Applications (Admin only)
             if (isAuthenticated) {
                 const { data: appsData, error: appsError } = await supabase
                     .from('job_applications')
@@ -235,24 +283,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .order('created_at', { ascending: false });
                 if (appsData) setJobApplications(appsData as JobApplication[]);
                 if (appsError) console.error("Error fetching job applications:", appsError);
-
-                const { data: eventsRegData, error: eventsRegError } = await supabase
-                    .from('event_registrations')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                let fetchedRegs = (eventsRegData as EventRegistration[]) || [];
-                try {
-                    const localRegs = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');
-                    const fetchedIds = new Set(fetchedRegs.map(r => r.id));
-                    const missing = localRegs.filter((r: any) => !fetchedIds.has(r.id));
-                    fetchedRegs = [...fetchedRegs, ...missing];
-                } catch (e) {
-                    console.error("Error reading local registrations:", e);
-                }
-
-                setEventRegistrations(fetchedRegs);
-                if (eventsRegError) console.error("Error fetching event registrations:", eventsRegError);
             }
         };
 
@@ -265,23 +295,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const tempId = 'event_' + Date.now();
         const optimisticEvent: Event = { ...event, id: tempId };
 
+        setEvents(prev => {
+            const next = [optimisticEvent, ...prev];
+            try {
+                localStorage.setItem('unai_events_custom', JSON.stringify(next));
+            } catch (e) {}
+            return next;
+        });
+
         const { data, error } = await supabase
             .from('events')
             .insert([event])
             .select();
 
         if (data && data.length > 0) {
-            setEvents(prev => [data[0] as Event, ...prev]);
-        } else {
-            if (error) console.error("Error adding event:", error);
-            // Optimistic fallback so user sees new event right away
-            setEvents(prev => [optimisticEvent, ...prev]);
+            setEvents(prev => {
+                const next = prev.map(e => e.id === tempId ? data[0] as Event : e);
+                try {
+                    localStorage.setItem('unai_events_custom', JSON.stringify(next));
+                } catch (e) {}
+                return next;
+            });
+        } else if (error) {
+            console.error("Error adding event to Supabase:", error);
         }
     };
 
     const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
-        // Optimistically update local state so changes reflect instantly
-        setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updatedEvent } as Event : e));
+        // Optimistically update local state & localStorage so changes reflect instantly everywhere on the site
+        setEvents(prev => {
+            const next = prev.map(e => e.id === id ? { ...e, ...updatedEvent } as Event : e);
+            try {
+                localStorage.setItem('unai_events_custom', JSON.stringify(next));
+            } catch (e) {}
+            return next;
+        });
 
         const { data, error } = await supabase
             .from('events')
@@ -290,20 +338,34 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .select();
 
         if (data && data.length > 0) {
-            setEvents(prev => prev.map(e => e.id === id ? data[0] as Event : e));
+            setEvents(prev => {
+                const next = prev.map(e => e.id === id ? data[0] as Event : e);
+                try {
+                    localStorage.setItem('unai_events_custom', JSON.stringify(next));
+                } catch (e) {}
+                return next;
+            });
         }
-        if (error) console.error("Error updating event in Supabase:", error);
+        if (error) {
+            console.error("Error updating event in Supabase:", error);
+        }
     };
 
     const deleteEvent = async (id: string) => {
+        setEvents(prev => {
+            const next = prev.filter((e) => e.id !== id);
+            try {
+                localStorage.setItem('unai_events_custom', JSON.stringify(next));
+            } catch (e) {}
+            return next;
+        });
+
         const { error } = await supabase
             .from('events')
             .delete()
             .eq('id', id);
 
-        if (!error) {
-            setEvents(prev => prev.filter((e) => e.id !== id));
-        } else {
+        if (error) {
             console.error("Error deleting event:", error);
         }
     };
@@ -421,6 +483,56 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase.from('jobs').delete().eq('id', id);
 
         setInternships(prev => prev.filter(i => i.id !== id));
+        try {
+            const pausedMap = JSON.parse(localStorage.getItem('unai_internships_paused') || '{}');
+            delete pausedMap[id];
+            localStorage.setItem('unai_internships_paused', JSON.stringify(pausedMap));
+        } catch (e) {}
+    };
+
+    const togglePauseInternship = async (id: string) => {
+        const target = internships.find(i => i.id === id);
+        if (!target) return;
+        const newPaused = !target.is_paused;
+
+        // Optimistically update local state & localStorage backup
+        setInternships(prev => prev.map(i => i.id === id ? { ...i, is_paused: newPaused } : i));
+        try {
+            const pausedMap = JSON.parse(localStorage.getItem('unai_internships_paused') || '{}');
+            pausedMap[id] = newPaused;
+            localStorage.setItem('unai_internships_paused', JSON.stringify(pausedMap));
+        } catch (e) {}
+
+        // Persist to Supabase internships table
+        try {
+            const { error: internError } = await supabase
+                .from('internships')
+                .update({ is_paused: newPaused })
+                .eq('id', id);
+
+            if (internError) {
+                console.warn("Notice: update is_paused in internships:", internError.message);
+            }
+        } catch (e) {
+            console.error("Error updating internship pause status in table:", e);
+        }
+
+        // Also update jobs table fallback mirror
+        try {
+            await supabase
+                .from('jobs')
+                .update({
+                    questions: {
+                        skills: target.skills || [],
+                        icon: target.icon || 'Cpu',
+                        stipend: target.stipend || '',
+                        is_paused: newPaused
+                    }
+                })
+                .eq('id', id);
+        } catch (e) {
+            console.error("Error updating jobs mirror:", e);
+        }
     };
 
     const addTeamMember = async (member: Omit<TeamMember, "id">) => {
@@ -552,6 +664,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const addEventRegistration = async (app: Omit<EventRegistration, "id" | "created_at">) => {
+        // Enforce maximum capacity limit if configured
+        const targetEvent = events.find(e => e.id === app.event_id);
+        if (targetEvent) {
+            const rawCap = targetEvent.max_registrations
+                ? Number(targetEvent.max_registrations)
+                : parseInt(String(targetEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
+            if (!isNaN(rawCap) && rawCap > 0) {
+                const currentCount = eventRegistrations.filter(r => r.event_id === app.event_id).length;
+                if (currentCount >= rawCap) {
+                    throw new Error(`Registration is closed for this event. Maximum capacity of ${rawCap} participants has been reached.`);
+                }
+            }
+        }
+
         // Verify against duplicate event registrations
         const normalizedName = app.applicant_name?.trim().toLowerCase();
         const normalizedPhone = app.phone ? app.phone.replace(/\D/g, "") : "";
@@ -560,6 +686,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .from('event_registrations')
             .select('id, applicant_name, phone, created_at')
             .eq('event_id', app.event_id);
+
+        if (targetEvent) {
+            const rawCap = targetEvent.max_registrations
+                ? Number(targetEvent.max_registrations)
+                : parseInt(String(targetEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
+            if (!isNaN(rawCap) && rawCap > 0 && dbRecords && dbRecords.length >= rawCap) {
+                throw new Error(`Registration is closed for this event. Maximum capacity of ${rawCap} participants has been reached.`);
+            }
+        }
 
         if (dbRecords && dbRecords.length > 0) {
             const dbDuplicate = dbRecords.find(existing => {
@@ -702,6 +837,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 deleteJob,
                 addInternship,
                 deleteInternship,
+                togglePauseInternship,
                 addTeamMember,
                 deleteTeamMember,
                 addGalleryItem,

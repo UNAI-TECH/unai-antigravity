@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   ExternalLink,
   Sparkles,
-  Check
+  Check,
+  Lock
 } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
@@ -30,12 +31,18 @@ import { toast } from "sonner";
 
 // ─── Registration Modal ──────────────────────────────────────────────────────────
 const RegistrationModal = ({ event }: { event: any }) => {
-  const { addEventRegistration } = useData();
+  const { addEventRegistration, eventRegistrations } = useData();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [selectedRadio, setSelectedRadio] = useState<{ [fieldId: string]: string }>({});
   const [otherTextValues, setOtherTextValues] = useState<{ [fieldId: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const currentCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
+  const capacity = event.max_registrations
+    ? Number(event.max_registrations)
+    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+  const isCapacityReached = !isNaN(capacity) && capacity > 0 && currentCount >= capacity;
 
   // CRITICAL FIX: Lock body scroll & stop Lenis smooth scroll while modal is open
   // This allows native trackpad two-finger scrolling inside the popup without scrolling the background page.
@@ -139,6 +146,18 @@ const RegistrationModal = ({ event }: { event: any }) => {
           }
       });
   };
+
+  if (isCapacityReached) {
+    return (
+      <button
+        disabled
+        className="w-full py-4 sm:py-5 rounded-2xl bg-slate-200 text-slate-500 font-black text-sm uppercase tracking-wider border border-slate-300 shadow-none flex items-center justify-center gap-2 cursor-not-allowed select-none"
+      >
+        <Lock className="w-4 h-4 text-slate-400" />
+        Registration closed
+      </button>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -462,7 +481,13 @@ const Countdown = ({ targetDate, dark = false }: { targetDate?: string; dark?: b
 
 // ─── Event Card (1:1 Ratio Cover Image, Clean Card Layout) ────────────────────
 const EventCard = ({ event, index, onClick }: { event: any; index: number; onClick: () => void }) => {
+  const { eventRegistrations } = useData();
   const displayImage = event.cover_image || event.banner;
+  const regCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
+  const capacity = event.max_registrations
+    ? Number(event.max_registrations)
+    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+  const isFull = !isNaN(capacity) && capacity > 0 && regCount >= capacity;
 
   return (
     <motion.article
@@ -504,10 +529,15 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
         </div>
 
         {event.registration_type === 'manual' && (
-          <div className="absolute bottom-3 left-3.5 pointer-events-none">
+          <div className="absolute bottom-3 left-3.5 pointer-events-none flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
               Manual Form
             </span>
+            {isFull && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-rose-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
+                Closed
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -557,7 +587,7 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
 
 // ─── Events Page ──────────────────────────────────────────────────────────────
 const Events = () => {
-  const { events } = useData();
+  const { events, eventRegistrations } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("id");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(eventId);
@@ -578,6 +608,12 @@ const Events = () => {
   // ── Redesigned Event Preview / Detail Page (SEPARATE 3:1 ULTRA-WIDE HERO) ─────
   if (selectedEventId && selectedEvent) {
     const formattedDate = selectedEvent.date ? selectedEvent.date.split('T')[0] : "TBA";
+    const currentEventRegs = eventRegistrations.filter((r) => r.event_id === selectedEvent.id);
+    const eventCapacity = selectedEvent.max_registrations
+      ? Number(selectedEvent.max_registrations)
+      : parseInt(String(selectedEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
+    const isCapacityReached = !isNaN(eventCapacity) && eventCapacity > 0 && currentEventRegs.length >= eventCapacity;
+    const isRegistrationClosed = isCapacityReached || selectedEvent.status === 'past';
 
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-primary/20 selection:text-primary relative" style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
@@ -754,9 +790,15 @@ const Events = () => {
                       <span className="text-xs font-bold uppercase tracking-wider text-primary block">Event Countdown</span>
                       <span className="text-xs text-slate-500">Live Registration Portal</span>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
-                      Open
-                    </span>
+                    {isRegistrationClosed ? (
+                      <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200 flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Registration Closed
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                        Open {!isNaN(eventCapacity) && eventCapacity > 0 ? `(${currentEventRegs.length}/${eventCapacity})` : ''}
+                      </span>
+                    )}
                   </div>
 
                   {/* Countdown Ticker - Light Theme */}
@@ -765,7 +807,22 @@ const Events = () => {
                   </div>
 
                   {/* Action CTA */}
-                  {(selectedEvent.registration_link || selectedEvent.registration_type === 'manual') ? (
+                  {isRegistrationClosed ? (
+                    <div className="space-y-2">
+                      <button
+                        disabled
+                        className="w-full py-4 sm:py-5 rounded-2xl bg-slate-200 text-slate-500 font-black text-sm uppercase tracking-wider border border-slate-300 shadow-none flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                      >
+                        <Lock className="w-4 h-4 text-slate-400" />
+                        Registration closed
+                      </button>
+                      {isCapacityReached && (
+                        <p className="text-center text-xs font-semibold text-rose-600">
+                          Registration closed. Maximum limit of {eventCapacity} participants has been reached.
+                        </p>
+                      )}
+                    </div>
+                  ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual') ? (
                     selectedEvent.registration_type === 'manual' ? (
                       <RegistrationModal event={selectedEvent} />
                     ) : (

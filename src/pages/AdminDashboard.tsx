@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock, IndianRupee, Download, ClipboardList, FileSpreadsheet, Check } from "lucide-react";
+import { Trash2, Plus, LogOut, LayoutDashboard, Calendar, Briefcase, Users, Search, Bell, Image as ImageIcon, FileText, CheckCircle, X, Edit, GraduationCap, Clock, IndianRupee, Download, ClipboardList, FileSpreadsheet, Check, Pause, Play, Lock } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { ApplicationsManager } from "@/components/admin/ApplicationsManager";
@@ -96,7 +96,7 @@ const AdminDashboard = () => {
         isAuthenticated, logout,
         events, addEvent, deleteEvent, updateEvent,
         jobs, addJob, deleteJob,
-        internships, addInternship, deleteInternship,
+        internships, addInternship, deleteInternship, togglePauseInternship,
         teamMembers, addTeamMember, deleteTeamMember,
         galleryItems, addGalleryItem, deleteGalleryItem,
         jobApplications,
@@ -273,10 +273,15 @@ const AdminDashboard = () => {
                             )}
                             {events.map(event => {
                                 const regCount = eventRegistrations.filter(r => r.event_id === event.id).length;
+                                const rawCap = event.max_registrations
+                                    ? Number(event.max_registrations)
+                                    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+                                const hasCap = !isNaN(rawCap) && rawCap > 0;
+                                const isCapReached = hasCap && regCount >= rawCap;
                                 return (
                                     <GlassCard key={event.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
                                         <div>
-                                            <div className="flex items-center gap-3 mb-1">
+                                            <div className="flex items-center gap-3 mb-1 flex-wrap">
                                                 <h3 className="font-bold text-xl">{event.title}</h3>
                                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.status === 'upcoming' ? 'bg-green-500/20 text-green-400' : event.status === 'draft' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-muted-foreground'}`}>
                                                     {event.status}
@@ -284,14 +289,26 @@ const AdminDashboard = () => {
                                                 {event.registration_type === 'manual' && (
                                                     <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Manual Form</span>
                                                 )}
+                                                {isCapReached && (
+                                                    <span className="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded text-xs font-semibold flex items-center gap-1">
+                                                        <Lock className="w-3 h-3" /> Registration Closed (Full)
+                                                    </span>
+                                                )}
                                             </div>
                                             <p className="text-sm text-muted-foreground flex items-center gap-2">
                                                 <Calendar className="w-3 h-3" /> {event.date} • <Search className="w-3 h-3" /> {event.location}
                                             </p>
                                             {event.registration_type === 'manual' && (
-                                                <p className="mt-2 text-sm font-medium text-primary/80">
-                                                    {regCount} Registration{regCount !== 1 ? 's' : ''}
-                                                </p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <p className="text-sm font-medium text-primary/80">
+                                                        {regCount}{hasCap ? ` / ${rawCap}` : ''} Registration{regCount !== 1 ? 's' : ''}
+                                                    </p>
+                                                    {isCapReached && (
+                                                        <span className="text-xs text-rose-400 font-medium">
+                                                            • Limit of {rawCap} reached, closed on main site
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-3 flex-wrap">
@@ -387,11 +404,41 @@ const AdminDashboard = () => {
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="text-right">
-                                                <div className="text-3xl font-black text-purple-400">{activeRegistrations.length}</div>
-                                                <div className="text-xs text-muted-foreground uppercase tracking-wider">Registrations</div>
+                                                {(() => {
+                                                    const viewCap = activeEventForView.max_registrations
+                                                        ? Number(activeEventForView.max_registrations)
+                                                        : parseInt(String(activeEventForView.attendees || '').replace(/[^0-9]/g, ''), 10);
+                                                    const hasViewCap = !isNaN(viewCap) && viewCap > 0;
+                                                    const isViewCapReached = hasViewCap && activeRegistrations.length >= viewCap;
+                                                    return (
+                                                        <>
+                                                            <div className={`text-3xl font-black ${isViewCapReached ? 'text-rose-400' : 'text-purple-400'}`}>
+                                                                {activeRegistrations.length}{hasViewCap ? ` / ${viewCap}` : ''}
+                                                            </div>
+                                                            <div className={`text-xs uppercase tracking-wider font-semibold ${isViewCapReached ? 'text-rose-400' : 'text-muted-foreground'}`}>
+                                                                {isViewCapReached ? 'Capacity Reached (Closed)' : 'Registrations'}
+                                                            </div>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
+                                    {(() => {
+                                        const viewCap = activeEventForView.max_registrations
+                                            ? Number(activeEventForView.max_registrations)
+                                            : parseInt(String(activeEventForView.attendees || '').replace(/[^0-9]/g, ''), 10);
+                                        const isViewCapReached = !isNaN(viewCap) && viewCap > 0 && activeRegistrations.length >= viewCap;
+                                        if (isViewCapReached) {
+                                            return (
+                                                <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                                                    <Lock className="w-4 h-4 shrink-0" />
+                                                    <span>Maximum capacity of <strong>{viewCap}</strong> registrations reached. The "Register Now" button on the main site has automatically turned to <strong>"Registration closed"</strong>.</span>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </GlassCard>
 
                                 {/* Registrations list */}
@@ -579,6 +626,15 @@ const AdminDashboard = () => {
                                                             {intern.stipend}
                                                         </span>
                                                     )}
+                                                    {intern.is_paused ? (
+                                                        <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
+                                                            <Pause className="w-3 h-3" /> Registration Closed (Paused)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" /> Active
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl">{intern.description}</p>
                                                 <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 flex-wrap">
@@ -596,6 +652,34 @@ const AdminDashboard = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 ml-auto md:ml-0">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    await togglePauseInternship(intern.id);
+                                                    if (intern.is_paused) {
+                                                        toast.success(`Registration resumed for "${intern.role}". Careers page now shows "Apply Now".`);
+                                                    } else {
+                                                        toast.info(`Registration paused for "${intern.role}". Careers page now shows "Registration closed".`);
+                                                    }
+                                                }}
+                                                className={`transition-all flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 ${
+                                                    intern.is_paused
+                                                        ? "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+                                                        : "border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                                                }`}
+                                                title={intern.is_paused ? "Resume registration on Careers page" : "Pause registration on Careers page"}
+                                            >
+                                                {intern.is_paused ? (
+                                                    <>
+                                                        <Play className="w-3.5 h-3.5 fill-current" /> Resume
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Pause className="w-3.5 h-3.5 fill-current" /> Pause
+                                                    </>
+                                                )}
+                                            </Button>
                                             <Button
                                                 variant="destructive"
                                                 size="icon"
@@ -801,6 +885,9 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
     const [uploadProgress, setUploadProgress] = useState("");
     const [submitMode, setSubmitMode] = useState<"upcoming" | "draft">("upcoming");
     const [registrationType, setRegistrationType] = useState<"url" | "manual">("url");
+    const [eventType, setEventType] = useState("Workshop");
+    const [formAttendees, setFormAttendees] = useState("");
+    const [registrationLimit, setRegistrationLimit] = useState("");
     const [formFields, setFormFields] = useState<{ id: string, type: string, label: string, options: string[], required: boolean }[]>([]);
 
     const addFormField = () => {
@@ -917,13 +1004,17 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
 
         setUploadProgress(isDraft ? "Saving draft..." : "Creating event...");
 
+        const attendeesVal = formAttendees || (formData.get("attendees") as string) || (isDraft ? "TBA" : "100+");
+        const maxRegVal = registrationLimit ? parseInt(registrationLimit, 10) : (parseInt(attendeesVal.replace(/[^0-9]/g, ''), 10) || null);
+
         const data = {
             title,
             caption: formData.get("caption") || "",
             date: formData.get("date") || (isDraft ? "TBA" : "Upcoming"),
             location: formData.get("location") || (isDraft ? "TBA" : "Chennai"),
-            type: formData.get("type") || "Workshop",
-            attendees: formData.get("attendees") || (isDraft ? "TBA" : "100+"),
+            type: eventType || "Workshop",
+            attendees: attendeesVal,
+            max_registrations: maxRegVal,
             status: isDraft ? "draft" : "upcoming",
             description: formData.get("description") || "",
             registration_link: registrationType === "url" ? (formData.get("registration_link") || "") : "",
@@ -1024,7 +1115,7 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-purple-600">Event Type</label>
-                            <Select name="type" defaultValue="Workshop">
+                            <Select value={eventType} onValueChange={setEventType}>
                                 <SelectTrigger className="bg-primary/5 border-primary/10 focus:border-purple-500">
                                     <SelectValue placeholder="Select event type" />
                                 </SelectTrigger>
@@ -1038,11 +1129,26 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-primary">Estimated Attendees</label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-primary">Estimated Attendees *</label>
+                                {registrationType === 'manual' && registrationLimit && (
+                                    <span className="text-[11px] text-purple-400 font-medium">Matches Forms Count: {registrationLimit}</span>
+                                )}
+                            </div>
                             <Input
                                 name="attendees"
-                                placeholder="e.g., 500+"
-                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                                value={formAttendees}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setFormAttendees(val);
+                                    const num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+                                    if (!isNaN(num) && num > 0) {
+                                        setRegistrationLimit(num.toString());
+                                    }
+                                }}
+                                placeholder="e.g., 60"
+                                required
+                                className="bg-primary/5 border-primary/10 focus:border-primary font-medium"
                             />
                         </div>
                     </div>
@@ -1098,107 +1204,144 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                         </div>
                     ) : (
                         <div className="space-y-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
-                            <div className="flex items-center justify-between">
+                            {/* Manual Form Header with Registration Forms Count on Top */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-primary/10">
                                 <div>
                                     <label className="text-sm font-semibold text-primary">Registration Form Fields</label>
                                     <p className="text-[11px] text-muted-foreground">Default fields (Name, Email, Phone) are always collected automatically.</p>
                                 </div>
-                                <Button type="button" variant="outline" size="sm" onClick={addFormField} className="border-primary/20 hover:bg-primary/10">
-                                    <Plus className="w-4 h-4 mr-1" /> Add Field
-                                </Button>
-                            </div>
-
-                            {formFields.length === 0 && (
-                                <p className="text-xs text-muted-foreground italic py-2">No custom fields added yet. Click "+ Add Field" above to customize questions.</p>
-                            )}
-
-                            <div className="space-y-4">
-                                {formFields.map((field) => (
-                                    <div key={field.id} className="p-4 rounded-lg bg-background border border-primary/10 relative group">
-                                        <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Field Label *</label>
-                                                <Input
-                                                    value={field.label}
-                                                    onChange={e => updateFormField(field.id, "label", e.target.value)}
-                                                    placeholder="e.g., Designation / College Name"
-                                                    className="h-8 text-sm"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Field Type</label>
-                                                <Select value={field.type} onValueChange={v => updateFormField(field.id, "type", v)}>
-                                                    <SelectTrigger className="h-8 text-sm">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="short_answer">Short Answer</SelectItem>
-                                                        <SelectItem value="long_answer">Long Answer</SelectItem>
-                                                        <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                                                        <SelectItem value="checkboxes">Checkboxes</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={field.required}
-                                                    onChange={e => updateFormField(field.id, "required", e.target.checked)}
-                                                    className="rounded border-primary/20 accent-primary"
-                                                />
-                                                Required Field
-                                            </label>
-                                        </div>
-
-                                        {(field.type === "multiple_choice" || field.type === "checkboxes") && (
-                                            <div className="mt-3 pl-2 border-l-2 border-primary/20 space-y-2">
-                                                <label className="text-xs text-muted-foreground font-medium">Options</label>
-                                                {field.options.map((opt, oIdx) => {
-                                                    const isOther = opt.trim().toLowerCase() === "other" || opt.trim().toLowerCase() === "others";
-                                                    return (
-                                                        <div key={oIdx} className="flex items-center gap-2">
-                                                            <div className={`w-3 h-3 border border-primary/40 ${field.type === 'multiple_choice' ? 'rounded-full' : 'rounded-sm'}`} />
-                                                            <Input
-                                                                value={opt}
-                                                                onChange={e => updateFieldOption(field.id, oIdx, e.target.value)}
-                                                                placeholder={`Option ${oIdx + 1}`}
-                                                                className="h-7 text-xs flex-1"
-                                                                required
-                                                            />
-                                                            {isOther && (
-                                                                <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                                                    Custom text input
-                                                                </span>
-                                                            )}
-                                                            {field.options.length > 1 && (
-                                                                <button type="button" onClick={() => removeFieldOption(field.id, oIdx)} className="text-muted-foreground hover:text-red-400 p-1">
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                                <div className="flex items-center gap-2 pt-1">
-                                                    <Button type="button" variant="ghost" size="sm" onClick={() => addFieldOption(field.id)} className="h-6 text-xs px-2 text-primary hover:bg-primary/10">
-                                                        + Add Option
-                                                    </Button>
-                                                    <Button type="button" variant="ghost" size="sm" onClick={() => addOtherOption(field.id)} className="h-6 text-xs px-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20">
-                                                        + Add "Others"
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
+                                <div className="flex items-center gap-2.5 bg-background p-2 rounded-lg border border-primary/20 shrink-0">
+                                    <div className="space-y-0.5 text-left">
+                                        <label className="text-xs font-semibold text-purple-400 block whitespace-nowrap">Registration Forms Count *</label>
+                                        <p className="text-[10px] text-muted-foreground">Auto-closes registration at limit</p>
                                     </div>
-                                ))}
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={registrationLimit}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setRegistrationLimit(val);
+                                            setFormAttendees(val);
+                                        }}
+                                        placeholder="e.g. 60"
+                                        required={registrationType === "manual"}
+                                        className="w-20 h-8 text-sm font-bold text-center bg-primary/5 border-primary/20 focus:border-purple-500"
+                                    />
+                                </div>
                             </div>
+
+                            {formFields.length === 0 ? (
+                                <div className="py-4 text-center space-y-3">
+                                    <p className="text-xs text-muted-foreground italic">No custom fields added yet. Click "+ Add Field" below to add question fields.</p>
+                                    <Button type="button" variant="outline" size="sm" onClick={addFormField} className="border-primary/20 hover:bg-primary/10 text-primary">
+                                        <Plus className="w-4 h-4 mr-1.5" /> Add Field
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {formFields.map((field) => (
+                                        <div key={field.id} className="space-y-3">
+                                            <div className="p-4 rounded-lg bg-background border border-primary/10 relative group">
+                                                <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-muted-foreground">Field Label *</label>
+                                                        <Input
+                                                            value={field.label}
+                                                            onChange={e => updateFormField(field.id, "label", e.target.value)}
+                                                            placeholder="e.g., Designation / College Name"
+                                                            className="h-8 text-sm"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-muted-foreground">Field Type</label>
+                                                        <Select value={field.type} onValueChange={v => updateFormField(field.id, "type", v)}>
+                                                            <SelectTrigger className="h-8 text-sm">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="short_answer">Short Answer</SelectItem>
+                                                                <SelectItem value="long_answer">Long Answer</SelectItem>
+                                                                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                                                                <SelectItem value="checkboxes">Checkboxes</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={field.required}
+                                                            onChange={e => updateFormField(field.id, "required", e.target.checked)}
+                                                            className="rounded border-primary/20 accent-primary"
+                                                        />
+                                                        Required Field
+                                                    </label>
+                                                </div>
+
+                                                {(field.type === "multiple_choice" || field.type === "checkboxes") && (
+                                                    <div className="mt-3 pl-2 border-l-2 border-primary/20 space-y-2">
+                                                        <label className="text-xs text-muted-foreground font-medium">Options</label>
+                                                        {field.options.map((opt, oIdx) => {
+                                                            const isOther = opt.trim().toLowerCase() === "other" || opt.trim().toLowerCase() === "others";
+                                                            return (
+                                                                <div key={oIdx} className="flex items-center gap-2">
+                                                                    <div className={`w-3 h-3 border border-primary/40 ${field.type === 'multiple_choice' ? 'rounded-full' : 'rounded-sm'}`} />
+                                                                    <Input
+                                                                        value={opt}
+                                                                        onChange={e => updateFieldOption(field.id, oIdx, e.target.value)}
+                                                                        placeholder={`Option ${oIdx + 1}`}
+                                                                        className="h-7 text-xs flex-1"
+                                                                        required
+                                                                    />
+                                                                    {isOther && (
+                                                                        <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                                                            Custom text input
+                                                                        </span>
+                                                                    )}
+                                                                    {field.options.length > 1 && (
+                                                                        <button type="button" onClick={() => removeFieldOption(field.id, oIdx)} className="text-muted-foreground hover:text-red-400 p-1">
+                                                                            <X className="w-3 h-3" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        <div className="flex items-center gap-2 pt-1">
+                                                            <Button type="button" variant="ghost" size="sm" onClick={() => addFieldOption(field.id)} className="h-6 text-xs px-2 text-primary hover:bg-primary/10">
+                                                                + Add Option
+                                                            </Button>
+                                                            <Button type="button" variant="ghost" size="sm" onClick={() => addOtherOption(field.id)} className="h-6 text-xs px-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20">
+                                                                + Add "Others"
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Button right below this field to easily add the next field */}
+                                            <div className="flex justify-center pt-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={addFormField}
+                                                    className="w-full border-dashed border-primary/30 hover:border-purple-500 hover:bg-purple-500/10 text-purple-400 text-xs font-semibold py-2"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5 mr-1.5" /> + Add Field Below
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -1264,8 +1407,26 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
     const [uploadProgress, setUploadProgress] = useState("");
     const [registrationType, setRegistrationType] = useState<"url" | "manual">(event.registration_type || "url");
     const [eventStatus, setEventStatus] = useState<"upcoming" | "draft" | "past">((event.status as any) || "upcoming");
+    const [eventType, setEventType] = useState(event.type || "Workshop");
+    const [formAttendees, setFormAttendees] = useState(event.attendees || "");
+    const [registrationLimit, setRegistrationLimit] = useState(
+        event.max_registrations ? String(event.max_registrations) : (event.attendees?.replace(/[^0-9]/g, '') || "")
+    );
     const [submitMode, setSubmitMode] = useState<"save" | "draft">("save");
     const [formFields, setFormFields] = useState<{ id: string, type: string, label: string, options: string[], required: boolean }[]>(event.form_fields || []);
+
+    useEffect(() => {
+        if (open) {
+            setRegistrationType(event.registration_type || "url");
+            setEventStatus((event.status as any) || "upcoming");
+            setEventType(event.type || "Workshop");
+            setFormAttendees(event.attendees || "");
+            setRegistrationLimit(
+                event.max_registrations ? String(event.max_registrations) : (event.attendees?.replace(/[^0-9]/g, '') || "")
+            );
+            setFormFields(event.form_fields || []);
+        }
+    }, [open, event]);
 
     const addFormField = () => {
         setFormFields([...formFields, { id: Date.now().toString() + Math.random().toString(), type: "short_answer", label: "", options: [""], required: true }]);
@@ -1377,17 +1538,20 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
         setUploadProgress("Updating event...");
 
         const finalStatus = submitMode === "draft" ? "draft" : eventStatus;
+        const attendeesVal = formAttendees || (formData.get("attendees") as string) || event.attendees || "";
+        const maxRegVal = registrationLimit ? parseInt(registrationLimit, 10) : (parseInt(attendeesVal.replace(/[^0-9]/g, ''), 10) || null);
 
         const data = {
-            title: formData.get("title"),
-            caption: formData.get("caption"),
-            date: formData.get("date"),
-            location: formData.get("location"),
-            type: formData.get("type"),
-            attendees: formData.get("attendees"),
+            title: formData.get("title") || event.title,
+            caption: formData.get("caption") || "",
+            date: formData.get("date") || event.date,
+            location: formData.get("location") || event.location,
+            type: eventType,
+            attendees: attendeesVal,
+            max_registrations: maxRegVal,
             status: finalStatus,
-            description: formData.get("description"),
-            registration_link: registrationType === "url" ? formData.get("registration_link") : "",
+            description: formData.get("description") || event.description,
+            registration_link: registrationType === "url" ? (formData.get("registration_link") || "") : "",
             registration_type: registrationType,
             form_fields: registrationType === "manual" ? formFields : [],
             cover_image: coverUrl,
@@ -1493,7 +1657,7 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-purple-600">Event Type *</label>
-                            <Select name="type" defaultValue={event.type}>
+                            <Select value={eventType} onValueChange={setEventType}>
                                 <SelectTrigger className="bg-primary/5 border-primary/10 focus:border-purple-500">
                                     <SelectValue placeholder="Select event type" />
                                 </SelectTrigger>
@@ -1507,13 +1671,26 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-primary">Estimated Attendees *</label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-primary">Estimated Attendees *</label>
+                                {registrationType === 'manual' && registrationLimit && (
+                                    <span className="text-[11px] text-purple-400 font-medium">Matches Forms Count: {registrationLimit}</span>
+                                )}
+                            </div>
                             <Input
                                 name="attendees"
-                                defaultValue={event.attendees}
-                                placeholder="e.g., 500+"
+                                value={formAttendees}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setFormAttendees(val);
+                                    const num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+                                    if (!isNaN(num) && num > 0) {
+                                        setRegistrationLimit(num.toString());
+                                    }
+                                }}
+                                placeholder="e.g., 60"
                                 required
-                                className="bg-primary/5 border-primary/10 focus:border-primary"
+                                className="bg-primary/5 border-primary/10 focus:border-primary font-medium"
                             />
                         </div>
                     </div>
@@ -1587,107 +1764,144 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                         </div>
                     ) : (
                         <div className="space-y-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
-                            <div className="flex items-center justify-between">
+                            {/* Manual Form Header with Registration Forms Count on Top */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-primary/10">
                                 <div>
                                     <label className="text-sm font-semibold text-primary">Registration Form Fields</label>
                                     <p className="text-[11px] text-muted-foreground">Default fields (Name, Email, Phone) are always collected automatically.</p>
                                 </div>
-                                <Button type="button" variant="outline" size="sm" onClick={addFormField} className="border-primary/20 hover:bg-primary/10">
-                                    <Plus className="w-4 h-4 mr-1" /> Add Field
-                                </Button>
-                            </div>
-
-                            {formFields.length === 0 && (
-                                <p className="text-xs text-muted-foreground italic py-2">No custom fields added. Default fields (Name, Email, Phone) will always be included.</p>
-                            )}
-
-                            <div className="space-y-4">
-                                {formFields.map((field) => (
-                                    <div key={field.id} className="p-4 rounded-lg bg-background border border-primary/10 relative group">
-                                        <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Field Label *</label>
-                                                <Input
-                                                    value={field.label}
-                                                    onChange={e => updateFormField(field.id, "label", e.target.value)}
-                                                    placeholder="e.g., Designation / College Name"
-                                                    className="h-8 text-sm"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Field Type</label>
-                                                <Select value={field.type} onValueChange={v => updateFormField(field.id, "type", v)}>
-                                                    <SelectTrigger className="h-8 text-sm">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="short_answer">Short Answer</SelectItem>
-                                                        <SelectItem value="long_answer">Long Answer</SelectItem>
-                                                        <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                                                        <SelectItem value="checkboxes">Checkboxes</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={field.required}
-                                                    onChange={e => updateFormField(field.id, "required", e.target.checked)}
-                                                    className="rounded border-primary/20 accent-primary"
-                                                />
-                                                Required Field
-                                            </label>
-                                        </div>
-
-                                        {(field.type === "multiple_choice" || field.type === "checkboxes") && (
-                                            <div className="mt-3 pl-2 border-l-2 border-primary/20 space-y-2">
-                                                <label className="text-xs text-muted-foreground font-medium">Options</label>
-                                                {field.options.map((opt, oIdx) => {
-                                                    const isOther = opt.trim().toLowerCase() === "other" || opt.trim().toLowerCase() === "others";
-                                                    return (
-                                                        <div key={oIdx} className="flex items-center gap-2">
-                                                            <div className={`w-3 h-3 border border-primary/40 ${field.type === 'multiple_choice' ? 'rounded-full' : 'rounded-sm'}`} />
-                                                            <Input
-                                                                value={opt}
-                                                                onChange={e => updateFieldOption(field.id, oIdx, e.target.value)}
-                                                                placeholder={`Option ${oIdx + 1}`}
-                                                                className="h-7 text-xs flex-1"
-                                                                required
-                                                            />
-                                                            {isOther && (
-                                                                <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                                                    Custom text input
-                                                                </span>
-                                                            )}
-                                                            {field.options.length > 1 && (
-                                                                <button type="button" onClick={() => removeFieldOption(field.id, oIdx)} className="text-muted-foreground hover:text-red-400 p-1">
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                                <div className="flex items-center gap-2 pt-1">
-                                                    <Button type="button" variant="ghost" size="sm" onClick={() => addFieldOption(field.id)} className="h-6 text-xs px-2 text-primary hover:bg-primary/10">
-                                                        + Add Option
-                                                    </Button>
-                                                    <Button type="button" variant="ghost" size="sm" onClick={() => addOtherOption(field.id)} className="h-6 text-xs px-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20">
-                                                        + Add "Others"
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
+                                <div className="flex items-center gap-2.5 bg-background p-2 rounded-lg border border-primary/20 shrink-0">
+                                    <div className="space-y-0.5 text-left">
+                                        <label className="text-xs font-semibold text-purple-400 block whitespace-nowrap">Registration Forms Count *</label>
+                                        <p className="text-[10px] text-muted-foreground">Auto-closes registration at limit</p>
                                     </div>
-                                ))}
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={registrationLimit}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setRegistrationLimit(val);
+                                            setFormAttendees(val);
+                                        }}
+                                        placeholder="e.g. 60"
+                                        required={registrationType === "manual"}
+                                        className="w-20 h-8 text-sm font-bold text-center bg-primary/5 border-primary/20 focus:border-purple-500"
+                                    />
+                                </div>
                             </div>
+
+                            {formFields.length === 0 ? (
+                                <div className="py-4 text-center space-y-3">
+                                    <p className="text-xs text-muted-foreground italic py-2">No custom fields added yet. Default fields (Name, Email, Phone) will always be included.</p>
+                                    <Button type="button" variant="outline" size="sm" onClick={addFormField} className="border-primary/20 hover:bg-primary/10 text-primary">
+                                        <Plus className="w-4 h-4 mr-1.5" /> Add Field
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {formFields.map((field) => (
+                                        <div key={field.id} className="space-y-3">
+                                            <div className="p-4 rounded-lg bg-background border border-primary/10 relative group">
+                                                <button type="button" onClick={() => removeFormField(field.id)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 pr-6">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-muted-foreground">Field Label *</label>
+                                                        <Input
+                                                            value={field.label}
+                                                            onChange={e => updateFormField(field.id, "label", e.target.value)}
+                                                            placeholder="e.g., Designation / College Name"
+                                                            className="h-8 text-sm"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs text-muted-foreground">Field Type</label>
+                                                        <Select value={field.type} onValueChange={v => updateFormField(field.id, "type", v)}>
+                                                            <SelectTrigger className="h-8 text-sm">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="short_answer">Short Answer</SelectItem>
+                                                                <SelectItem value="long_answer">Long Answer</SelectItem>
+                                                                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                                                                <SelectItem value="checkboxes">Checkboxes</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={field.required}
+                                                            onChange={e => updateFormField(field.id, "required", e.target.checked)}
+                                                            className="rounded border-primary/20 accent-primary"
+                                                        />
+                                                        Required Field
+                                                    </label>
+                                                </div>
+
+                                                {(field.type === "multiple_choice" || field.type === "checkboxes") && (
+                                                    <div className="mt-3 pl-2 border-l-2 border-primary/20 space-y-2">
+                                                        <label className="text-xs text-muted-foreground font-medium">Options</label>
+                                                        {field.options.map((opt, oIdx) => {
+                                                            const isOther = opt.trim().toLowerCase() === "other" || opt.trim().toLowerCase() === "others";
+                                                            return (
+                                                                <div key={oIdx} className="flex items-center gap-2">
+                                                                    <div className={`w-3 h-3 border border-primary/40 ${field.type === 'multiple_choice' ? 'rounded-full' : 'rounded-sm'}`} />
+                                                                    <Input
+                                                                        value={opt}
+                                                                        onChange={e => updateFieldOption(field.id, oIdx, e.target.value)}
+                                                                        placeholder={`Option ${oIdx + 1}`}
+                                                                        className="h-7 text-xs flex-1"
+                                                                        required
+                                                                    />
+                                                                    {isOther && (
+                                                                        <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                                                            Custom text input
+                                                                        </span>
+                                                                    )}
+                                                                    {field.options.length > 1 && (
+                                                                        <button type="button" onClick={() => removeFieldOption(field.id, oIdx)} className="text-muted-foreground hover:text-red-400 p-1">
+                                                                            <X className="w-3 h-3" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        <div className="flex items-center gap-2 pt-1">
+                                                            <Button type="button" variant="ghost" size="sm" onClick={() => addFieldOption(field.id)} className="h-6 text-xs px-2 text-primary hover:bg-primary/10">
+                                                                + Add Option
+                                                            </Button>
+                                                            <Button type="button" variant="ghost" size="sm" onClick={() => addOtherOption(field.id)} className="h-6 text-xs px-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20">
+                                                                + Add "Others"
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Button right below this field to easily add the next field */}
+                                            <div className="flex justify-center pt-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={addFormField}
+                                                    className="w-full border-dashed border-primary/30 hover:border-purple-500 hover:bg-purple-500/10 text-purple-400 text-xs font-semibold py-2"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5 mr-1.5" /> + Add Field Below
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
