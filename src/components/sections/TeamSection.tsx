@@ -21,20 +21,20 @@ const teamMembers: Array<{
     imageClass?: string;
 }> = [
         {
-            name: "Neethi selvan",
-            role: "Marketing",
-            image: "/1776426332350.png",
-            imageClass: "object-cover object-top",
-            shortNote: "Visionary marketing strategist focused on communicating the transformative power of AI and building strong global brand presence.",
-            bio: "Neethi combines data-driven insights with creative storytelling to bridge the gap between complex engineering and market needs. He drives our global growth and brand recognition."
-        },
-        {
             name: "Anjali Patel",
             role: "COO",
             image: "/Anjali_M.JPG.jpeg",
             imageClass: "object-cover object-top",
             shortNote: "Strategic human resource leader dedicated to building high-performing teams and fostering a culture of innovation and inclusivity.",
             bio: "Anjali brings over a decade of experience in talent acquisition and organizational development. She is passionate about creating environments where engineers and visionaries can thrive together to build the next generation of technology."
+        },
+        {
+            name: "Kamalesh",
+            role: "AI Engineer",
+            image: "/Kamalesh_S.JPG.jpeg",
+            imageClass: "object-cover object-top",
+            shortNote: "Specializing in frontier AI research and implementing sophisticated neural architectures that drive the core intelligence of our systems.",
+            bio: "Kamalesh is at the forefront of our AI research. He translates complex mathematical models into production-ready intelligence, ensuring UNAI TECH remains at the cutting edge of what's possible."
         },
         {
             name: "Madhan Kumar",
@@ -45,12 +45,12 @@ const teamMembers: Array<{
             bio: "With a background in high-performance computing, Madhan leads our full-stack engineering efforts. He ensures that our sophisticated AI capabilities are delivered through intuitive and lightning-fast interfaces."
         },
         {
-            name: "Kamalesh",
-            role: "AI Engineer",
-            image: "/Kamalesh_S.JPG.jpeg",
+            name: "Neethi selvan",
+            role: "Marketing",
+            image: "/1776426332350.png",
             imageClass: "object-cover object-top",
-            shortNote: "Specializing in frontier AI research and implementing sophisticated neural architectures that drive the core intelligence of our systems.",
-            bio: "Kamalesh is at the forefront of our AI research. He translates complex mathematical models into production-ready intelligence, ensuring UNAI TECH remains at the cutting edge of what's possible."
+            shortNote: "Visionary marketing strategist focused on communicating the transformative power of AI and building strong global brand presence.",
+            bio: "Neethi combines data-driven insights with creative storytelling to bridge the gap between complex engineering and market needs. He drives our global growth and brand recognition."
         }
     ];
 

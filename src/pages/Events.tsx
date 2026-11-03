@@ -1004,10 +1004,10 @@ const Events = () => {
                 >
                   <div className="flex -space-x-3">
                     {[
-                      "/Madhan_Kumar_P.JPG.jpeg",
+                      "/Anjali_M.JPG.jpeg",
                       "/Kamalesh_S.JPG.jpeg",
-                      "/1776426332350.png",
-                      "/Anjali_M.JPG.jpeg"
+                      "/Madhan_Kumar_P.JPG.jpeg",
+                      "/1776426332350.png"
                     ].map((img, i) => (
                       <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0f1e] overflow-hidden bg-slate-800">
                         <img src={img} alt="Team" className="w-full h-full object-cover" />
