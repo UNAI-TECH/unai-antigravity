@@ -40,6 +40,55 @@ export interface EventRegistration {
     amount_paid?: number | string;
 }
 
+/**
+ * Normalizes event paid configuration across devices (desktop, mobile, tablet),
+ * ensuring that paid status, ticket amount, and Razorpay button IDs are accurately
+ * preserved even if new Supabase database columns are not yet provisioned.
+ */
+export const normalizeEventPaidData = (event: any): Event => {
+    if (!event) return event;
+    let is_paid = Boolean(event.is_paid === true || event.is_paid === 'true' || event.is_paid === 1 || event.is_paid === '1');
+    let amount = event.amount !== undefined && event.amount !== null && event.amount !== '' ? Number(event.amount) : 0;
+    let payment_button_id = event.payment_button_id ? String(event.payment_button_id).trim() : '';
+
+    // Check for embedded config in description or caption
+    const rawText = `${event.description || ''} ${event.caption || ''}`;
+    const match = rawText.match(/__PAID_CONFIG__:(\{.*?\})/);
+    if (match && match[1]) {
+        try {
+            const parsed = JSON.parse(match[1]);
+            if (!is_paid && parsed.is_paid) is_paid = true;
+            if ((isNaN(amount) || amount <= 0) && parsed.amount) amount = Number(parsed.amount);
+            if (!payment_button_id && parsed.payment_button_id) payment_button_id = String(parsed.payment_button_id).trim();
+        } catch {}
+    }
+
+    if (!isNaN(amount) && amount > 0) {
+        is_paid = true;
+    }
+
+    if (is_paid && (!payment_button_id || payment_button_id.length === 0)) {
+        payment_button_id = "pl_TxxlM2Z9Q4JvBr";
+    }
+
+    // Clean display description and caption so attendees don't see internal metadata tag
+    const cleanDesc = typeof event.description === 'string'
+        ? event.description.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()
+        : event.description;
+    const cleanCaption = typeof event.caption === 'string'
+        ? event.caption.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()
+        : event.caption;
+
+    return {
+        ...event,
+        description: cleanDesc,
+        caption: cleanCaption,
+        is_paid,
+        amount: is_paid ? (amount || 0) : 0,
+        payment_button_id: is_paid ? payment_button_id : ''
+    };
+};
+
 export interface JobQuestion {
     id: string;
     question: string;
@@ -178,9 +227,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.error("Error reading local events:", e);
             }
 
+            // Normalize all events across desktop and mobile devices
+            const normalizedLoadedEvents = loadedEvents.map(normalizeEventPaidData);
+
             if (!isMounted) return;
-            if (loadedEvents.length > 0) setEvents(loadedEvents);
-            else if (eventsData) setEvents(eventsData as Event[]);
+            if (normalizedLoadedEvents.length > 0) setEvents(normalizedLoadedEvents);
+            else if (eventsData) setEvents((eventsData as Event[]).map(normalizeEventPaidData));
             if (eventsError) console.error("Error fetching events:", eventsError);
 
             // Jobs
@@ -339,12 +391,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Fallback: If is_paid, amount, or payment_button_id columns are not yet in Supabase schema
             if (error.message && (error.message.includes('is_paid') || error.message.includes('amount') || error.message.includes('payment_button_id'))) {
                 const { is_paid, amount, payment_button_id, ...fallbackEvent } = event as any;
+                const isPaid = Boolean(is_paid) || Number(amount || 0) > 0;
+                if (isPaid) {
+                    const paidConfig = `__PAID_CONFIG__:${JSON.stringify({ is_paid: true, amount: Number(amount) || 0, payment_button_id: payment_button_id || 'pl_TxxlM2Z9Q4JvBr' })}`;
+                    fallbackEvent.description = fallbackEvent.description ? `${fallbackEvent.description}\n\n${paidConfig}` : paidConfig;
+                }
                 const { data: fallbackData, error: fbError } = await supabase
                     .from('events')
                     .insert([fallbackEvent])
                     .select();
                 if (fallbackData && fallbackData.length > 0) {
-                    const mergedEvent = { ...fallbackData[0], is_paid, amount, payment_button_id } as Event;
+                    const mergedEvent = normalizeEventPaidData({ ...fallbackData[0], is_paid, amount, payment_button_id });
                     setEvents(prev => {
                         const next = prev.map(e => e.id === tempId ? mergedEvent : e);
                         try {
@@ -387,14 +444,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error("Error updating event in Supabase:", error);
             if (error.message && (error.message.includes('is_paid') || error.message.includes('amount') || error.message.includes('payment_button_id'))) {
                 const { is_paid, amount, payment_button_id, ...fallbackUpdates } = updatedEvent as any;
+                const isPaid = Boolean(is_paid) || Number(amount || 0) > 0;
+                if (isPaid && fallbackUpdates.description !== undefined) {
+                    const paidConfig = `__PAID_CONFIG__:${JSON.stringify({ is_paid: true, amount: Number(amount) || 0, payment_button_id: payment_button_id || 'pl_TxxlM2Z9Q4JvBr' })}`;
+                    fallbackUpdates.description = fallbackUpdates.description ? `${fallbackUpdates.description.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()}\n\n${paidConfig}` : paidConfig;
+                }
                 const { data: fbData } = await supabase
                     .from('events')
                     .update(fallbackUpdates)
                     .eq('id', id)
                     .select();
                 if (fbData && fbData.length > 0) {
+                    const mergedEvent = normalizeEventPaidData({ ...fbData[0], is_paid, amount, payment_button_id });
                     setEvents(prev => {
-                        const next = prev.map(e => e.id === id ? { ...fbData[0], is_paid, amount, payment_button_id } as Event : e);
+                        const next = prev.map(e => e.id === id ? mergedEvent : e);
                         try {
                             localStorage.setItem('unai_events_custom', JSON.stringify(next));
                         } catch (e) {}
@@ -767,20 +830,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // ─── Mandatory Payment Enforcement for Paid Events ─────────
-        let isPaidEvent = Boolean(targetEvent?.is_paid);
-        let expectedAmount = targetEvent ? Number(targetEvent.amount || 0) : 0;
+        const normalizedTarget = targetEvent ? normalizeEventPaidData(targetEvent) : null;
+        let isPaidEvent = Boolean(normalizedTarget?.is_paid) || (normalizedTarget ? Number(normalizedTarget.amount || 0) > 0 : false);
+        let expectedAmount = normalizedTarget ? Number(normalizedTarget.amount || 0) : 0;
 
-        // If targetEvent wasn't in memory, query Supabase to ensure accurate paid configuration
-        if (!targetEvent) {
+        // If targetEvent wasn't in memory or wasn't marked paid, query Supabase to ensure accurate paid configuration
+        if (!isPaidEvent) {
             try {
                 const { data: dbEvent } = await supabase
                     .from('events')
-                    .select('is_paid, amount')
+                    .select('*')
                     .eq('id', app.event_id)
                     .maybeSingle();
                 if (dbEvent) {
-                    isPaidEvent = Boolean(dbEvent.is_paid);
-                    expectedAmount = Number(dbEvent.amount || 0);
+                    const normalizedDb = normalizeEventPaidData(dbEvent);
+                    if (normalizedDb.is_paid || Number(normalizedDb.amount || 0) > 0) {
+                        isPaidEvent = true;
+                        expectedAmount = Number(normalizedDb.amount || 0);
+                    }
                 }
             } catch (err) {
                 console.warn("Could not verify event paid status from DB:", err);

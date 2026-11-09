@@ -23,7 +23,7 @@ import {
   IndianRupee,
   Loader2
 } from "lucide-react";
-import { useData } from "@/context/DataContext";
+import { useData, normalizeEventPaidData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -36,6 +36,11 @@ import { RazorpayPaymentButton } from "@/components/events/RazorpayPaymentButton
 // ─── Registration Modal ──────────────────────────────────────────────────────────
 const RegistrationModal = ({ event }: { event: any }) => {
   const { addEventRegistration, eventRegistrations } = useData();
+  const normalizedEvent = normalizeEventPaidData(event);
+  const isPaid = Boolean(normalizedEvent.is_paid) || Number(normalizedEvent.amount || 0) > 0;
+  const eventAmount = Number(normalizedEvent.amount || 0);
+  const paymentButtonId = normalizedEvent.payment_button_id || "pl_TxxlM2Z9Q4JvBr";
+
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"form" | "payment" | "success">("form");
   const [formData, setFormData] = useState<any>({});
@@ -44,10 +49,10 @@ const RegistrationModal = ({ event }: { event: any }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentResult, setPaymentResult] = useState<any>(null);
 
-  const currentCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
-  const capacity = event.max_registrations
-    ? Number(event.max_registrations)
-    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+  const currentCount = eventRegistrations.filter((r) => r.event_id === normalizedEvent.id).length;
+  const capacity = normalizedEvent.max_registrations
+    ? Number(normalizedEvent.max_registrations)
+    : parseInt(String(normalizedEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
   const isCapacityReached = !isNaN(capacity) && capacity > 0 && currentCount >= capacity;
 
   // Lock body scroll & stop Lenis smooth scroll while modal is open
@@ -91,8 +96,8 @@ const RegistrationModal = ({ event }: { event: any }) => {
     e.preventDefault();
 
     // Validate any selected "Other" fields that are required
-    if (event.form_fields && Array.isArray(event.form_fields)) {
-      for (const field of event.form_fields) {
+    if (normalizedEvent.form_fields && Array.isArray(normalizedEvent.form_fields)) {
+      for (const field of normalizedEvent.form_fields) {
         if (field.type === 'multiple_choice' && field.required) {
           const selected = selectedRadio[field.id];
           const isOther = selected && (selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others');
@@ -105,7 +110,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
     }
 
     // If it's a paid event, validate required attendee information and move strictly to payment step
-    if (event.is_paid) {
+    if (isPaid || eventAmount > 0) {
       const name = formData['name']?.trim();
       const email = formData['email']?.trim();
       const phone = formData['phone']?.trim();
@@ -124,19 +129,26 @@ const RegistrationModal = ({ event }: { event: any }) => {
         sessionStorage.setItem(
           'unai_pending_paid_registration',
           JSON.stringify({
-            event_id: event.id,
-            event_title: event.title,
+            event_id: normalizedEvent.id,
+            event_title: normalizedEvent.title,
             applicant_name: name,
             email,
             phone,
             answers,
-            amount: Number(event.amount) || 0,
+            amount: eventAmount,
           })
         );
       } catch (err) {
         console.error("Failed to store pending registration:", err);
       }
 
+      setStep("payment");
+      return;
+    }
+
+    // Safety check: paid events can NEVER pass here
+    if (isPaid || eventAmount > 0) {
+      toast.error("Payment is compulsory for this event. Please complete the payment step.");
       setStep("payment");
       return;
     }
@@ -153,7 +165,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
 
     try {
       await addEventRegistration({
-        event_id: event.id,
+        event_id: normalizedEvent.id,
         applicant_name: name,
         email,
         phone,
@@ -181,12 +193,6 @@ const RegistrationModal = ({ event }: { event: any }) => {
       return;
     }
 
-    const eventAmount = Number(event.amount) || 0;
-    if (event.is_paid && eventAmount <= 0) {
-      toast.error("Invalid event fee configuration. Please contact the organizers.");
-      return;
-    }
-
     setIsSubmitting(true);
     const name = formData['name'] || '';
     const email = formData['email'] || '';
@@ -199,7 +205,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
 
     try {
       await addEventRegistration({
-        event_id: event.id,
+        event_id: normalizedEvent.id,
         applicant_name: name,
         email,
         phone,
@@ -283,9 +289,9 @@ const RegistrationModal = ({ event }: { event: any }) => {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all duration-300 flex items-center justify-center gap-3 group cursor-pointer">
-          {event.is_paid ? (
+          {isPaid ? (
             <>
-              Register & Pay ₹{Number(event.amount || 0).toLocaleString("en-IN")}{" "}
+              Register & Pay ₹{eventAmount.toLocaleString("en-IN")}{" "}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </>
           ) : (
@@ -297,20 +303,18 @@ const RegistrationModal = ({ event }: { event: any }) => {
       </DialogTrigger>
       <DialogContent 
         data-lenis-prevent
-        onWheel={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
-        className="sm:max-w-[620px] w-[95vw] bg-white text-slate-900 border border-slate-200 p-6 sm:p-8 rounded-[2rem] max-h-[88vh] overflow-y-auto custom-scrollbar shadow-2xl overscroll-contain"
+        className="sm:max-w-[620px] w-[95vw] bg-white text-slate-900 border border-slate-200 p-5 sm:p-8 rounded-[2rem] max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl overscroll-contain z-[60]"
         style={{ overscrollBehavior: 'contain' }}
       >
         {/* Step Indicator for Paid Events */}
-        {event.is_paid && step !== "success" && (
+        {isPaid && step !== "success" && (
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${step === "form" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"}`}>
               <span>1</span> Attendee Details
             </div>
             <div className="w-6 h-px bg-slate-200" />
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${step === "payment" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500"}`}>
-              <span>2</span> Payment (₹{Number(event.amount || 0).toLocaleString("en-IN")})
+              <span>2</span> Razorpay Payment (₹{eventAmount.toLocaleString("en-IN")})
             </div>
           </div>
         )}
@@ -324,19 +328,19 @@ const RegistrationModal = ({ event }: { event: any }) => {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Registration Open</span>
                 </div>
-                {event.is_paid && (
+                {isPaid && (
                   <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-black">
                     <IndianRupee className="w-3.5 h-3.5" />
-                    {Number(event.amount || 0).toLocaleString("en-IN")}
+                    {eventAmount.toLocaleString("en-IN")}
                   </span>
                 )}
               </div>
               <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-                Register for {event.title}
+                Register for {normalizedEvent.title}
               </DialogTitle>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                {event.is_paid
-                  ? "Please fill in your details below to proceed to the secure payment step."
+                {isPaid
+                  ? "Please fill in your attendee details below to proceed to the secure Razorpay payment step."
                   : "Please fill in your details below to secure your entry pass."}
               </p>
             </DialogHeader>
@@ -529,9 +533,9 @@ const RegistrationModal = ({ event }: { event: any }) => {
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       Submitting Registration...
                     </>
-                  ) : event.is_paid ? (
+                  ) : isPaid ? (
                     <>
-                      Proceed to Payment (₹{Number(event.amount || 0).toLocaleString("en-IN")})
+                      Proceed to Razorpay Payment (₹{eventAmount.toLocaleString("en-IN")})
                       <ArrowRight className="w-4 h-4" />
                     </>
                   ) : (
@@ -553,11 +557,15 @@ const RegistrationModal = ({ event }: { event: any }) => {
         {step === "payment" && (
           <div className="space-y-6">
             <DialogHeader>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Payment Required</span>
+              </div>
               <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-                Complete Payment
+                Complete Razorpay Payment
               </DialogTitle>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Pay using the secure Razorpay button below to finalize your registration for <span className="font-bold text-slate-800">{event.title}</span>.
+                Pay using the official Razorpay payment button below to process your fee and finalize your registration for <span className="font-bold text-slate-800">{normalizedEvent.title}</span>.
               </p>
             </DialogHeader>
 
@@ -577,11 +585,21 @@ const RegistrationModal = ({ event }: { event: any }) => {
               </button>
             </div>
 
-            {/* Embedded Razorpay Button */}
+            {/* Complete Embedded Razorpay Payment Button */}
             <RazorpayPaymentButton
-              buttonId={event.payment_button_id || "pl_TxxlM2Z9Q4JvBr"}
-              amount={event.amount}
+              buttonId={paymentButtonId}
+              amount={eventAmount}
               onSuccess={handlePaymentSuccess}
+              beforePayment={() => {
+                const name = formData['name']?.trim();
+                const email = formData['email']?.trim();
+                const phone = formData['phone']?.trim();
+                if (!name || !email || !phone) {
+                  toast.error("Please enter your Full Name, Email, and Phone number before paying.");
+                  return false;
+                }
+                return true;
+              }}
             />
 
             {isSubmitting && (
@@ -598,7 +616,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
                 onClick={() => setStep("form")}
                 className="w-full text-slate-600 border-slate-200"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" /> Back to Registration Form
+                <ChevronLeft className="w-4 h-4 mr-1" /> Back to Attendee Details
               </Button>
             </div>
           </div>
@@ -619,10 +637,10 @@ const RegistrationModal = ({ event }: { event: any }) => {
 
             <div className="space-y-2 max-w-md">
               <h3 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Playfair Display', serif" }}>
-                {event.is_paid ? "Payment & Registration Confirmed!" : "Registration Successful!"}
+                {isPaid ? "Payment & Registration Confirmed!" : "Registration Successful!"}
               </h3>
               <p className="text-slate-600 text-sm">
-                Woohoo! You are officially registered for <span className="font-bold text-slate-900">{event.title}</span>. A confirmation has been recorded.
+                Woohoo! You are officially registered for <span className="font-bold text-slate-900">{normalizedEvent.title}</span>. A confirmation has been recorded.
               </p>
             </div>
 
@@ -636,11 +654,11 @@ const RegistrationModal = ({ event }: { event: any }) => {
                 <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Email & Contact</span>
                 <span className="font-semibold text-slate-700">{formData['email']} • {formData['phone']}</span>
               </div>
-              {event.is_paid && (
+              {isPaid && (
                 <>
                   <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Amount Paid</span>
-                    <span className="font-black text-emerald-600 text-base">₹{Number(event.amount || 0).toLocaleString("en-IN")}</span>
+                    <span className="font-black text-emerald-600 text-base">₹{eventAmount.toLocaleString("en-IN")}</span>
                   </div>
                   {paymentResult?.payment_id && (
                     <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
@@ -778,8 +796,12 @@ const Countdown = ({ targetDate, dark = false }: { targetDate?: string; dark?: b
 };
 
 // ─── Event Card (1:1 Ratio Cover Image, Clean Card Layout) ────────────────────
-const EventCard = ({ event, index, onClick }: { event: any; index: number; onClick: () => void }) => {
+const EventCard = ({ event: rawEvent, index, onClick }: { event: any; index: number; onClick: () => void }) => {
   const { eventRegistrations } = useData();
+  const event = normalizeEventPaidData(rawEvent);
+  const isPaid = Boolean(event.is_paid) || Number(event.amount || 0) > 0;
+  const eventAmount = Number(event.amount || 0);
+
   const displayImage = event.cover_image || event.banner;
   const regCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
   const capacity = event.max_registrations
@@ -821,9 +843,9 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               {event.type || "Event"}
             </span>
-            {event.is_paid ? (
+            {isPaid ? (
               <span className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-md">
-                ₹{Number(event.amount || 0).toLocaleString("en-IN")}
+                ₹{eventAmount.toLocaleString("en-IN")}
               </span>
             ) : (
               <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold uppercase tracking-wider border border-white/20 shadow-md">
@@ -888,10 +910,10 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
           <div className="flex items-center justify-between pt-1">
             <Countdown targetDate={event.date} />
             <div className="flex items-center gap-2.5">
-              {event.is_paid ? (
+              {isPaid ? (
                 <span className="text-xs font-black text-emerald-600 flex items-center gap-0.5">
                   <IndianRupee className="w-3 h-3" />
-                  {Number(event.amount || 0).toLocaleString("en-IN")}
+                  {eventAmount.toLocaleString("en-IN")}
                 </span>
               ) : (
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
@@ -995,7 +1017,10 @@ const Events = () => {
   };
 
   const handleCloseEvent = () => setSearchParams({});
-  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const rawSelectedEvent = events.find((e) => e.id === selectedEventId);
+  const selectedEvent = rawSelectedEvent ? normalizeEventPaidData(rawSelectedEvent) : undefined;
+  const isSelectedEventPaid = Boolean(selectedEvent?.is_paid) || Number(selectedEvent?.amount || 0) > 0;
+  const selectedEventAmount = Number(selectedEvent?.amount || 0);
 
   // ── Redesigned Event Preview / Detail Page (SEPARATE 3:1 ULTRA-WIDE HERO) ─────
   if (selectedEventId && selectedEvent) {
@@ -1076,9 +1101,9 @@ const Events = () => {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {selectedEvent.type || "Conference"}
               </span>
-              {selectedEvent.is_paid ? (
+              {isSelectedEventPaid ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-sm">
-                  ₹{Number(selectedEvent.amount || 0).toLocaleString("en-IN")} • Paid Event
+                  ₹{selectedEventAmount.toLocaleString("en-IN")} • Paid Event
                 </span>
               ) : (
                 <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white text-xs font-bold uppercase tracking-wider text-slate-700 border border-slate-200/90 shadow-sm">
@@ -1124,16 +1149,16 @@ const Events = () => {
 
               <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  {selectedEvent.is_paid ? (
+                  {isSelectedEventPaid ? (
                     <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   ) : (
                     <Ticket className="w-3.5 h-3.5 text-primary shrink-0" />
                   )}
-                  {selectedEvent.is_paid ? "Entry Fee" : "Admission"}
+                  {isSelectedEventPaid ? "Entry Fee" : "Admission"}
                 </div>
                 <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">
-                  {selectedEvent.is_paid
-                    ? `₹${Number(selectedEvent.amount || 0).toLocaleString("en-IN")}`
+                  {isSelectedEventPaid
+                    ? `₹${selectedEventAmount.toLocaleString("en-IN")}`
                     : selectedEvent.registration_type === 'manual' ? "Direct Entry (Free)" : "Online Pass (Free)"}
                 </div>
               </div>
@@ -1230,8 +1255,8 @@ const Events = () => {
                         </p>
                       )}
                     </div>
-                  ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || selectedEvent.is_paid) ? (
-                    selectedEvent.registration_type === 'manual' || selectedEvent.is_paid ? (
+                  ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || isSelectedEventPaid) ? (
+                    selectedEvent.registration_type === 'manual' || isSelectedEventPaid ? (
                       <RegistrationModal event={selectedEvent} />
                     ) : (
                       <button

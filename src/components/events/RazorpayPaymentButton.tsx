@@ -5,6 +5,7 @@ interface RazorpayPaymentButtonProps {
   buttonId?: string;
   amount?: number | string;
   onSuccess: (paymentData: any) => void;
+  beforePayment?: () => boolean;
   className?: string;
 }
 
@@ -12,6 +13,7 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
   buttonId = "pl_TxxlM2Z9Q4JvBr",
   amount,
   onSuccess,
+  beforePayment,
   className = "",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,6 +55,10 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     // Capture standard form submission executed by Razorpay upon successful payment
     const handleFormSubmit = (e: Event) => {
       e.preventDefault();
+      if (beforePayment && !beforePayment()) {
+        setIsProcessing(false);
+        return;
+      }
       setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
       const paymentId = hiddenInput?.value?.trim();
@@ -69,6 +75,10 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
 
     // Hook programmatic form.submit() call executed by Razorpay widget
     form.submit = () => {
+      if (beforePayment && !beforePayment()) {
+        setIsProcessing(false);
+        return;
+      }
       setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
       const paymentId = hiddenInput?.value?.trim();
@@ -101,11 +111,17 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
 
     // Listen to click on container to detect when attendee opens Razorpay checkout
     const container = containerRef.current;
-    const handleClick = () => {
+    const handleClick = (e: MouseEvent) => {
+      if (beforePayment && !beforePayment()) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsProcessing(false);
+        return;
+      }
       setIsProcessing(true);
     };
     if (container) {
-      container.addEventListener("click", handleClick);
+      container.addEventListener("click", handleClick, true);
     }
 
     // Listen for postMessage from Razorpay checkout iframe
@@ -160,12 +176,12 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     return () => {
       if (cleanup) cleanup();
       if (container) {
-        container.removeEventListener("click", handleClick);
+        container.removeEventListener("click", handleClick, true);
         container.innerHTML = "";
       }
       window.removeEventListener("message", handleMessage);
     };
-  }, [effectiveButtonId, onSuccess]);
+  }, [effectiveButtonId, onSuccess, beforePayment]);
 
   return (
     <div className={`w-full flex flex-col items-center gap-4 ${className}`}>
