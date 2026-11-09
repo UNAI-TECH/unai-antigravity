@@ -327,7 +327,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            let fetchedRegs = (eventsRegData as EventRegistration[]) || [];
+            let fetchedRegs = ((eventsRegData as EventRegistration[]) || []).map(reg => {
+                const answers = (reg.answers || {}) as any;
+                return {
+                    ...reg,
+                    payment_status: reg.payment_status || answers.payment_status || "free",
+                    payment_id: reg.payment_id || answers.payment_id || undefined,
+                    amount_paid: reg.amount_paid !== undefined ? reg.amount_paid : answers.amount_paid
+                };
+            });
             try {
                 if (typeof window !== 'undefined' && window.localStorage) {
                     const localRegs = JSON.parse(window.localStorage.getItem('unai_event_registrations') || '[]');
@@ -362,8 +370,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Actions
     const addEvent = async (event: Omit<Event, "id">) => {
+        const isPaid = Boolean(event.is_paid) || Number(event.amount || 0) > 0;
+        const normalized = normalizeEventPaidData({
+            ...event,
+            is_paid: isPaid,
+            amount: isPaid ? (Number(event.amount) || 0) : 0,
+            payment_button_id: isPaid ? (event.payment_button_id || 'pl_TxxlM2Z9Q4JvBr') : ''
+        });
+
         const tempId = 'event_' + Date.now();
-        const optimisticEvent: Event = { ...event, id: tempId };
+        const optimisticEvent: Event = { ...normalized, id: tempId };
 
         setEvents(prev => {
             const next = [optimisticEvent, ...prev];
@@ -373,14 +389,52 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return next;
         });
 
+        // Always embed __PAID_CONFIG__ in description so Supabase accurately preserves paid status
+        // and amounts across mobile, tablet, and desktop without requiring custom table migrations
+        let payloadDescription = event.description || '';
+        if (isPaid) {
+            const paidConfig = `__PAID_CONFIG__:${JSON.stringify({
+                is_paid: true,
+                amount: Number(event.amount) || 0,
+                payment_button_id: event.payment_button_id || 'pl_TxxlM2Z9Q4JvBr'
+            })}`;
+            payloadDescription = payloadDescription
+                ? `${payloadDescription.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()}\n\n${paidConfig}`
+                : paidConfig;
+        }
+
+        const dbPayload: any = {
+            title: event.title,
+            caption: event.caption || '',
+            date: event.date || 'Upcoming',
+            location: event.location || 'Chennai',
+            type: event.type || 'Workshop',
+            attendees: event.attendees || '100+',
+            max_registrations: event.max_registrations || null,
+            status: event.status || 'upcoming',
+            description: payloadDescription,
+            registration_link: event.registration_link || '',
+            registration_type: isPaid ? 'manual' : (event.registration_type || 'manual'),
+            form_fields: event.form_fields || [],
+            cover_image: event.cover_image || '',
+            banner: event.banner || '',
+            posters: event.posters || []
+        };
+
         const { data, error } = await supabase
             .from('events')
-            .insert([event])
+            .insert([dbPayload])
             .select();
 
         if (data && data.length > 0) {
+            const savedEvent = normalizeEventPaidData({
+                ...data[0],
+                is_paid: isPaid,
+                amount: isPaid ? (Number(event.amount) || 0) : 0,
+                payment_button_id: isPaid ? (event.payment_button_id || 'pl_TxxlM2Z9Q4JvBr') : ''
+            });
             setEvents(prev => {
-                const next = prev.map(e => e.id === tempId ? data[0] as Event : e);
+                const next = prev.map(e => e.id === tempId ? savedEvent : e);
                 try {
                     localStorage.setItem('unai_events_custom', JSON.stringify(next));
                 } catch (e) {}
@@ -388,83 +442,66 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
         } else if (error) {
             console.error("Error adding event to Supabase:", error);
-            // Fallback: If is_paid, amount, or payment_button_id columns are not yet in Supabase schema
-            if (error.message && (error.message.includes('is_paid') || error.message.includes('amount') || error.message.includes('payment_button_id'))) {
-                const { is_paid, amount, payment_button_id, ...fallbackEvent } = event as any;
-                const isPaid = Boolean(is_paid) || Number(amount || 0) > 0;
-                if (isPaid) {
-                    const paidConfig = `__PAID_CONFIG__:${JSON.stringify({ is_paid: true, amount: Number(amount) || 0, payment_button_id: payment_button_id || 'pl_TxxlM2Z9Q4JvBr' })}`;
-                    fallbackEvent.description = fallbackEvent.description ? `${fallbackEvent.description}\n\n${paidConfig}` : paidConfig;
-                }
-                const { data: fallbackData, error: fbError } = await supabase
-                    .from('events')
-                    .insert([fallbackEvent])
-                    .select();
-                if (fallbackData && fallbackData.length > 0) {
-                    const mergedEvent = normalizeEventPaidData({ ...fallbackData[0], is_paid, amount, payment_button_id });
-                    setEvents(prev => {
-                        const next = prev.map(e => e.id === tempId ? mergedEvent : e);
-                        try {
-                            localStorage.setItem('unai_events_custom', JSON.stringify(next));
-                        } catch (e) {}
-                        return next;
-                    });
-                }
-                if (fbError) console.error("Error with fallback event insert:", fbError);
-            }
         }
     };
 
     const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
-        // Optimistically update local state & localStorage so changes reflect instantly everywhere on the site
         setEvents(prev => {
-            const next = prev.map(e => e.id === id ? { ...e, ...updatedEvent } as Event : e);
+            const next = prev.map(e => e.id === id ? normalizeEventPaidData({ ...e, ...updatedEvent }) : e);
             try {
                 localStorage.setItem('unai_events_custom', JSON.stringify(next));
             } catch (e) {}
             return next;
         });
 
+        const currentTarget = events.find(e => e.id === id);
+        const mergedEvent = { ...currentTarget, ...updatedEvent };
+        const isPaid = Boolean(mergedEvent.is_paid) || Number(mergedEvent.amount || 0) > 0;
+
+        let payloadDescription = updatedEvent.description !== undefined ? updatedEvent.description : (currentTarget?.description || '');
+        if (isPaid) {
+            const paidConfig = `__PAID_CONFIG__:${JSON.stringify({
+                is_paid: true,
+                amount: Number(mergedEvent.amount) || 0,
+                payment_button_id: mergedEvent.payment_button_id || 'pl_TxxlM2Z9Q4JvBr'
+            })}`;
+            payloadDescription = payloadDescription
+                ? `${payloadDescription.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()}\n\n${paidConfig}`
+                : paidConfig;
+        } else if (payloadDescription) {
+            payloadDescription = payloadDescription.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim();
+        }
+
+        const { is_paid, amount, payment_button_id, ...safeUpdates } = updatedEvent as any;
+        if (payloadDescription !== undefined) {
+            safeUpdates.description = payloadDescription;
+        }
+        if (isPaid) {
+            safeUpdates.registration_type = 'manual';
+        }
+
         const { data, error } = await supabase
             .from('events')
-            .update(updatedEvent)
+            .update(safeUpdates)
             .eq('id', id)
             .select();
 
         if (data && data.length > 0) {
+            const normalizedResult = normalizeEventPaidData({
+                ...data[0],
+                is_paid: isPaid,
+                amount: isPaid ? (Number(mergedEvent.amount) || 0) : 0,
+                payment_button_id: isPaid ? (mergedEvent.payment_button_id || 'pl_TxxlM2Z9Q4JvBr') : ''
+            });
             setEvents(prev => {
-                const next = prev.map(e => e.id === id ? data[0] as Event : e);
+                const next = prev.map(e => e.id === id ? normalizedResult : e);
                 try {
                     localStorage.setItem('unai_events_custom', JSON.stringify(next));
                 } catch (e) {}
                 return next;
             });
-        }
-        if (error) {
+        } else if (error) {
             console.error("Error updating event in Supabase:", error);
-            if (error.message && (error.message.includes('is_paid') || error.message.includes('amount') || error.message.includes('payment_button_id'))) {
-                const { is_paid, amount, payment_button_id, ...fallbackUpdates } = updatedEvent as any;
-                const isPaid = Boolean(is_paid) || Number(amount || 0) > 0;
-                if (isPaid && fallbackUpdates.description !== undefined) {
-                    const paidConfig = `__PAID_CONFIG__:${JSON.stringify({ is_paid: true, amount: Number(amount) || 0, payment_button_id: payment_button_id || 'pl_TxxlM2Z9Q4JvBr' })}`;
-                    fallbackUpdates.description = fallbackUpdates.description ? `${fallbackUpdates.description.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()}\n\n${paidConfig}` : paidConfig;
-                }
-                const { data: fbData } = await supabase
-                    .from('events')
-                    .update(fallbackUpdates)
-                    .eq('id', id)
-                    .select();
-                if (fbData && fbData.length > 0) {
-                    const mergedEvent = normalizeEventPaidData({ ...fbData[0], is_paid, amount, payment_button_id });
-                    setEvents(prev => {
-                        const next = prev.map(e => e.id === id ? mergedEvent : e);
-                        try {
-                            localStorage.setItem('unai_events_custom', JSON.stringify(next));
-                        } catch (e) {}
-                        return next;
-                    });
-                }
-            }
         }
     };
 
@@ -909,7 +946,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .select();
 
                 if (fbData && fbData.length > 0) {
-                    const fallbackReg = fbData[0] as EventRegistration;
+                    const fallbackReg: EventRegistration = {
+                        ...(fbData[0] as EventRegistration),
+                        payment_status: app.payment_status || (isPaidEvent ? "paid" : "free"),
+                        payment_id: app.payment_id,
+                        amount_paid: app.amount_paid
+                    };
                     setEventRegistrations(prev => [fallbackReg, ...prev]);
                     try {
                         const stored = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');

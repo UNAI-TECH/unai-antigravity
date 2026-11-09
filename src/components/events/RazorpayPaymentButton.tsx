@@ -258,9 +258,50 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
       )}
 
       {/* Embedded Razorpay Form Container */}
+      <style>{`
+        .razorpay-btn-container {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          width: 100% !important;
+        }
+        .razorpay-btn-container form {
+          width: 100% !important;
+          display: flex !important;
+          justify-content: center !important;
+          margin: 0 !important;
+        }
+        .razorpay-btn-container .razorpay-payment-button {
+          width: 100% !important;
+          min-height: 52px !important;
+          padding: 14px 24px !important;
+          border-radius: 1rem !important;
+          font-weight: 800 !important;
+          font-size: 0.95rem !important;
+          letter-spacing: 0.025em !important;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%) !important;
+          color: #ffffff !important;
+          border: none !important;
+          box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.35) !important;
+          cursor: pointer !important;
+          transition: all 0.25s ease !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          text-align: center !important;
+        }
+        .razorpay-btn-container .razorpay-payment-button:hover {
+          filter: brightness(1.08) !important;
+          transform: translateY(-1px) !important;
+          box-shadow: 0 14px 28px -5px rgba(37, 99, 235, 0.45) !important;
+        }
+        .razorpay-btn-container .razorpay-payment-button:active {
+          transform: translateY(0px) !important;
+        }
+      `}</style>
       <div
         ref={containerRef}
-        className="w-full flex justify-center razorpay-btn-container min-h-[48px]"
+        className="w-full flex justify-center razorpay-btn-container min-h-[52px]"
       />
 
       {/* Security & Compulsory Payment Guarantee Note */}

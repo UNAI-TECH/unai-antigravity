@@ -42,7 +42,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
   const paymentButtonId = normalizedEvent.payment_button_id || "pl_TxxlM2Z9Q4JvBr";
 
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"form" | "payment" | "success">("form");
+  const [step, setStep] = useState<"form" | "success">("form");
   const [formData, setFormData] = useState<any>({});
   const [selectedRadio, setSelectedRadio] = useState<{ [fieldId: string]: string }>({});
   const [otherTextValues, setOtherTextValues] = useState<{ [fieldId: string]: string }>({});
@@ -92,71 +92,96 @@ const RegistrationModal = ({ event }: { event: any }) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateAttendeeDetails = (): boolean => {
+    const name = (formData['name'] || '').trim();
+    const email = (formData['email'] || '').trim();
+    const phone = (formData['phone'] || '').trim();
+
+    if (!name) {
+      toast.error("Please enter your Full Name.");
+      return false;
+    }
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid Email address.");
+      return false;
+    }
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      toast.error("Please enter a valid 10-digit Phone number.");
+      return false;
+    }
 
     // Validate any selected "Other" fields that are required
     if (normalizedEvent.form_fields && Array.isArray(normalizedEvent.form_fields)) {
       for (const field of normalizedEvent.form_fields) {
-        if (field.type === 'multiple_choice' && field.required) {
-          const selected = selectedRadio[field.id];
-          const isOther = selected && (selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others');
-          if (isOther && (!otherTextValues[field.id] || !otherTextValues[field.id].trim())) {
-            toast.error(`Please specify your answer for "${field.label}"`);
-            return;
+        if (field.required) {
+          if (field.type === 'multiple_choice') {
+            const selected = selectedRadio[field.id];
+            if (!selected) {
+              toast.error(`Please select an option for "${field.label}"`);
+              return false;
+            }
+            const isOther = selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others';
+            if (isOther && (!otherTextValues[field.id] || !otherTextValues[field.id].trim())) {
+              toast.error(`Please specify your answer for "${field.label}"`);
+              return false;
+            }
+          } else if (field.type === 'checkboxes') {
+            const current = formData[field.label] || [];
+            if (!Array.isArray(current) || current.length === 0) {
+              toast.error(`Please select at least one option for "${field.label}"`);
+              return false;
+            }
+          } else {
+            const val = formData[field.label];
+            if (!val || !String(val).trim()) {
+              toast.error(`Please fill in "${field.label}"`);
+              return false;
+            }
           }
         }
       }
     }
 
-    // If it's a paid event, validate required attendee information and move strictly to payment step
-    if (isPaid || eventAmount > 0) {
-      const name = formData['name']?.trim();
-      const email = formData['email']?.trim();
-      const phone = formData['phone']?.trim();
-
-      if (!name || !email || !phone) {
-        toast.error("Please fill in your Full Name, Email, and Phone number before proceeding to payment.");
-        return;
-      }
-
+    // Cache pending registration in case of payment redirect
+    try {
       const answers = { ...formData };
       delete answers['name'];
       delete answers['email'];
       delete answers['phone'];
+      sessionStorage.setItem(
+        'unai_pending_paid_registration',
+        JSON.stringify({
+          event_id: normalizedEvent.id,
+          event_title: normalizedEvent.title,
+          applicant_name: name,
+          email,
+          phone,
+          answers,
+          amount: eventAmount,
+        })
+      );
+    } catch (err) {
+      console.error("Failed to store pending registration:", err);
+    }
 
-      try {
-        sessionStorage.setItem(
-          'unai_pending_paid_registration',
-          JSON.stringify({
-            event_id: normalizedEvent.id,
-            event_title: normalizedEvent.title,
-            applicant_name: name,
-            email,
-            phone,
-            answers,
-            amount: eventAmount,
-          })
-        );
-      } catch (err) {
-        console.error("Failed to store pending registration:", err);
-      }
+    return true;
+  };
 
-      setStep("payment");
+  const handleFreeSubmit = async () => {
+    if (isPaid || eventAmount > 0) {
+      toast.error("Payment is compulsory for this event. Please complete payment using the Razorpay button.");
       return;
     }
 
-    // Safety check: paid events can NEVER pass here
-    if (isPaid || eventAmount > 0) {
-      toast.error("Payment is compulsory for this event. Please complete the payment step.");
-      setStep("payment");
+    if (!validateAttendeeDetails()) {
       return;
     }
 
     setIsSubmitting(true);
-    const name = formData['name'] || '';
-    const email = formData['email'] || '';
-    const phone = formData['phone'] || '';
+    const name = (formData['name'] || '').trim();
+    const email = (formData['email'] || '').trim();
+    const phone = (formData['phone'] || '').trim();
 
     const answers = { ...formData };
     delete answers['name'];
@@ -189,14 +214,14 @@ const RegistrationModal = ({ event }: { event: any }) => {
     const paymentId = typeof rawPaymentId === "string" ? rawPaymentId.trim() : "";
 
     if (!paymentId || !paymentId.startsWith("pay_") || paymentId.length < 8) {
-      toast.error("Payment is compulsory. A verified Razorpay payment transaction is required to complete registration.");
+      toast.error("Payment is compulsory. A verified Razorpay transaction is required to complete registration.");
       return;
     }
 
     setIsSubmitting(true);
-    const name = formData['name'] || '';
-    const email = formData['email'] || '';
-    const phone = formData['phone'] || '';
+    const name = (formData['name'] || '').trim();
+    const email = (formData['email'] || '').trim();
+    const phone = (formData['phone'] || '').trim();
 
     const answers = { ...formData };
     delete answers['name'];
@@ -306,23 +331,10 @@ const RegistrationModal = ({ event }: { event: any }) => {
         className="sm:max-w-[620px] w-[95vw] bg-white text-slate-900 border border-slate-200 p-5 sm:p-8 rounded-[2rem] max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl overscroll-contain z-[60]"
         style={{ overscrollBehavior: 'contain' }}
       >
-        {/* Step Indicator for Paid Events */}
-        {isPaid && step !== "success" && (
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${step === "form" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"}`}>
-              <span>1</span> Attendee Details
-            </div>
-            <div className="w-6 h-px bg-slate-200" />
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${step === "payment" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500"}`}>
-              <span>2</span> Razorpay Payment (₹{eventAmount.toLocaleString("en-IN")})
-            </div>
-          </div>
-        )}
-
-        {/* STEP 1: Registration Form */}
+        {/* Registration Form Step (Directly embeds Razorpay Payment Button for every paid event) */}
         {step === "form" && (
-          <>
-            <DialogHeader className="mb-5 pb-4 border-b border-slate-100">
+          <div className="space-y-6">
+            <DialogHeader className="mb-2 pb-4 border-b border-slate-100">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -331,7 +343,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
                 {isPaid && (
                   <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-black">
                     <IndianRupee className="w-3.5 h-3.5" />
-                    {eventAmount.toLocaleString("en-IN")}
+                    {eventAmount.toLocaleString("en-IN")} • Paid Event
                   </span>
                 )}
               </div>
@@ -340,12 +352,13 @@ const RegistrationModal = ({ event }: { event: any }) => {
               </DialogTitle>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 {isPaid
-                  ? "Please fill in your attendee details below to proceed to the secure Razorpay payment step."
+                  ? "Please fill in your attendee details and process your fee using the Razorpay payment button below."
                   : "Please fill in your details below to secure your entry pass."}
               </p>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Inputs Container (DIV to prevent nested form conflicts with Razorpay) */}
+            <div className="space-y-5">
               {/* Default Fields */}
               <div className="space-y-4">
                 <div>
@@ -429,7 +442,6 @@ const RegistrationModal = ({ event }: { event: any }) => {
                                   <input 
                                     type="radio" 
                                     name={`field_${field.id}`} 
-                                    required={field.required && !selectedRadio[field.id]}
                                     value={opt}
                                     checked={selectedRadio[field.id] === opt}
                                     onChange={() => handleRadioChange(field, opt)}
@@ -446,7 +458,6 @@ const RegistrationModal = ({ event }: { event: any }) => {
                                   >
                                     <Input
                                       placeholder="Please specify your other answer..."
-                                      required={field.required}
                                       value={otherTextValues[field.id] || ""}
                                       onChange={(e) => handleOtherInputChange(field, e.target.value)}
                                       className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
@@ -522,102 +533,61 @@ const RegistrationModal = ({ event }: { event: any }) => {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-slate-100">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Submitting Registration...
-                    </>
-                  ) : isPaid ? (
-                    <>
-                      Proceed to Razorpay Payment (₹{eventAmount.toLocaleString("en-IN")})
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  ) : (
-                    <>
-                      Complete Registration
-                      <ArrowRight className="w-4 h-4" />
-                    </>
+              {/* Payment Section for Paid Events vs Free Submission */}
+              {isPaid ? (
+                <div className="pt-6 border-t border-slate-200/90 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      Payment & Submission (Compulsory)
+                    </span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                  </div>
+
+                  {/* Complete Embedded Razorpay Payment Button */}
+                  <RazorpayPaymentButton
+                    buttonId={paymentButtonId}
+                    amount={eventAmount}
+                    onSuccess={handlePaymentSuccess}
+                    beforePayment={validateAttendeeDetails}
+                    className="w-full"
+                  />
+
+                  {isSubmitting && (
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                      <span>Payment verified! Recording your confirmed registration...</span>
+                    </div>
                   )}
-                </button>
-                <p className="text-[11px] text-center text-slate-400 mt-2">
-                  Your information is securely verified and will only be used for event admission.
-                </p>
-              </div>
-            </form>
-          </>
-        )}
 
-        {/* STEP 2: Razorpay Payment Step */}
-        {step === "payment" && (
-          <div className="space-y-6">
-            <DialogHeader>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Payment Required</span>
-              </div>
-              <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-                Complete Razorpay Payment
-              </DialogTitle>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Pay using the official Razorpay payment button below to process your fee and finalize your registration for <span className="font-bold text-slate-800">{normalizedEvent.title}</span>.
-              </p>
-            </DialogHeader>
-
-            {/* Attendee Summary Pill */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div>
-                <p className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">Registered Attendee</p>
-                <p className="font-black text-slate-900 text-sm">{formData['name']}</p>
-                <p className="text-slate-600">{formData['email']} • {formData['phone']}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStep("form")}
-                className="text-xs font-bold text-primary hover:underline self-start sm:self-center"
-              >
-                Edit Details
-              </button>
-            </div>
-
-            {/* Complete Embedded Razorpay Payment Button */}
-            <RazorpayPaymentButton
-              buttonId={paymentButtonId}
-              amount={eventAmount}
-              onSuccess={handlePaymentSuccess}
-              beforePayment={() => {
-                const name = formData['name']?.trim();
-                const email = formData['email']?.trim();
-                const phone = formData['phone']?.trim();
-                if (!name || !email || !phone) {
-                  toast.error("Please enter your Full Name, Email, and Phone number before paying.");
-                  return false;
-                }
-                return true;
-              }}
-            />
-
-            {isSubmitting && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 animate-pulse">
-                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                <span>Payment verified! Recording your confirmed registration...</span>
-              </div>
-            )}
-
-            <div className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep("form")}
-                className="w-full text-slate-600 border-slate-200"
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" /> Back to Attendee Details
-              </Button>
+                  <p className="text-[11px] text-center text-slate-400">
+                    Use the Razorpay payment button above to complete your ticket purchase. Your registration is officially confirmed only upon verified payment.
+                  </p>
+                </div>
+              ) : (
+                <div className="pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={handleFreeSubmit}
+                    disabled={isSubmitting}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Submitting Registration...
+                      </>
+                    ) : (
+                      <>
+                        Complete Registration
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[11px] text-center text-slate-400 mt-2">
+                    Your information is securely verified and will only be used for event admission.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1162,6 +1132,35 @@ const Events = () => {
                     : selectedEvent.registration_type === 'manual' ? "Direct Entry (Free)" : "Online Pass (Free)"}
                 </div>
               </div>
+            </div>
+
+            {/* Mobile Quick Registration Action (Direct access on mobile touch devices) */}
+            <div className="block lg:hidden mt-5">
+              {isRegistrationClosed ? (
+                <button
+                  disabled
+                  className="w-full py-4 rounded-2xl bg-slate-200 text-slate-500 font-black text-sm uppercase tracking-wider border border-slate-300 shadow-none flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                >
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  Registration closed
+                </button>
+              ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || isSelectedEventPaid) ? (
+                selectedEvent.registration_type === 'manual' || isSelectedEventPaid ? (
+                  <RegistrationModal event={selectedEvent} />
+                ) : (
+                  <button
+                    onClick={() => window.open(selectedEvent.registration_link, "_blank")}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                  >
+                    Register for Event
+                    <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                )
+              ) : (
+                <div className="w-full py-4 text-center text-sm font-semibold text-slate-500 bg-slate-100 rounded-2xl border border-slate-200">
+                  Registrations Opening Soon
+                </div>
+              )}
             </div>
           </div>
 
