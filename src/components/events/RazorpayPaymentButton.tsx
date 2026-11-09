@@ -22,6 +22,13 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
   const [hasError, setHasError] = useState(false);
   const effectiveButtonId = (buttonId && buttonId.trim()) ? buttonId.trim() : "pl_TxxlM2Z9Q4JvBr";
 
+  // Use refs for callbacks so keystrokes in parent components NEVER wipe out the button
+  const beforePaymentRef = useRef(beforePayment);
+  beforePaymentRef.current = beforePayment;
+
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+
   const loadPaymentButton = () => {
     const container = containerRef.current;
     if (!container) return;
@@ -30,11 +37,32 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     setIsLoading(true);
     setHasError(false);
 
-    // Exact Razorpay embed format:
-    // <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_TxxlM2Z9Q4JvBr" async> </script> </form>
+    // Exact Razorpay embed format with fallback action url:
+    // <form action="https://razorpay.com/payment-button/pl_TxxlM2Z9Q4JvBr/view/" method="GET">
+    //   <script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_TxxlM2Z9Q4JvBr" async> </script>
+    // </form>
     const form = document.createElement("form");
     form.id = `razorpay-form-${effectiveButtonId}`;
-    form.className = "w-full flex justify-center";
+    form.action = `https://razorpay.com/payment-button/${effectiveButtonId}/view/`;
+    form.method = "GET";
+    form.className = "w-full flex justify-center items-center m-0 p-0";
+
+    // Pre-insert an authentic high-fidelity Razorpay button so mobile attendees see it immediately at 0ms
+    const fallbackBtn = document.createElement("button");
+    fallbackBtn.type = "submit";
+    fallbackBtn.className = "PaymentButton PaymentButton--dark PaymentButton--rzpTheme PaymentButton--rzp-dark-standard custom-rzp-btn";
+    fallbackBtn.setAttribute("data-rzp-placeholder", "true");
+    fallbackBtn.innerHTML = `
+      <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px; flex-shrink: 0;">
+        <path d="M7.077 6.476l-.988 3.569 5.65-3.589-3.695 13.54 3.752.004 5.457-20L7.077 6.476z" fill="#fff"></path>
+        <path d="M1.455 14.308L0 20h7.202L10.149 8.42l-8.694 5.887z" fill="#fff"></path>
+      </svg>
+      <div class="PaymentButton-contents" style="text-align: left;">
+        <span class="PaymentButton-text" style="font-size: 15px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; display: block; color: #ffffff;">PAY HERE</span>
+        <div class="PaymentButton-securedBy" style="font-size: 9px; letter-spacing: 0.2px; opacity: 0.75; color: #ffffff; line-height: 1; margin-top: 2px;">Secured by Razorpay</div>
+      </div>
+    `;
+    form.appendChild(fallbackBtn);
 
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/payment-button.js";
@@ -44,61 +72,74 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     script.onload = () => {
       setIsLoading(false);
       setHasError(false);
+      // Remove placeholder once Razorpay's official widget has mounted
+      const placeholder = form.querySelector('[data-rzp-placeholder="true"]');
+      if (placeholder && form.children.length > 2) {
+        placeholder.remove();
+      }
     };
 
     script.onerror = () => {
       setIsLoading(false);
-      setHasError(true);
-      console.error("Failed to load Razorpay payment button script from checkout.razorpay.com");
+      setHasError(false); // Do not block user; fallback button will direct them straight to checkout
+      console.warn("Razorpay script load deferred, using direct payment action fallback.");
     };
 
     // Capture standard form submission executed by Razorpay upon successful payment
     const handleFormSubmit = (e: Event) => {
-      e.preventDefault();
-      if (beforePayment && !beforePayment()) {
+      if (beforePaymentRef.current && !beforePaymentRef.current()) {
+        e.preventDefault();
+        e.stopPropagation();
         setIsProcessing(false);
         return;
       }
-      setIsProcessing(true);
+
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
       const paymentId = hiddenInput?.value?.trim();
       if (paymentId && paymentId.startsWith("pay_") && paymentId.length >= 8) {
-        onSuccess({
-          razorpay_payment_id: paymentId,
-          status: "success",
-        });
-      } else {
-        setIsProcessing(false);
+        e.preventDefault();
+        setIsProcessing(true);
+        if (onSuccessRef.current) {
+          onSuccessRef.current({
+            razorpay_payment_id: paymentId,
+            status: "success",
+          });
+        }
       }
     };
     form.addEventListener("submit", handleFormSubmit);
 
     // Hook programmatic form.submit() call executed by Razorpay widget
     form.submit = () => {
-      if (beforePayment && !beforePayment()) {
+      if (beforePaymentRef.current && !beforePaymentRef.current()) {
         setIsProcessing(false);
         return;
       }
-      setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
       const paymentId = hiddenInput?.value?.trim();
       if (paymentId && paymentId.startsWith("pay_") && paymentId.length >= 8) {
-        onSuccess({
-          razorpay_payment_id: paymentId,
-          status: "success",
-        });
-      } else {
-        setIsProcessing(false);
+        setIsProcessing(true);
+        if (onSuccessRef.current) {
+          onSuccessRef.current({
+            razorpay_payment_id: paymentId,
+            status: "success",
+          });
+        }
       }
     };
 
     form.appendChild(script);
     container.appendChild(form);
 
-    // Fallback timer: Razorpay button renders within ~1.5s
+    // Fallback timer: ensure loading indicator turns off quickly
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+      // If Razorpay mounted, clean placeholder
+      const placeholder = form.querySelector('[data-rzp-placeholder="true"]');
+      if (placeholder && form.children.length > 2) {
+        placeholder.remove();
+      }
+    }, 1800);
 
     return () => {
       clearTimeout(timer);
@@ -109,19 +150,22 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
   useEffect(() => {
     const cleanup = loadPaymentButton();
 
-    // Listen to click on container to detect when attendee opens Razorpay checkout
+    // Listen to click and touch on container to enforce beforePayment check
     const container = containerRef.current;
-    const handleClick = (e: MouseEvent) => {
-      if (beforePayment && !beforePayment()) {
+    const handleInteract = (e: Event) => {
+      if (beforePaymentRef.current && !beforePaymentRef.current()) {
         e.preventDefault();
         e.stopPropagation();
         setIsProcessing(false);
-        return;
+        return false;
       }
       setIsProcessing(true);
+      return true;
     };
+
     if (container) {
-      container.addEventListener("click", handleClick, true);
+      container.addEventListener("click", handleInteract, true);
+      container.addEventListener("touchend", handleInteract, true);
     }
 
     // Listen for postMessage from Razorpay checkout iframe
@@ -157,11 +201,13 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
 
               if (paymentId && paymentId.startsWith("pay_") && paymentId.length >= 8) {
                 setIsProcessing(false);
-                onSuccess({
-                  ...data,
-                  razorpay_payment_id: paymentId,
-                  status: "success",
-                });
+                if (onSuccessRef.current) {
+                  onSuccessRef.current({
+                    ...data,
+                    razorpay_payment_id: paymentId,
+                    status: "success",
+                  });
+                }
               }
             }
           }
@@ -176,33 +222,35 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     return () => {
       if (cleanup) cleanup();
       if (container) {
-        container.removeEventListener("click", handleClick, true);
+        container.removeEventListener("click", handleInteract, true);
+        container.removeEventListener("touchend", handleInteract, true);
         container.innerHTML = "";
       }
       window.removeEventListener("message", handleMessage);
     };
-  }, [effectiveButtonId, onSuccess, beforePayment]);
+    // ONLY depend on effectiveButtonId so keystrokes in parent inputs NEVER destroy the button!
+  }, [effectiveButtonId]);
 
   return (
-    <div className={`w-full flex flex-col items-center gap-4 ${className}`}>
+    <div className={`w-full flex flex-col items-center gap-3.5 ${className}`}>
       {/* Price Summary Banner */}
       {amount !== undefined && amount !== null && amount !== "" && (
-        <div className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between">
+        <div className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-600">
-              <IndianRupee className="w-5 h-5" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
+              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider font-bold text-emerald-800">
+              <p className="text-[10px] sm:text-xs uppercase tracking-wider font-bold text-emerald-800">
                 Amount Payable
               </p>
-              <p className="text-2xl font-black text-emerald-700">
+              <p className="text-xl sm:text-2xl font-black text-emerald-700 leading-tight">
                 ₹{Number(amount).toLocaleString("en-IN")}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
-            <ShieldCheck className="w-4 h-4" />
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-emerald-700 bg-white/80 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-emerald-500/20 shadow-sm shrink-0">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Secured by Razorpay</span>
           </div>
         </div>
@@ -210,104 +258,114 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
 
       {/* Loading state indicator */}
       {isLoading && (
-        <div className="flex items-center justify-center gap-2 py-4 text-sm text-slate-500">
-          <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
-          <span>Loading secure payment gateway...</span>
+        <div className="flex items-center justify-center gap-2 py-1 text-xs text-slate-500">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-600" />
+          <span>Connecting to Razorpay gateway...</span>
         </div>
       )}
 
       {/* Processing Status Banner */}
       {isProcessing && (
-        <div className="w-full p-4 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center gap-3 text-left animate-in fade-in-50 duration-300">
-          <div className="w-9 h-9 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0">
-            <Loader2 className="w-5 h-5 animate-spin" />
+        <div className="w-full p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-3 text-left animate-in fade-in-50 duration-300">
+          <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0">
+            <Loader2 className="w-4 h-4 animate-spin" />
           </div>
           <div className="space-y-0.5">
             <p className="text-xs font-black uppercase tracking-wider text-blue-900">
               Payment Processing in Razorpay
             </p>
             <p className="text-xs text-blue-700">
-              Please complete your payment in the Razorpay checkout window. Do not close or refresh this page.
+              Please complete your payment in the Razorpay checkout window. Do not close this page.
             </p>
           </div>
         </div>
       )}
 
-      {/* Error / Ad-blocker notice with retry */}
-      {hasError && (
-        <div className="w-full p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-3">
-          <div className="flex items-start gap-2.5">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-                Payment Gateway Unavailable
-              </p>
-              <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                The payment button script could not be loaded. If you are using an ad-blocker or content filter, please allow <code>checkout.razorpay.com</code> and try again.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={loadPaymentButton}
-            className="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Retry Loading Payment Button
-          </button>
-        </div>
-      )}
-
-      {/* Embedded Razorpay Form Container */}
+      {/* Razorpay Button Scoped CSS */}
       <style>{`
         .razorpay-btn-container {
           display: flex !important;
           justify-content: center !important;
           align-items: center !important;
           width: 100% !important;
+          min-height: 52px !important;
         }
         .razorpay-btn-container form {
           width: 100% !important;
           display: flex !important;
           justify-content: center !important;
+          align-items: center !important;
           margin: 0 !important;
+          padding: 0 !important;
         }
-        .razorpay-btn-container .razorpay-payment-button {
-          width: 100% !important;
-          min-height: 52px !important;
-          padding: 14px 24px !important;
-          border-radius: 1rem !important;
-          font-weight: 800 !important;
-          font-size: 0.95rem !important;
-          letter-spacing: 0.025em !important;
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%) !important;
-          color: #ffffff !important;
-          border: none !important;
-          box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.35) !important;
-          cursor: pointer !important;
-          transition: all 0.25s ease !important;
-          display: flex !important;
+        .razorpay-btn-container .custom-rzp-btn,
+        .razorpay-btn-container .PaymentButton {
+          display: inline-flex !important;
           align-items: center !important;
           justify-content: center !important;
-          text-align: center !important;
+          background: #0c2340 !important;
+          color: #ffffff !important;
+          min-height: 52px !important;
+          padding: 10px 24px !important;
+          border-radius: 12px !important;
+          text-decoration: none !important;
+          border: none !important;
+          cursor: pointer !important;
+          box-shadow: 0 4px 14px rgba(12, 35, 64, 0.3) !important;
+          transition: all 0.2s ease !important;
+          width: 100% !important;
+          max-width: 340px !important;
+          -webkit-tap-highlight-color: transparent !important;
         }
-        .razorpay-btn-container .razorpay-payment-button:hover {
-          filter: brightness(1.08) !important;
+        .razorpay-btn-container .custom-rzp-btn:hover,
+        .razorpay-btn-container .PaymentButton:hover {
+          filter: brightness(1.1) !important;
           transform: translateY(-1px) !important;
-          box-shadow: 0 14px 28px -5px rgba(37, 99, 235, 0.45) !important;
+          box-shadow: 0 6px 18px rgba(12, 35, 64, 0.4) !important;
         }
-        .razorpay-btn-container .razorpay-payment-button:active {
+        .razorpay-btn-container .custom-rzp-btn:active,
+        .razorpay-btn-container .PaymentButton:active {
           transform: translateY(0px) !important;
         }
+        .razorpay-btn-container .custom-rzp-btn svg,
+        .razorpay-btn-container .PaymentButton svg {
+          margin-right: 12px !important;
+          flex-shrink: 0 !important;
+        }
+        .razorpay-btn-container .custom-rzp-btn .PaymentButton-contents,
+        .razorpay-btn-container .PaymentButton-contents {
+          text-align: left !important;
+        }
+        .razorpay-btn-container .custom-rzp-btn .PaymentButton-text,
+        .razorpay-btn-container .PaymentButton-text {
+          font-size: 15px !important;
+          font-weight: 800 !important;
+          letter-spacing: 0.5px !important;
+          line-height: 1.2 !important;
+          display: block !important;
+          color: #ffffff !important;
+        }
+        .razorpay-btn-container .custom-rzp-btn .PaymentButton-securedBy,
+        .razorpay-btn-container .PaymentButton-securedBy {
+          font-size: 9px !important;
+          letter-spacing: 0.2px !important;
+          opacity: 0.8 !important;
+          color: #ffffff !important;
+          line-height: 1 !important;
+          margin-top: 2px !important;
+        }
       `}</style>
+
+      {/* Embedded Razorpay Form Container */}
       <div
         ref={containerRef}
-        className="w-full flex justify-center razorpay-btn-container min-h-[52px]"
+        className="w-full flex justify-center items-center razorpay-btn-container min-h-[52px]"
       />
 
       {/* Security & Compulsory Payment Guarantee Note */}
-      <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-[11px] text-slate-500 font-medium">
+      <div className="w-full pt-2 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-500 font-medium">
         <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-        <span>Payment is compulsory for this event. Registration is officially confirmed only upon successful Razorpay verification.</span>
+        <span>Payment is compulsory for this event. Entry confirmed upon Razorpay verification.</span>
       </div>
     </div>
   );
