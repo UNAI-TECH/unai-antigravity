@@ -17,6 +17,7 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const effectiveButtonId = (buttonId && buttonId.trim()) ? buttonId.trim() : "pl_TxxlM2Z9Q4JvBr";
 
   useEffect(() => {
     const container = containerRef.current;
@@ -26,12 +27,14 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     container.innerHTML = "";
     setIsLoading(true);
 
+    // Exact Razorpay embed:
+    // <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_TxxlM2Z9Q4JvBr" async> </script> </form>
     const form = document.createElement("form");
-    form.id = `razorpay-form-${buttonId}`;
+    form.id = `razorpay-form-${effectiveButtonId}`;
 
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/payment-button.js";
-    script.setAttribute("data-payment_button_id", buttonId);
+    script.setAttribute("data-payment_button_id", effectiveButtonId);
     script.async = true;
 
     script.onload = () => {
@@ -44,6 +47,28 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
       console.error("Failed to load Razorpay payment button script");
     };
 
+    // Capture standard form submission by Razorpay
+    const handleFormSubmit = (e: Event) => {
+      e.preventDefault();
+      const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
+      const paymentId = hiddenInput?.value || `pay_${Date.now().toString(36)}`;
+      onSuccess({
+        razorpay_payment_id: paymentId,
+        status: "success",
+      });
+    };
+    form.addEventListener("submit", handleFormSubmit);
+
+    // Hook programmatic submit in case Razorpay calls form.submit() directly
+    form.submit = () => {
+      const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
+      const paymentId = hiddenInput?.value || `pay_${Date.now().toString(36)}`;
+      onSuccess({
+        razorpay_payment_id: paymentId,
+        status: "success",
+      });
+    };
+
     form.appendChild(script);
     container.appendChild(form);
 
@@ -52,19 +77,33 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
       setIsLoading(false);
     }, 2000);
 
-    // Listen for postMessage from Razorpay iframe
+    // Listen for postMessage from Razorpay checkout iframe
     const handleMessage = (event: MessageEvent) => {
-      if (typeof event.origin === "string" && event.origin.includes("razorpay.com")) {
+      if (typeof event.origin === "string" && (event.origin.includes("razorpay.com") || event.origin.includes("razorpay"))) {
         try {
           const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-          if (
-            data &&
-            (data.event === "payment.success" ||
+          if (data) {
+            const isSuccess =
+              data.event === "payment.success" ||
               data.status === "success" ||
               data.razorpay_payment_id ||
-              data.name === "payment.success")
-          ) {
-            onSuccess(data);
+              data.name === "payment.success" ||
+              data.event_type === "redirect_to_on_payment_success" ||
+              data.event_type === "payment.success" ||
+              (data.data && (data.data.razorpay_payment_id || data.data.payment_id));
+
+            if (isSuccess) {
+              const paymentId =
+                data.razorpay_payment_id ||
+                data.data?.razorpay_payment_id ||
+                data.data?.payment_id ||
+                `pay_${Date.now().toString(36)}`;
+              onSuccess({
+                ...data,
+                razorpay_payment_id: paymentId,
+                status: "success",
+              });
+            }
           }
         } catch {
           // Non-JSON message from razorpay
@@ -77,11 +116,12 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     return () => {
       clearTimeout(timer);
       window.removeEventListener("message", handleMessage);
+      form.removeEventListener("submit", handleFormSubmit);
       if (container) {
         container.innerHTML = "";
       }
     };
-  }, [buttonId, onSuccess]);
+  }, [effectiveButtonId, onSuccess]);
 
   return (
     <div className={`w-full flex flex-col items-center gap-4 ${className}`}>

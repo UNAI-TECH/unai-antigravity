@@ -1110,7 +1110,7 @@ const Events = () => {
                       </button>
                       {isCapacityReached && (
                         <p className="text-center text-xs font-semibold text-rose-600">
-                          Registration closed. Maximum limit of ${eventCapacity} participants has been reached.
+                          Registration closed. Maximum limit of {eventCapacity} participants has been reached.
                         </p>
                       )}
                     </div>

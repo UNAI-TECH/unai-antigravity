@@ -1455,9 +1455,14 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                                         />
                                     </div>
                                 </div>
-                                <div className="text-[11px] text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-primary/10 flex items-center gap-2">
-                                    <span className="font-semibold text-emerald-600 shrink-0">Razorpay Button:</span>
-                                    <span>Configured with Button ID <code className="text-emerald-500 font-mono font-bold">{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}</code>. Attendees will pay ₹{amount || "0"} upon registration with success confetti celebration.</span>
+                                <div className="text-[11px] text-muted-foreground bg-background/50 p-3 rounded-lg border border-primary/10 space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-emerald-600 shrink-0">Razorpay Payment Button:</span>
+                                        <span>Button ID <code className="text-emerald-500 font-mono font-bold">{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}</code> • Fee ₹{amount || "0"}</span>
+                                    </div>
+                                    <div className="font-mono text-[10px] text-slate-400 bg-black/40 p-2 rounded border border-white/5 break-all select-all">
+                                        &lt;form&gt;&lt;script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}" async&gt; &lt;/script&gt; &lt;/form&gt;
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -2080,9 +2085,14 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                                         />
                                     </div>
                                 </div>
-                                <div className="text-[11px] text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-primary/10 flex items-center gap-2">
-                                    <span className="font-semibold text-emerald-600 shrink-0">Razorpay Button:</span>
-                                    <span>Configured with Button ID <code className="text-emerald-500 font-mono font-bold">{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}</code>. Attendees will pay ₹{amount || "0"} upon registration with success confetti celebration.</span>
+                                <div className="text-[11px] text-muted-foreground bg-background/50 p-3 rounded-lg border border-primary/10 space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-emerald-600 shrink-0">Razorpay Payment Button:</span>
+                                        <span>Button ID <code className="text-emerald-500 font-mono font-bold">{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}</code> • Fee ₹{amount || "0"}</span>
+                                    </div>
+                                    <div className="font-mono text-[10px] text-slate-400 bg-black/40 p-2 rounded border border-white/5 break-all select-all">
+                                        &lt;form&gt;&lt;script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}" async&gt; &lt;/script&gt; &lt;/form&gt;
+                                    </div>
                                 </div>
                             </div>
                         )}
