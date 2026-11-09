@@ -55,12 +55,14 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
       e.preventDefault();
       setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
-      const paymentId = hiddenInput?.value;
-      if (paymentId) {
+      const paymentId = hiddenInput?.value?.trim();
+      if (paymentId && paymentId.startsWith("pay_") && paymentId.length >= 8) {
         onSuccess({
           razorpay_payment_id: paymentId,
           status: "success",
         });
+      } else {
+        setIsProcessing(false);
       }
     };
     form.addEventListener("submit", handleFormSubmit);
@@ -69,12 +71,14 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     form.submit = () => {
       setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
-      const paymentId = hiddenInput?.value;
-      if (paymentId) {
+      const paymentId = hiddenInput?.value?.trim();
+      if (paymentId && paymentId.startsWith("pay_") && paymentId.length >= 8) {
         onSuccess({
           razorpay_payment_id: paymentId,
           status: "success",
         });
+      } else {
+        setIsProcessing(false);
       }
     };
 
@@ -128,12 +132,14 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
               Boolean(data.data?.payment_id);
 
             if (isSuccess) {
-              const paymentId =
+              const rawPaymentId =
                 data.razorpay_payment_id ||
                 data.data?.razorpay_payment_id ||
                 data.data?.payment_id;
 
-              if (paymentId) {
+              const paymentId = typeof rawPaymentId === "string" ? rawPaymentId.trim() : "";
+
+              if (paymentId && paymentId.startsWith("pay_") && paymentId.length >= 8) {
                 setIsProcessing(false);
                 onSuccess({
                   ...data,
@@ -241,10 +247,10 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
         className="w-full flex justify-center razorpay-btn-container min-h-[48px]"
       />
 
-      {/* Security & Completion Guarantee Note */}
-      <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-[11px] text-slate-500">
-        <Lock className="w-3.5 h-3.5 text-emerald-600" />
-        <span>Your registration completes immediately once payment is processed and verified by Razorpay.</span>
+      {/* Security & Compulsory Payment Guarantee Note */}
+      <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-[11px] text-slate-500 font-medium">
+        <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <span>Payment is compulsory for this event. Registration is officially confirmed only upon successful Razorpay verification.</span>
       </div>
     </div>
   );

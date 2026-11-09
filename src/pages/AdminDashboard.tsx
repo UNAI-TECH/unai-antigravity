@@ -59,6 +59,9 @@ export const downloadEventRegistrationsExcel = (event: Event, registrations: Eve
             "Email": reg.email || "",
             "Phone": reg.phone || "",
             "Registration Date": reg.created_at ? new Date(reg.created_at).toLocaleString() : "",
+            "Payment Status": reg.payment_status || (event.is_paid ? "paid" : "free"),
+            "Amount Paid (₹)": reg.amount_paid !== undefined ? reg.amount_paid : (event.is_paid ? (event.amount || 0) : 0),
+            "Razorpay Payment ID": reg.payment_id || (reg.answers as any)?.payment_id || (event.is_paid ? "Pending/Unverified" : "N/A"),
         };
 
         customFieldKeys.forEach(key => {
@@ -77,6 +80,9 @@ export const downloadEventRegistrationsExcel = (event: Event, registrations: Eve
         { wch: 30 },
         { wch: 18 },
         { wch: 22 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 26 },
         ...customFieldKeys.map(k => ({ wch: Math.max(k.length + 6, 20) }))
     ];
     worksheet["!cols"] = cols;
@@ -492,9 +498,24 @@ const AdminDashboard = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <span className="text-xs text-muted-foreground bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10 self-start sm:self-auto">
-                                                            {new Date(reg.created_at).toLocaleString()}
-                                                        </span>
+                                                        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                                                            {activeEventForView.is_paid ? (
+                                                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                                                    <IndianRupee className="w-3 h-3" />
+                                                                    <span>Paid ₹{reg.amount_paid || (reg.answers as any)?.amount_paid || activeEventForView.amount || 0}</span>
+                                                                    <span className="font-mono text-[10px] text-emerald-300/80 ml-1">
+                                                                        ({(reg.payment_id || (reg.answers as any)?.payment_id || 'Verified').slice(0, 14)}...)
+                                                                    </span>
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                                    Free
+                                                                </span>
+                                                            )}
+                                                            <span className="text-xs text-muted-foreground bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10">
+                                                                {new Date(reg.created_at).toLocaleString()}
+                                                            </span>
+                                                        </div>
                                                     </div>
 
                                                     {/* Form Answers */}
@@ -1011,6 +1032,19 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             return;
         }
 
+        // Compulsory payment validation for paid events
+        if (isPaid) {
+            const numAmount = parseFloat(amount);
+            if (!amount || isNaN(numAmount) || numAmount <= 0) {
+                toast.error("Please enter a valid ticket amount (₹) greater than 0 for paid events.");
+                return;
+            }
+            if (!paymentButtonId.trim()) {
+                toast.error("Please provide a valid Razorpay Payment Button ID (e.g. pl_TxxlM2Z9Q4JvBr) for paid events.");
+                return;
+            }
+        }
+
         setIsUploading(true);
 
         // Upload Cover
@@ -1072,9 +1106,9 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             max_registrations: maxRegVal,
             status: isDraft ? "draft" : "upcoming",
             description: formData.get("description") || "",
-            registration_link: registrationType === "url" ? (formData.get("registration_link") || "") : "",
-            registration_type: registrationType,
-            form_fields: registrationType === "manual" ? formFields : [],
+            registration_link: !isPaid && registrationType === "url" ? (formData.get("registration_link") || "") : "",
+            registration_type: isPaid ? "manual" : registrationType,
+            form_fields: (isPaid || registrationType === "manual") ? formFields : [],
             is_paid: isPaid,
             amount: isPaid ? (parseFloat(amount) || 0) : 0,
             payment_button_id: isPaid ? (paymentButtonId.trim() || "pl_TxxlM2Z9Q4JvBr") : "",
@@ -1609,6 +1643,20 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Compulsory payment validation for paid events
+        if (isPaid) {
+            const numAmount = parseFloat(amount);
+            if (!amount || isNaN(numAmount) || numAmount <= 0) {
+                toast.error("Please enter a valid ticket amount (₹) greater than 0 for paid events.");
+                return;
+            }
+            if (!paymentButtonId.trim()) {
+                toast.error("Please provide a valid Razorpay Payment Button ID (e.g. pl_TxxlM2Z9Q4JvBr) for paid events.");
+                return;
+            }
+        }
+
         setIsUploading(true);
         const formData = new FormData(e.target as HTMLFormElement);
 
@@ -1676,9 +1724,9 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
             max_registrations: maxRegVal,
             status: finalStatus,
             description: formData.get("description") || event.description,
-            registration_link: registrationType === "url" ? (formData.get("registration_link") || "") : "",
-            registration_type: registrationType,
-            form_fields: registrationType === "manual" ? formFields : [],
+            registration_link: !isPaid && registrationType === "url" ? (formData.get("registration_link") || "") : "",
+            registration_type: isPaid ? "manual" : registrationType,
+            form_fields: (isPaid || registrationType === "manual") ? formFields : [],
             is_paid: isPaid,
             amount: isPaid ? (parseFloat(amount) || 0) : 0,
             payment_button_id: isPaid ? (paymentButtonId.trim() || "pl_TxxlM2Z9Q4JvBr") : "",

@@ -10,3 +10,7 @@ ADD COLUMN IF NOT EXISTS payment_status text DEFAULT 'free',
 ADD COLUMN IF NOT EXISTS payment_id text,
 ADD COLUMN IF NOT EXISTS amount_paid numeric DEFAULT 0;
 
+-- Index for payment lookup and audit queries
+CREATE INDEX IF NOT EXISTS idx_event_reg_payment ON public.event_registrations(event_id, payment_status, payment_id);
+
+

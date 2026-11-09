@@ -172,10 +172,18 @@ const RegistrationModal = ({ event }: { event: any }) => {
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
-    // The payment button must process and return a verified Razorpay payment ID before registration completes
-    const paymentId = paymentData?.razorpay_payment_id || paymentData?.payment_id;
-    if (!paymentId) {
-      toast.error("Payment could not be verified by Razorpay. Please complete the transaction.");
+    // Payment is compulsory: verify authentic Razorpay transaction ID before registration completes
+    const rawPaymentId = paymentData?.razorpay_payment_id || paymentData?.payment_id;
+    const paymentId = typeof rawPaymentId === "string" ? rawPaymentId.trim() : "";
+
+    if (!paymentId || !paymentId.startsWith("pay_") || paymentId.length < 8) {
+      toast.error("Payment is compulsory. A verified Razorpay payment transaction is required to complete registration.");
+      return;
+    }
+
+    const eventAmount = Number(event.amount) || 0;
+    if (event.is_paid && eventAmount <= 0) {
+      toast.error("Invalid event fee configuration. Please contact the organizers.");
       return;
     }
 
@@ -199,11 +207,11 @@ const RegistrationModal = ({ event }: { event: any }) => {
           ...answers,
           payment_id: paymentId,
           payment_status: "paid",
-          amount_paid: Number(event.amount) || 0
+          amount_paid: eventAmount
         },
         payment_status: "paid",
         payment_id: paymentId,
-        amount_paid: Number(event.amount) || 0
+        amount_paid: eventAmount
       });
 
       // Clear pending session registration now that it is completed
@@ -914,18 +922,36 @@ const Events = () => {
   }, [eventId]);
 
   useEffect(() => {
-    const paymentStatus = searchParams.get("payment_status");
-    const razorpayPaymentId = searchParams.get("razorpay_payment_id");
+    const rawRazorpayPaymentId = searchParams.get("razorpay_payment_id");
+    const rawPaymentStatus = searchParams.get("payment_status");
+    const razorpayPaymentId = rawRazorpayPaymentId?.trim() || "";
+    const paymentStatus = rawPaymentStatus?.trim().toLowerCase() || "";
 
-    if (razorpayPaymentId || paymentStatus === "success") {
-      const paymentId = razorpayPaymentId || `pay_${Date.now().toString(36)}`;
+    // Clear payment query parameters from URL once read to avoid replay or refresh issues
+    if (rawRazorpayPaymentId || rawPaymentStatus) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("razorpay_payment_id");
+      newParams.delete("payment_status");
+      newParams.delete("razorpay_payment_link_id");
+      newParams.delete("razorpay_payment_link_status");
+      newParams.delete("razorpay_signature");
+      setSearchParams(newParams, { replace: true });
+    }
 
+    // Payment is compulsory: require authentic Razorpay payment ID format
+    if (razorpayPaymentId && razorpayPaymentId.startsWith("pay_") && razorpayPaymentId.length >= 8) {
       // Attempt to retrieve pending registration from sessionStorage if Razorpay redirected
       try {
         const saved = sessionStorage.getItem('unai_pending_paid_registration');
         if (saved) {
           const pending = JSON.parse(saved);
           sessionStorage.removeItem('unai_pending_paid_registration');
+
+          const paidAmount = Number(pending.amount) || 0;
+          if (paidAmount <= 0) {
+            toast.error("Payment verification failed: invalid amount.");
+            return;
+          }
 
           addEventRegistration({
             event_id: pending.event_id,
@@ -934,22 +960,21 @@ const Events = () => {
             phone: pending.phone,
             answers: {
               ...(pending.answers || {}),
-              payment_id: paymentId,
+              payment_id: razorpayPaymentId,
               payment_status: "paid",
-              amount_paid: Number(pending.amount) || 0,
+              amount_paid: paidAmount,
             },
             payment_status: "paid",
-            payment_id: paymentId,
-            amount_paid: Number(pending.amount) || 0,
+            payment_id: razorpayPaymentId,
+            amount_paid: paidAmount,
           })
             .then(() => {
               triggerPaymentSuccessConfetti();
-              toast.success(`Payment of ₹${pending.amount} Successful! Your registration for ${pending.event_title} is confirmed.`);
+              toast.success(`Payment of ₹${paidAmount} Verified! Your registration for "${pending.event_title}" is confirmed.`);
             })
             .catch((err) => {
               console.error("Error saving redirected registration:", err);
-              triggerPaymentSuccessConfetti();
-              toast.success("Payment Successful! Your registration is confirmed.");
+              toast.error(err?.message || "Payment verified, but saving registration failed. Please contact support.");
             });
           return;
         }
@@ -958,9 +983,11 @@ const Events = () => {
       }
 
       triggerPaymentSuccessConfetti();
-      toast.success("Payment Successful! Your registration is confirmed.");
+      toast.success("Payment Verified! Your registration is confirmed.");
+    } else if (paymentStatus === "failed" || paymentStatus === "cancelled") {
+      toast.error("Payment was not completed. Payment is compulsory to register for this event.");
     }
-  }, [searchParams, addEventRegistration]);
+  }, [searchParams, setSearchParams, addEventRegistration]);
 
   const handleOpenEvent = (id: string) => {
     setSearchParams({ id });

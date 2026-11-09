@@ -766,6 +766,45 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         }
 
+        // ─── Mandatory Payment Enforcement for Paid Events ─────────
+        let isPaidEvent = Boolean(targetEvent?.is_paid);
+        let expectedAmount = targetEvent ? Number(targetEvent.amount || 0) : 0;
+
+        // If targetEvent wasn't in memory, query Supabase to ensure accurate paid configuration
+        if (!targetEvent) {
+            try {
+                const { data: dbEvent } = await supabase
+                    .from('events')
+                    .select('is_paid, amount')
+                    .eq('id', app.event_id)
+                    .maybeSingle();
+                if (dbEvent) {
+                    isPaidEvent = Boolean(dbEvent.is_paid);
+                    expectedAmount = Number(dbEvent.amount || 0);
+                }
+            } catch (err) {
+                console.warn("Could not verify event paid status from DB:", err);
+            }
+        }
+
+        if (isPaidEvent) {
+            const paymentId = typeof app.payment_id === 'string' ? app.payment_id.trim() : '';
+            const paymentStatus = typeof app.payment_status === 'string' ? app.payment_status.trim().toLowerCase() : '';
+            const amountPaid = Number(app.amount_paid);
+
+            if (paymentStatus !== 'paid') {
+                throw new Error("Payment is compulsory for this event. Registration cannot be accepted without a confirmed payment status.");
+            }
+
+            if (!paymentId || !paymentId.startsWith('pay_') || paymentId.length < 8) {
+                throw new Error("Payment is compulsory for this event. A valid verified Razorpay transaction ID is required.");
+            }
+
+            if (isNaN(amountPaid) || amountPaid <= 0) {
+                throw new Error(`Payment is compulsory for this event. An amount greater than 0 must be paid (expected ₹${expectedAmount || 'entry fee'}).`);
+            }
+        }
+
         const tempReg: EventRegistration = {
             ...app,
             id: 'reg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
