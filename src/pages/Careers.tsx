@@ -147,6 +147,11 @@ const Careers = () => {
                                                                     {intern.stipend}
                                                                 </span>
                                                             )}
+                                                            {intern.is_paused && (
+                                                                <span className="inline-flex items-center gap-1 text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                                                                    Registration Closed
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -168,28 +173,39 @@ const Careers = () => {
                                                 )}
 
                                                 {/* Apply CTA */}
-                                                <Button
-                                                    size="sm"
-                                                    className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 text-white font-semibold hover:shadow-lg hover:shadow-metal-blue-500/25 transition-all"
-                                                    onClick={() => {
-                                                        const internJob: Job = {
-                                                            id: intern.id,
-                                                            title: intern.role,
-                                                            department: "Internship",
-                                                            type: "Internship",
-                                                            location: intern.location || "Chennai / Remote",
-                                                            salary: intern.stipend || "",
-                                                            experience: intern.duration,
-                                                            description: intern.description,
-                                                            questions: [],
-                                                        };
-                                                        setSelectedJob(internJob);
-                                                        setIsApplying(true);
-                                                    }}
-                                                    id={`careers-intern-apply-${index}`}
-                                                >
-                                                    Apply Now <ArrowRight className="ml-1.5 w-4 h-4" />
-                                                </Button>
+                                                {intern.is_paused ? (
+                                                    <Button
+                                                        size="sm"
+                                                        disabled
+                                                        className="w-full bg-slate-800/80 hover:bg-slate-800/80 text-slate-400 border border-slate-700/60 font-semibold cursor-not-allowed select-none shadow-none"
+                                                        id={`careers-intern-apply-${index}`}
+                                                    >
+                                                        Registration closed
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        className="w-full bg-gradient-to-r from-metal-blue-500 to-metal-purple-500 text-white font-semibold hover:shadow-lg hover:shadow-metal-blue-500/25 transition-all"
+                                                        onClick={() => {
+                                                            const internJob: Job = {
+                                                                id: intern.id,
+                                                                title: intern.role,
+                                                                department: "Internship",
+                                                                type: "Internship",
+                                                                location: intern.location || "Chennai / Remote",
+                                                                salary: intern.stipend || "",
+                                                                experience: intern.duration,
+                                                                description: intern.description,
+                                                                questions: [],
+                                                            };
+                                                            setSelectedJob(internJob);
+                                                            setIsApplying(true);
+                                                        }}
+                                                        id={`careers-intern-apply-${index}`}
+                                                    >
+                                                        Apply Now <ArrowRight className="ml-1.5 w-4 h-4" />
+                                                    </Button>
+                                                )}
                                             </GlassCard>
                                         </motion.div>
                                     );

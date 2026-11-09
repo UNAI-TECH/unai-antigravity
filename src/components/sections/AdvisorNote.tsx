@@ -19,18 +19,6 @@ const advisors = [
             "At UNAI TECH, my focus is to bridge the gap between frontier intelligence and production-grade reliability. We are not just deploying innovation; we are engineering certainty through established best practices and a lean, agile mindset.",
         ],
     },
-    {
-        name: "S Prasanna",
-        role: "ADVISORY DIRECTOR",
-        image: "/candidate.jpeg",
-        title: "\"Ambition Without <span class='text-blue-600'>Execution</span> is Just a Dream.\"",
-        label: "A Message from the Advisor",
-        content: [
-            "The most transformative ideas I've encountered were never born in boardrooms — they were forged through relentless curiosity and the courage to act before the path was clear. Technology, at its core, is a mirror of human will.",
-            "At UNAI TECH, I see an organization that doesn't wait for the future — it builds it. My role is to ensure that every strategic pivot we make is grounded in real-world wisdom, powered by bold thinking, and held accountable by measurable outcomes.",
-            "Innovation is not a department. <span class='font-medium text-slate-900'>It is a discipline — and at UNAI TECH, it is our identity.</span>",
-        ],
-    },
 ];
 
 export const AdvisorNote = () => {
@@ -52,10 +40,10 @@ export const AdvisorNote = () => {
                         fadeEffect={{ crossFade: true }}
                         spaceBetween={30}
                         slidesPerView={1}
-                        loop={true}
-                        autoplay={{ delay: 5500, disableOnInteraction: false }}
-                        pagination={{ clickable: true, dynamicBullets: true }}
-                        className="advisors-swiper !pb-16"
+                        loop={advisors.length > 1}
+                        autoplay={advisors.length > 1 ? { delay: 5500, disableOnInteraction: false } : false}
+                        pagination={advisors.length > 1 ? { clickable: true, dynamicBullets: true } : false}
+                        className={`advisors-swiper ${advisors.length > 1 ? '!pb-16' : ''}`}
                     >
                         {advisors.map((advisor) => (
                             <SwiperSlide key={advisor.name}>

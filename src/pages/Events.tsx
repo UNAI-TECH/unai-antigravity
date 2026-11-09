@@ -1,11 +1,29 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, ArrowRight, Clock, X, ChevronLeft, ChevronRight, ArrowUpRight, CheckCircle2, IndianRupee, Sparkles, ShieldCheck } from "lucide-react";
+import { 
+  Calendar, 
+  MapPin, 
+  Users, 
+  ArrowRight, 
+  Clock, 
+  X, 
+  ChevronLeft, 
+  ChevronRight, 
+  ArrowUpRight,
+  Share2,
+  Ticket,
+  ShieldCheck,
+  CheckCircle2,
+  ExternalLink,
+  Sparkles,
+  Check,
+  Lock,
+  IndianRupee
+} from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
-import { Magnetic } from "@/components/effects/Magnetic";
 import SEO from "@/components/SEO";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,16 +34,47 @@ import { RazorpayPaymentButton } from "@/components/events/RazorpayPaymentButton
 
 // ─── Registration Modal ──────────────────────────────────────────────────────────
 const RegistrationModal = ({ event }: { event: any }) => {
-  const { addEventRegistration } = useData();
+  const { addEventRegistration, eventRegistrations } = useData();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"form" | "payment" | "success">("form");
   const [formData, setFormData] = useState<any>({});
+  const [selectedRadio, setSelectedRadio] = useState<{ [fieldId: string]: string }>({});
+  const [otherTextValues, setOtherTextValues] = useState<{ [fieldId: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentResult, setPaymentResult] = useState<any>(null);
+
+  const currentCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
+  const capacity = event.max_registrations
+    ? Number(event.max_registrations)
+    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+  const isCapacityReached = !isNaN(capacity) && capacity > 0 && currentCount >= capacity;
+
+  // Lock body scroll & stop Lenis smooth scroll while modal is open
+  useEffect(() => {
+    if (open) {
+      if (typeof window !== "undefined" && (window as any).lenis) {
+        (window as any).lenis.stop();
+      }
+      document.body.style.overflow = "hidden";
+    } else {
+      if (typeof window !== "undefined" && (window as any).lenis) {
+        (window as any).lenis.start();
+      }
+      document.body.style.overflow = "";
+    }
+    return () => {
+      if (typeof window !== "undefined" && (window as any).lenis) {
+        (window as any).lenis.start();
+      }
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const resetModal = () => {
     setStep("form");
     setFormData({});
+    setSelectedRadio({});
+    setOtherTextValues({});
     setPaymentResult(null);
     setIsSubmitting(false);
   };
@@ -37,8 +86,22 @@ const RegistrationModal = ({ event }: { event: any }) => {
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate any selected "Other" fields that are required
+    if (event.form_fields && Array.isArray(event.form_fields)) {
+      for (const field of event.form_fields) {
+        if (field.type === 'multiple_choice' && field.required) {
+          const selected = selectedRadio[field.id];
+          const isOther = selected && (selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others');
+          if (isOther && (!otherTextValues[field.id] || !otherTextValues[field.id].trim())) {
+            toast.error(`Please specify your answer for "${field.label}"`);
+            return;
+          }
+        }
+      }
+    }
 
     // If it's a paid event, move to payment step
     if (event.is_paid) {
@@ -46,7 +109,6 @@ const RegistrationModal = ({ event }: { event: any }) => {
       return;
     }
 
-    // Free event submission
     setIsSubmitting(true);
     const name = formData['name'] || '';
     const email = formData['email'] || '';
@@ -71,7 +133,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
       setStep("success");
       toast.success("Registration Successful!");
     } catch (error: any) {
-      toast.error(error.message || "Registration failed. Please try again.");
+      toast.error(error?.message || "Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +180,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
       toast.success("Payment & Registration confirmed!");
     } catch (error: any) {
       console.error("Failed to complete registration:", error);
-      toast.error(error.message || "Payment processed, but saving registration failed. Please contact support.");
+      toast.error(error?.message || "Payment processed, but saving registration failed. Please contact support.");
     } finally {
       setIsSubmitting(false);
     }
@@ -128,21 +190,49 @@ const RegistrationModal = ({ event }: { event: any }) => {
     setFormData((prev: any) => ({ ...prev, [key]: value }));
   };
 
-  const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
+  const handleRadioChange = (field: any, opt: string) => {
+    setSelectedRadio(prev => ({ ...prev, [field.id]: opt }));
+    const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+    if (isOther) {
+      const custom = otherTextValues[field.id]?.trim();
+      handleFieldChange(field.label, custom ? `Other: ${custom}` : 'Other');
+    } else {
+      handleFieldChange(field.label, opt);
+    }
+  };
+
+  const handleOtherInputChange = (field: any, customText: string) => {
+    setOtherTextValues(prev => ({ ...prev, [field.id]: customText }));
+    handleFieldChange(field.label, customText.trim() ? `Other: ${customText.trim()}` : 'Other');
+  };
+
+  const handleCheckboxChange = (field: any, value: string, checked: boolean) => {
     setFormData((prev: any) => {
-      const current = prev[key] || [];
+      const current = prev[field.label] || [];
       if (checked) {
-        return { ...prev, [key]: [...current, value] };
+        return { ...prev, [field.label]: [...current, value] };
       } else {
-        return { ...prev, [key]: current.filter((v: string) => v !== value) };
+        return { ...prev, [field.label]: current.filter((v: string) => v !== value) };
       }
     });
   };
 
+  if (isCapacityReached) {
+    return (
+      <button
+        disabled
+        className="w-full py-4 sm:py-5 rounded-2xl bg-slate-200 text-slate-500 font-black text-sm uppercase tracking-wider border border-slate-300 shadow-none flex items-center justify-center gap-2 cursor-not-allowed select-none"
+      >
+        <Lock className="w-4 h-4 text-slate-400" />
+        Registration closed
+      </button>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group">
+        <button className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all duration-300 flex items-center justify-center gap-3 group cursor-pointer">
           {event.is_paid ? (
             <>
               Register & Pay ₹{Number(event.amount || 0).toLocaleString("en-IN")}{" "}
@@ -155,7 +245,13 @@ const RegistrationModal = ({ event }: { event: any }) => {
           )}
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[620px] bg-white border-slate-100 text-slate-900 p-8 rounded-[2rem] max-h-[88vh] overflow-y-auto custom-scrollbar">
+      <DialogContent 
+        data-lenis-prevent
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        className="sm:max-w-[620px] w-[95vw] bg-white text-slate-900 border border-slate-200 p-6 sm:p-8 rounded-[2rem] max-h-[88vh] overflow-y-auto custom-scrollbar shadow-2xl overscroll-contain"
+        style={{ overscrollBehavior: 'contain' }}
+      >
         {/* Step Indicator for Paid Events */}
         {event.is_paid && step !== "success" && (
           <div className="flex items-center justify-center gap-2 mb-6">
@@ -172,11 +268,12 @@ const RegistrationModal = ({ event }: { event: any }) => {
         {/* STEP 1: Registration Form */}
         {step === "form" && (
           <>
-            <DialogHeader className="mb-6">
+            <DialogHeader className="mb-5 pb-4 border-b border-slate-100">
               <div className="flex items-center justify-between gap-4">
-                <DialogTitle className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  Register for {event.title}
-                </DialogTitle>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Registration Open</span>
+                </div>
                 {event.is_paid && (
                   <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-black">
                     <IndianRupee className="w-3.5 h-3.5" />
@@ -184,47 +281,50 @@ const RegistrationModal = ({ event }: { event: any }) => {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-500 mt-2">
+              <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                Register for {event.title}
+              </DialogTitle>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 {event.is_paid
-                  ? "Enter your details to proceed to the secure payment step."
-                  : "Please fill in the details below to secure your spot."}
+                  ? "Please fill in your details below to proceed to the secure payment step."
+                  : "Please fill in your details below to secure your entry pass."}
               </p>
             </DialogHeader>
 
-            <form onSubmit={handleFormSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Default Fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Full Name *</label>
-                  <Input
-                    required
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Full Name *</label>
+                  <Input 
+                    required 
                     value={formData['name'] || ''}
-                    onChange={(e) => handleFieldChange("name", e.target.value)}
+                    onChange={(e) => handleFieldChange("name", e.target.value)} 
                     placeholder="e.g. John Doe"
-                    className="bg-slate-50 border-slate-200"
+                    className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Email *</label>
-                    <Input
-                      type="email"
-                      required
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Email Address *</label>
+                    <Input 
+                      type="email" 
+                      required 
                       value={formData['email'] || ''}
-                      onChange={(e) => handleFieldChange("email", e.target.value)}
+                      onChange={(e) => handleFieldChange("email", e.target.value)} 
                       placeholder="john@example.com"
-                      className="bg-slate-50 border-slate-200"
+                      className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Phone *</label>
-                    <Input
-                      type="tel"
-                      required
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Phone Number *</label>
+                    <Input 
+                      type="tel" 
+                      required 
                       value={formData['phone'] || ''}
-                      onChange={(e) => handleFieldChange("phone", e.target.value)}
+                      onChange={(e) => handleFieldChange("phone", e.target.value)} 
                       placeholder="+91 98765 43210"
-                      className="bg-slate-50 border-slate-200"
+                      className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
                     />
                   </div>
                 </div>
@@ -233,64 +333,134 @@ const RegistrationModal = ({ event }: { event: any }) => {
               {/* Dynamic Fields */}
               {event.form_fields && event.form_fields.length > 0 && (
                 <div className="space-y-5 pt-5 border-t border-slate-100">
-                  <h4 className="text-sm font-black uppercase tracking-widest text-slate-800">Additional Information</h4>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">Additional Information</span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                  </div>
                   {event.form_fields.map((field: any) => (
                     <div key={field.id} className="space-y-2">
-                      <label className="text-xs font-bold text-slate-600 block">
-                        {field.label} {field.required && "*"}
+                      <label className="text-xs font-bold text-slate-700 block">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
                       </label>
 
                       {field.type === 'short_answer' && (
-                        <Input
-                          required={field.required}
+                        <Input 
+                          required={field.required} 
                           value={formData[field.label] || ''}
-                          onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                          className="bg-slate-50 border-slate-200"
+                          onChange={(e) => handleFieldChange(field.label, e.target.value)} 
+                          placeholder="Your answer..."
+                          className="bg-slate-50 border-slate-200 text-slate-900 h-10 rounded-xl focus:border-primary focus:bg-white"
                         />
                       )}
 
                       {field.type === 'long_answer' && (
-                        <Textarea
-                          required={field.required}
+                        <Textarea 
+                          required={field.required} 
                           value={formData[field.label] || ''}
-                          onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                          className="bg-slate-50 border-slate-200 resize-none h-24"
+                          onChange={(e) => handleFieldChange(field.label, e.target.value)} 
+                          placeholder="Provide your detailed answer..."
+                          className="bg-slate-50 border-slate-200 text-slate-900 resize-none h-24 rounded-xl focus:border-primary focus:bg-white"
                         />
                       )}
 
                       {field.type === 'multiple_choice' && (
-                        <div className="space-y-2">
-                          {field.options.map((opt: string, i: number) => (
-                            <label key={i} className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="radio"
-                                name={`field_${field.id}`}
-                                required={field.required}
-                                checked={formData[field.label] === opt}
-                                value={opt}
-                                onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                className="w-4 h-4 accent-slate-900"
-                              />
-                              <span className="text-sm text-slate-600">{opt}</span>
-                            </label>
-                          ))}
+                        <div className="space-y-2.5 pt-1">
+                          {field.options.map((opt: string, i: number) => {
+                            const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+                            const isSelected = selectedRadio[field.id] === opt;
+
+                            return (
+                              <div key={i} className="space-y-2">
+                                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                                  <input 
+                                    type="radio" 
+                                    name={`field_${field.id}`} 
+                                    required={field.required && !selectedRadio[field.id]}
+                                    value={opt}
+                                    checked={selectedRadio[field.id] === opt}
+                                    onChange={() => handleRadioChange(field, opt)}
+                                    className="w-4 h-4 accent-primary cursor-pointer"
+                                  />
+                                  <span className="text-sm font-medium text-slate-800">{opt}</span>
+                                </label>
+
+                                {isOther && isSelected && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pl-7 pt-1"
+                                  >
+                                    <Input
+                                      placeholder="Please specify your other answer..."
+                                      required={field.required}
+                                      value={otherTextValues[field.id] || ""}
+                                      onChange={(e) => handleOtherInputChange(field, e.target.value)}
+                                      className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
+                                      autoFocus
+                                    />
+                                  </motion.div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
 
                       {field.type === 'checkboxes' && (
-                        <div className="space-y-2">
-                          {field.options.map((opt: string, i: number) => (
-                            <label key={i} className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                value={opt}
-                                checked={Array.isArray(formData[field.label]) && formData[field.label].includes(opt)}
-                                onChange={(e) => handleCheckboxChange(field.label, opt, e.target.checked)}
-                                className="w-4 h-4 rounded border-slate-300 accent-slate-900"
-                              />
-                              <span className="text-sm text-slate-600">{opt}</span>
-                            </label>
-                          ))}
+                        <div className="space-y-2 pt-1">
+                          {field.options.map((opt: string, i: number) => {
+                            const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+                            const checked = (formData[field.label] || []).some((v: string) => v === opt || v.startsWith(`Other:`));
+
+                            return (
+                              <div key={i} className="space-y-2">
+                                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                                  <input 
+                                    type="checkbox" 
+                                    value={opt}
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const isChecked = e.target.checked;
+                                      if (isOther) {
+                                        const custom = otherTextValues[field.id]?.trim();
+                                        const val = custom ? `Other: ${custom}` : 'Other';
+                                        handleCheckboxChange(field, val, isChecked);
+                                      } else {
+                                        handleCheckboxChange(field, opt, isChecked);
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded accent-primary cursor-pointer"
+                                  />
+                                  <span className="text-sm font-medium text-slate-800">{opt}</span>
+                                </label>
+
+                                {isOther && checked && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pl-7 pt-1"
+                                  >
+                                    <Input
+                                      placeholder="Please specify your other answer..."
+                                      value={otherTextValues[field.id] || ""}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setOtherTextValues(prev => ({ ...prev, [field.id]: val }));
+                                        setFormData((prev: any) => {
+                                          const current: string[] = prev[field.label] || [];
+                                          const filtered = current.filter(c => c !== 'Other' && !c.startsWith('Other:'));
+                                          const newVal = val.trim() ? `Other: ${val.trim()}` : 'Other';
+                                          return { ...prev, [field.label]: [...filtered, newVal] };
+                                        });
+                                      }}
+                                      className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
+                                      autoFocus
+                                    />
+                                  </motion.div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -298,23 +468,32 @@ const RegistrationModal = ({ event }: { event: any }) => {
                 </div>
               )}
 
-              <div className="pt-6">
+              <div className="pt-4 border-t border-slate-100">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
-                    "Submitting..."
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Submitting Registration...
+                    </>
                   ) : event.is_paid ? (
                     <>
-                      Proceed to Payment (₹{Number(event.amount || 0).toLocaleString("en-IN")}){" "}
+                      Proceed to Payment (₹{Number(event.amount || 0).toLocaleString("en-IN")})
                       <ArrowRight className="w-4 h-4" />
                     </>
                   ) : (
-                    "Complete Registration"
+                    <>
+                      Complete Registration
+                      <ArrowRight className="w-4 h-4" />
+                    </>
                   )}
                 </button>
+                <p className="text-[11px] text-center text-slate-400 mt-2">
+                  Your information is securely verified and will only be used for event admission.
+                </p>
               </div>
             </form>
           </>
@@ -324,10 +503,10 @@ const RegistrationModal = ({ event }: { event: any }) => {
         {step === "payment" && (
           <div className="space-y-6">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+              <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
                 Complete Payment
               </DialogTitle>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 Pay using the secure Razorpay button below to finalize your registration for <span className="font-bold text-slate-800">{event.title}</span>.
               </p>
             </DialogHeader>
@@ -342,7 +521,7 @@ const RegistrationModal = ({ event }: { event: any }) => {
               <button
                 type="button"
                 onClick={() => setStep("form")}
-                className="text-xs font-bold text-slate-600 hover:text-slate-900 underline self-start sm:self-center"
+                className="text-xs font-bold text-primary hover:underline self-start sm:self-center"
               >
                 Edit Details
               </button>
@@ -453,7 +632,7 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
 
   return (
     <div className="relative group w-full h-full">
-      <div className="relative overflow-hidden rounded-2xl h-full bg-black">
+      <div className="relative overflow-hidden rounded-2xl h-full bg-black/60">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
@@ -469,17 +648,23 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
         {posters.length > 1 && (
           <>
             <button onClick={(e) => { e.stopPropagation(); prev(); }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/90 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10">
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/90 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10"
+              aria-label="Previous Poster"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button onClick={(e) => { e.stopPropagation(); next(); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/90 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10">
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-black/90 rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 border border-white/10"
+              aria-label="Next Poster"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {posters.map((_, idx) => (
                 <button key={idx} onClick={() => setCurrentIndex(idx)}
-                  className={`h-1 rounded-full transition-all duration-500 ${idx === currentIndex ? "bg-white w-6" : "bg-white/30 w-1"}`} />
+                  className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentIndex ? "bg-white w-6" : "bg-white/30 w-1.5"}`} 
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
               ))}
             </div>
           </>
@@ -490,7 +675,7 @@ const PosterCarousel = ({ posters }: { posters: string[] }) => {
 };
 
 // ─── Countdown Timer ──────────────────────────────────────────────────────────
-const Countdown = ({ targetDate }: { targetDate?: string }) => {
+const Countdown = ({ targetDate, dark = false }: { targetDate?: string; dark?: boolean }) => {
   const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
 
   useEffect(() => {
@@ -521,100 +706,131 @@ const Countdown = ({ targetDate }: { targetDate?: string }) => {
   ];
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5 sm:gap-2">
       {units.map((u, i) => (
-        <div key={u.label} className="flex items-center gap-1">
-          <div className="text-center">
-            <div className="font-mono text-xs font-black text-slate-900 tabular-nums leading-none">{u.val}</div>
-            <div className="text-[8px] uppercase tracking-widest text-slate-400 font-semibold mt-0.5">{u.label}</div>
+        <div key={u.label} className="flex items-center gap-1.5 sm:gap-2">
+          <div className="text-center min-w-[28px] sm:min-w-[34px]">
+            <div className={`font-mono text-xs sm:text-sm font-black tabular-nums leading-none ${dark ? 'text-white' : 'text-slate-900'}`}>{u.val}</div>
+            <div className={`text-[8px] uppercase tracking-wider font-semibold mt-0.5 ${dark ? 'text-slate-400' : 'text-slate-400'}`}>{u.label}</div>
           </div>
-          {i < units.length - 1 && <span className="text-slate-300 text-xs font-light mb-2">:</span>}
+          {i < units.length - 1 && <span className={`text-xs font-light mb-2 ${dark ? 'text-white/20' : 'text-slate-300'}`}>:</span>}
         </div>
       ))}
     </div>
   );
 };
 
-// ─── Event Card ───────────────────────────────────────────────────────────────
+// ─── Event Card (1:1 Ratio Cover Image, Clean Card Layout) ────────────────────
 const EventCard = ({ event, index, onClick }: { event: any; index: number; onClick: () => void }) => {
+  const { eventRegistrations } = useData();
+  const displayImage = event.cover_image || event.banner;
+  const regCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
+  const capacity = event.max_registrations
+    ? Number(event.max_registrations)
+    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+  const isFull = !isNaN(capacity) && capacity > 0 && regCount >= capacity;
+
   return (
     <motion.article
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.7, delay: index * 0.08, ease: [0.23, 1, 0.32, 1] }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.6, delay: index * 0.06, ease: [0.23, 1, 0.32, 1] }}
       onClick={onClick}
-      className="group relative cursor-pointer aspect-[3/4]"
+      className="group relative cursor-pointer flex flex-col h-full rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 overflow-hidden"
     >
-      {/* Card Shell */}
-      <div className="relative w-full h-full overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-700 flex flex-col">
+      {/* Cover Image Container - STRICTLY 1:1 RATIO */}
+      <div className="relative w-full aspect-square overflow-hidden bg-slate-950 flex-shrink-0">
+        {displayImage ? (
+          <img 
+            src={displayImage} 
+            alt={event.title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" 
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex items-center justify-center">
+            <Calendar className="w-12 h-12 text-slate-600" />
+          </div>
+        )}
 
-        {/* Image Area (1:1 Ratio) */}
-        <div className="relative overflow-hidden flex-shrink-0 aspect-square w-full">
-          {event.cover_image || event.banner ? (
-            <img src={event.cover_image || event.banner} alt={event.title}
-              width="400" height="400"
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-              <Calendar className="w-10 h-10 text-slate-300" />
-            </div>
-          )}
+        {/* Soft gradient overlay for pill readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
-          {/* Type & Price Badges */}
-          <div className="absolute top-4 left-4 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm border border-white/50">
+        {/* Top Floating Badges */}
+        <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between pointer-events-none">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-white border border-white/20 shadow-md">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               {event.type || "Event"}
             </span>
             {event.is_paid ? (
-              <span className="inline-flex items-center gap-0.5 px-2.5 py-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-sm">
+              <span className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-md">
                 ₹{Number(event.amount || 0).toLocaleString("en-IN")}
               </span>
             ) : (
-              <span className="inline-flex items-center px-2.5 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest shadow-sm border border-white/20">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold uppercase tracking-wider border border-white/20 shadow-md">
                 Free
               </span>
             )}
           </div>
 
-          {/* Arrow Icon */}
-          <div className="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-500">
+          <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-300">
             <ArrowUpRight className="w-4 h-4" />
           </div>
-
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         </div>
 
-        {/* Body */}
-        <div className="p-4 sm:p-6 flex flex-col flex-1 justify-between bg-white">
-          <div>
-            <h3 className="font-black text-slate-900 mb-2 leading-tight group-hover:text-slate-600 transition-colors duration-300 text-lg line-clamp-1">
-              {event.title}
-            </h3>
-            <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-2">
-              {event.description}
-            </p>
+        {/* Bottom Floating Badges on image */}
+        <div className="absolute bottom-3 left-3.5 right-3.5 pointer-events-none flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            {event.registration_type === 'manual' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
+                Manual Form
+              </span>
+            )}
+            {isFull && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-rose-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
+                Closed
+              </span>
+            )}
           </div>
+        </div>
+      </div>
 
-          <div>
-            {/* Meta Row */}
-            <div className="flex items-center gap-3 text-[11px] text-slate-400 font-semibold mb-4 overflow-hidden">
-              <span className="flex items-center gap-1.5 whitespace-nowrap">
-                <MapPin className="w-3 h-3 text-slate-300" /> <span className="truncate max-w-[100px]">{event.location || "TBA"}</span>
-              </span>
-              <span className="flex items-center gap-1.5 whitespace-nowrap">
-                <Clock className="w-3 h-3 text-slate-300" /> {event.date ? event.date.split('T')[0] : "Upcoming"}
-              </span>
+      {/* Card Body with proper vertical distribution & NO cutoffs */}
+      <div className="p-5 sm:p-6 flex flex-col flex-1 justify-between bg-white gap-4">
+        <div className="space-y-2">
+          {/* Title */}
+          <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl leading-snug group-hover:text-primary transition-colors line-clamp-2">
+            {event.title}
+          </h3>
+
+          {/* Caption / Description */}
+          <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
+            {event.caption || event.description}
+          </p>
+        </div>
+
+        {/* Meta & Info */}
+        <div className="space-y-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-col gap-1.5 text-xs text-slate-600">
+            {/* Location with NO cutoff */}
+            <div className="flex items-start gap-2">
+              <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+              <span className="font-medium line-clamp-1">{event.location || "Venue TBA"}</span>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-slate-100 mb-4" />
+            {/* Date */}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              <span className="font-medium">{event.date ? event.date.split('T')[0] : "Date Upcoming"}</span>
+            </div>
+          </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-between">
-              <Countdown targetDate={event.date} />
+          {/* Footer Action Row */}
+          <div className="flex items-center justify-between pt-1">
+            <Countdown targetDate={event.date} />
+            <div className="flex items-center gap-2.5">
               {event.is_paid ? (
                 <span className="text-xs font-black text-emerald-600 flex items-center gap-0.5">
                   <IndianRupee className="w-3 h-3" />
@@ -625,12 +841,12 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
                   Free
                 </span>
               )}
+              <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                Details <ChevronRight className="w-3.5 h-3.5" />
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Bottom accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-900 via-slate-600 to-slate-900 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
       </div>
     </motion.article>
   );
@@ -638,14 +854,11 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
 
 // ─── Events Page ──────────────────────────────────────────────────────────────
 const Events = () => {
-  const { events } = useData();
+  const { events, eventRegistrations } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("id");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(eventId);
   const [activeFilter, setActiveFilter] = useState("All");
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
   useEffect(() => {
     setSelectedEventId(eventId || null);
@@ -668,165 +881,287 @@ const Events = () => {
   const handleCloseEvent = () => setSearchParams({});
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
-  // ── Detail View ─────────────────────────────────────────────────────────────
+  // ── Redesigned Event Preview / Detail Page (SEPARATE 3:1 ULTRA-WIDE HERO) ─────
   if (selectedEventId && selectedEvent) {
+    const formattedDate = selectedEvent.date ? selectedEvent.date.split('T')[0] : "TBA";
+    const currentEventRegs = eventRegistrations.filter((r) => r.event_id === selectedEvent.id);
+    const eventCapacity = selectedEvent.max_registrations
+      ? Number(selectedEvent.max_registrations)
+      : parseInt(String(selectedEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
+    const isCapacityReached = !isNaN(eventCapacity) && eventCapacity > 0 && currentEventRegs.length >= eventCapacity;
+    const isRegistrationClosed = isCapacityReached || selectedEvent.status === 'past';
+
     return (
-      <div className="min-h-screen bg-[#F7F6F2]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;0,9..40,900;1,9..40,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap');`}</style>
-        <SEO title={selectedEvent.title} description={selectedEvent.description} />
+      <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-primary/20 selection:text-primary relative" style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
+        <SEO title={`${selectedEvent.title} | UNAI TECH Events`} description={selectedEvent.caption || selectedEvent.description} />
 
+        {/* Subtle Ambient Glow */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[500px] bg-gradient-to-b from-blue-100/60 via-indigo-50/40 to-transparent blur-[140px] pointer-events-none -z-10" />
 
-        <main>
-          {/* Hero */}
-          <section className="relative w-full aspect-video overflow-hidden bg-slate-950">
-            {selectedEvent.banner ? (
-              <img src={selectedEvent.banner} alt={selectedEvent.title} width="1920" height="1080" className="absolute inset-0 w-full h-full object-contain" />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#F7F6F2]" />
+        {/* ── Separate Hero Section (ONLY for Banner Image) ──────── */}
+        <section className="relative w-full pt-20 sm:pt-28 bg-[#F8FAFC]">
+          {/* Top Navigation & Share Toolbar */}
+          <div className="max-w-[1340px] mx-auto px-4 sm:px-8 md:px-12 mb-3 sm:mb-4 flex items-center justify-between">
+            <button
+              onClick={handleCloseEvent}
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm text-xs sm:text-sm font-semibold transition-all duration-300 group"
+            >
+              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Back to all Events</span>
+            </button>
 
-            <div className="absolute inset-0 flex flex-col justify-end px-4 sm:px-8 md:px-16 pb-8 md:pb-16 max-w-[1400px] mx-auto w-full">
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}>
-                <div className="flex items-center gap-2 mb-4 sm:mb-6 flex-wrap">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {selectedEvent.type || "Event"}
-                  </span>
-                  {selectedEvent.is_paid ? (
-                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20">
-                      ₹{Number(selectedEvent.amount || 0).toLocaleString("en-IN")} • Paid Event
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">
-                      Free Entry
-                    </span>
-                  )}
-                </div>
-                <h1 style={{ fontFamily: "'Playfair Display', serif" }}
-                  className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] mb-2 sm:mb-4 max-w-4xl">
-                  {selectedEvent.title}
-                </h1>
-              </motion.div>
-            </div>
-          </section>
-
-          {/* Content */}
-          <section className="px-4 sm:px-8 md:px-16 py-12 sm:py-20 max-w-[1400px] mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-              {/* Description */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="lg:col-span-2 bg-white rounded-[2.5rem] p-10 md:p-14 border border-slate-100"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success("Event link copied to clipboard!");
+                }}
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm text-xs sm:text-sm font-semibold transition-all duration-300"
+                title="Copy event link"
               >
-                {/* Back Button */}
-                <button
-                  onClick={handleCloseEvent}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-slate-900 transition-all duration-300 mb-8 group"
-                >
-                  <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                  Back to Events
-                </button>
+                <Share2 className="w-3.5 h-3.5 text-primary" />
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
 
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-0.5 bg-slate-900" />
-                  <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">About</span>
+          {/* Ultra-Wide Banner Container (Responsive aspect ratio without obscuring overlay badges) */}
+          <div 
+            className="relative w-full aspect-[2.2/1] sm:aspect-[2.6/1] md:aspect-[3/1] max-w-[1920px] mx-auto overflow-hidden bg-slate-950 border-y border-slate-200/90 shadow-sm group"
+          >
+            {selectedEvent.banner ? (
+              <img
+                src={selectedEvent.banner}
+                alt={selectedEvent.title}
+                className="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-[1.01]"
+              />
+            ) : selectedEvent.cover_image ? (
+              <img
+                src={selectedEvent.cover_image}
+                alt={selectedEvent.title}
+                className="w-full h-full object-contain bg-slate-950 p-4"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 flex flex-col items-center justify-center text-slate-400">
+                <Calendar className="w-16 h-16 mb-2 opacity-50 text-slate-400" />
+                <span className="text-sm font-semibold text-slate-600">UNAI TECH Special Event</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ── Main Content Section (Below the Separate Hero Section) ──────── */}
+        <main className="py-8 sm:py-14 px-4 sm:px-8 md:px-12 max-w-[1240px] mx-auto">
+          {/* Event Header Block (Cleanly below the hero banner) */}
+          <div className="mb-8 sm:mb-10">
+            {/* Badges placed cleanly above title without overlaying banner */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-3 sm:mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white text-xs font-bold uppercase tracking-wider text-slate-900 border border-slate-200/90 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {selectedEvent.type || "Conference"}
+              </span>
+              {selectedEvent.is_paid ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-sm">
+                  ₹{Number(selectedEvent.amount || 0).toLocaleString("en-IN")} • Paid Event
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white text-xs font-bold uppercase tracking-wider text-slate-700 border border-slate-200/90 shadow-sm">
+                  Free Entry
+                </span>
+              )}
+              <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-blue-600 text-xs font-semibold text-white shadow-sm">
+                {selectedEvent.status === 'past' ? 'Past Event' : 'Official Event'}
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+              {selectedEvent.title}
+            </h1>
+            {selectedEvent.caption && (
+              <p className="text-base sm:text-xl text-primary font-semibold mt-2.5 sm:mt-3 leading-snug">
+                {selectedEvent.caption}
+              </p>
+            )}
+
+            {/* Key Info Cards Grid - Light Theme */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mt-6">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-primary shrink-0" /> Date
                 </div>
-                <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-line">
-                  {selectedEvent.description}
-                </p>
-              </motion.div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Quick Stats */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.1 }}
-                  className="bg-slate-900 rounded-[2.5rem] p-8 text-white"
-                >
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-6 h-0.5 bg-white/30" />
-                    <span className="text-xs font-black uppercase tracking-[0.3em] text-white/40">Details</span>
-                  </div>
-                  <div className="space-y-7">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
-                        <MapPin className="w-3 h-3" /> Venue
-                      </div>
-                      <div className="text-lg font-black">{selectedEvent.location || "TBA"}</div>
-                    </div>
-                    <div className="h-px bg-white/10" />
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
-                        <Calendar className="w-3 h-3" /> Date
-                      </div>
-                      <div className="text-lg font-black">{selectedEvent.date ? selectedEvent.date.split('T')[0] : "TBA"}</div>
-                    </div>
-                    <div className="h-px bg-white/10" />
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
-                        <Users className="w-3 h-3" /> Attendees
-                      </div>
-                      <div className="text-3xl font-black">{selectedEvent.attendees ?? "—"}</div>
-                    </div>
-                    <div className="h-px bg-white/10" />
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
-                        <IndianRupee className="w-3 h-3 text-emerald-400" /> Entry Fee
-                      </div>
-                      <div className="text-2xl font-black text-emerald-400">
-                        {selectedEvent.is_paid
-                          ? `₹${Number(selectedEvent.amount || 0).toLocaleString("en-IN")}`
-                          : "Free Entry"}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* CTA */}
-                {(selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || selectedEvent.is_paid) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                  >
-                    {selectedEvent.registration_type === 'manual' || selectedEvent.is_paid ? (
-                        <RegistrationModal event={selectedEvent} />
-                    ) : (
-                        <button
-                          onClick={() => window.open(selectedEvent.registration_link, "_blank")}
-                          className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group"
-                        >
-                          Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    )}
-                  </motion.div>
-                )}
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">{formattedDate}</div>
               </div>
 
-              {/* Gallery */}
-              {selectedEvent.posters && selectedEvent.posters.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  className="lg:col-span-3 flex flex-col items-center mt-8"
-                >
-                  <div className="w-full max-w-md">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-6 h-0.5 bg-slate-900" />
-                      <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Event Posters</span>
-                    </div>
-                    <div className="w-full aspect-[3/4] relative rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
-                      <PosterCarousel posters={selectedEvent.posters} />
-                    </div>
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" /> Venue
+                </div>
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 line-clamp-2 leading-tight" title={selectedEvent.location}>{selectedEvent.location || "TBA"}</div>
+              </div>
+
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <Users className="w-3.5 h-3.5 text-primary shrink-0" /> Capacity
+                </div>
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">{selectedEvent.attendees || "Open Access"}</div>
+              </div>
+
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  {selectedEvent.is_paid ? (
+                    <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Ticket className="w-3.5 h-3.5 text-primary shrink-0" />
+                  )}
+                  {selectedEvent.is_paid ? "Entry Fee" : "Admission"}
+                </div>
+                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">
+                  {selectedEvent.is_paid
+                    ? `₹${Number(selectedEvent.amount || 0).toLocaleString("en-IN")}`
+                    : selectedEvent.registration_type === 'manual' ? "Direct Entry (Free)" : "Online Pass (Free)"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2-Column Content + Sticky Sidebar */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-10">
+            {/* Main Content (2 Columns) */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Description Card */}
+              <div className="p-6 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600" />
+                  <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-slate-500">About The Event</h2>
+                </div>
+                <p className="whitespace-pre-line text-slate-700 text-base sm:text-lg leading-relaxed font-normal">
+                  {selectedEvent.description}
+                </p>
+              </div>
+
+              {/* Cover Image Showcase - STRICTLY 1:1 RATIO */}
+              {selectedEvent.cover_image && (
+                <div className="p-6 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600" />
+                    <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-slate-500">Official Event Artwork</h2>
                   </div>
-                </motion.div>
+                  <div className="max-w-md mx-auto sm:mx-0 w-full aspect-square rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-slate-50 group">
+                    <img
+                      src={selectedEvent.cover_image}
+                      alt={`${selectedEvent.title} Cover`}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
+                </div>
               )}
 
+              {/* Posters Gallery (if available) */}
+              {selectedEvent.posters && selectedEvent.posters.length > 0 && (
+                <div className="p-6 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600" />
+                    <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-slate-500">Event Posters & Media</h2>
+                  </div>
+                  <div className="w-full max-w-lg mx-auto aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-50">
+                    <PosterCarousel posters={selectedEvent.posters} />
+                  </div>
+                </div>
+              )}
             </div>
-          </section>
+
+            {/* Sticky Action Sidebar (1 Column) */}
+            <div className="space-y-6">
+              <div className="lg:sticky lg:top-28 space-y-6">
+                {/* Registration Card - Light Theme */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-primary/20 shadow-xl shadow-primary/5 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600" />
+
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-primary block">Event Countdown</span>
+                      <span className="text-xs text-slate-500">Live Registration Portal</span>
+                    </div>
+                    {isRegistrationClosed ? (
+                      <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200 flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Registration Closed
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                        Open {!isNaN(eventCapacity) && eventCapacity > 0 ? `(${currentEventRegs.length}/${eventCapacity})` : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Countdown Ticker - Light Theme */}
+                  <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <Countdown targetDate={selectedEvent.date} dark={false} />
+                  </div>
+
+                  {/* Action CTA */}
+                  {isRegistrationClosed ? (
+                    <div className="space-y-2">
+                      <button
+                        disabled
+                        className="w-full py-4 sm:py-5 rounded-2xl bg-slate-200 text-slate-500 font-black text-sm uppercase tracking-wider border border-slate-300 shadow-none flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                      >
+                        <Lock className="w-4 h-4 text-slate-400" />
+                        Registration closed
+                      </button>
+                      {isCapacityReached && (
+                        <p className="text-center text-xs font-semibold text-rose-600">
+                          Registration closed. Maximum limit of ${eventCapacity} participants has been reached.
+                        </p>
+                      )}
+                    </div>
+                  ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || selectedEvent.is_paid) ? (
+                    selectedEvent.registration_type === 'manual' || selectedEvent.is_paid ? (
+                      <RegistrationModal event={selectedEvent} />
+                    ) : (
+                      <button
+                        onClick={() => window.open(selectedEvent.registration_link, "_blank")}
+                        className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                      >
+                        Register for Event
+                        <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      </button>
+                    )
+                  ) : (
+                    <div className="w-full py-4 text-center text-sm font-semibold text-slate-500 bg-slate-100 rounded-2xl border border-slate-200">
+                      Registrations Opening Soon
+                    </div>
+                  )}
+
+                  {/* Value Props / Guarantees */}
+                  <div className="mt-6 pt-6 border-t border-slate-100 space-y-2.5 text-xs text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-primary" />
+                      <span>Instant digital confirmation & access pass</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Verified admission for registered attendees</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Share Card */}
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm text-center">
+                  <p className="text-xs text-slate-500 mb-3">Invite colleagues or students to this event</p>
+                  <button
+                    onClick={() => {
+                      const shareText = `Check out ${selectedEvent.title} on UNAI TECH: ${window.location.href}`;
+                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>Share on WhatsApp</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -838,6 +1173,7 @@ const Events = () => {
 
   const filteredEvents = events
     .filter(event => {
+      if (event.status === "draft") return false;
       if (activeFilter === "All") return true;
       return event.type === activeFilter;
     })
@@ -876,7 +1212,7 @@ const Events = () => {
       <main className="pt-0 min-h-screen">
 
         {/* ── Hero Section ──────────────────────────────────────────────────── */}
-        <section ref={heroRef} className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-28 px-4 sm:px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
+        <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-28 px-4 sm:px-8 md:px-16" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1a3a 40%, #0a1628 70%, #060c18 100%)" }}>
 
           {/* Animated grid overlay */}
           <div className="absolute inset-0 pointer-events-none" style={{
@@ -960,10 +1296,10 @@ const Events = () => {
                 >
                   <div className="flex -space-x-3">
                     {[
-                      "/Madhan_Kumar_P.JPG.jpeg",
+                      "/Anjali_M.JPG.jpeg",
                       "/Kamalesh_S.JPG.jpeg",
-                      "/Kishore_K.jpg.jpeg",
-                      "/Anjali_M.JPG.jpeg"
+                      "/Madhan_Kumar_P.JPG.jpeg",
+                      "/1776426332350.png"
                     ].map((img, i) => (
                       <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0f1e] overflow-hidden bg-slate-800">
                         <img src={img} alt="Team" className="w-full h-full object-cover" />
