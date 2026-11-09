@@ -24,8 +24,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { GlowOrb } from "@/components/effects/GlowOrb";
 import { INTERNSHIP_ICON_OPTIONS, getInternshipIcon } from "@/utils/internshipIcons";
+import { usePWA } from "@/hooks/usePWA";
 
 const AdminDashboard = () => {
+    const { isInstallable, isInstalled, promptInstall } = usePWA();
     const {
         isAuthenticated, logout,
         events, addEvent, deleteEvent, updateEvent,
@@ -118,6 +120,15 @@ const AdminDashboard = () => {
                                     <Button variant="outline" onClick={() => setActiveTab('internships')}>Manage Internships</Button>
                                     <Button variant="outline" onClick={() => setActiveTab('applications')}>View Applications</Button>
                                     <Button variant="outline" onClick={() => setActiveTab('gallery')}>Add Photo</Button>
+                                    {isInstallable && !isInstalled && (
+                                        <Button
+                                            variant="outline"
+                                            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                                            onClick={() => promptInstall()}
+                                        >
+                                            <Download className="w-4 h-4 mr-2" /> Install Admin App
+                                        </Button>
+                                    )}
                                 </div>
                             </GlassCard>
                         </div>
@@ -213,6 +224,16 @@ const AdminDashboard = () => {
                                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.status === 'upcoming' ? 'bg-green-500/20 text-green-400' : 'bg-primary/10 text-muted-foreground'}`}>
                                                     {event.status}
                                                 </span>
+                                                {event.is_paid ? (
+                                                    <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1">
+                                                        <IndianRupee className="w-3 h-3" />
+                                                        {event.amount || 0}
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs font-medium">
+                                                        Free
+                                                    </span>
+                                                )}
                                                 {event.registration_type === 'manual' && (
                                                     <span className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">Manual Form</span>
                                                 )}
@@ -500,6 +521,27 @@ const AdminDashboard = () => {
                     ))}
                 </nav>
 
+                {isInstallable && !isInstalled && (
+                    <div className="px-4 pb-2">
+                        <button
+                            onClick={() => promptInstall()}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all text-xs font-semibold"
+                            title="Install Admin Portal App"
+                        >
+                            <Download className="w-4 h-4 shrink-0" />
+                            <span className="hidden md:block">Install Admin App</span>
+                        </button>
+                    </div>
+                )}
+                {isInstalled && (
+                    <div className="px-4 pb-2 hidden md:block">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-emerald-400/80 bg-emerald-500/5 text-[11px] font-medium border border-emerald-500/10">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>Admin App Installed</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="p-4 border-t border-primary/5">
                     <button
                         onClick={() => { logout(); navigate("/admin"); }}
@@ -516,6 +558,16 @@ const AdminDashboard = () => {
                 <header className="h-20 border-b border-primary/5 bg-background/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
                     <h2 className="font-semibold text-lg capitalize">{activeTab}</h2>
                     <div className="flex items-center gap-4">
+                        {isInstallable && !isInstalled && (
+                            <button
+                                onClick={() => promptInstall()}
+                                className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all shadow-sm"
+                                title="Install UNAI Admin App"
+                            >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Install App</span>
+                            </button>
+                        )}
                         <button className="w-10 h-10 rounded-full border border-primary/10 flex items-center justify-center hover:bg-primary/5">
                             <Bell className="w-4 h-4" />
                         </button>
@@ -550,6 +602,9 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState("");
     const [registrationType, setRegistrationType] = useState<"url" | "manual">("url");
+    const [isPaid, setIsPaid] = useState(false);
+    const [amount, setAmount] = useState("");
+    const [paymentButtonId, setPaymentButtonId] = useState("pl_TxxlM2Z9Q4JvBr");
     const [formFields, setFormFields] = useState<{ id: string, type: string, label: string, options: string[], required: boolean }[]>([]);
 
     const addFormField = () => {
@@ -695,6 +750,9 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
             registration_link: registrationType === "url" ? formData.get("registration_link") : "",
             registration_type: registrationType,
             form_fields: registrationType === "manual" ? formFields : [],
+            is_paid: isPaid,
+            amount: isPaid ? (parseFloat(amount) || 0) : 0,
+            payment_button_id: isPaid ? (paymentButtonId.trim() || "pl_TxxlM2Z9Q4JvBr") : "",
             cover_image: coverUrl,
             banner: bannerUrl,
             posters: posterUrls
@@ -971,6 +1029,66 @@ const AddEventDialog = ({ onAdd }: { onAdd: (data: any) => void }) => {
                         </div>
                     )}
 
+                    {/* Event Pricing (Free / Paid Toggle) */}
+                    <div className="space-y-4 pt-4 border-t border-primary/10">
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/10">
+                            <div className="space-y-0.5">
+                                <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <IndianRupee className="w-4 h-4 text-emerald-400" />
+                                    <span>Paid Event</span>
+                                </label>
+                                <p className="text-xs text-muted-foreground">
+                                    Enable paid ticketing. Attendees will pay the specified fee using Razorpay.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={isPaid}
+                                onCheckedChange={setIsPaid}
+                            />
+                        </div>
+
+                        {isPaid && (
+                            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+                                            Event Fee / Amount (₹) *
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">₹</span>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                step="any"
+                                                value={amount}
+                                                onChange={(e) => setAmount(e.target.value)}
+                                                placeholder="e.g., 499"
+                                                required={isPaid}
+                                                className="pl-8 bg-background border-primary/20 focus:border-emerald-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-emerald-600">
+                                            Razorpay Payment Button ID *
+                                        </label>
+                                        <Input
+                                            value={paymentButtonId}
+                                            onChange={(e) => setPaymentButtonId(e.target.value)}
+                                            placeholder="pl_TxxlM2Z9Q4JvBr"
+                                            required={isPaid}
+                                            className="bg-background border-primary/20 focus:border-emerald-500 font-mono text-xs"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-primary/10 flex items-center gap-2">
+                                    <span className="font-semibold text-emerald-600 shrink-0">Razorpay Button:</span>
+                                    <span>Configured with Button ID <code className="text-emerald-500 font-mono font-bold">{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}</code>. Attendees will pay ₹{amount || "0"} upon registration with success confetti celebration.</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Hidden Status */}
                     <input type="hidden" name="status" value="upcoming" />
 
@@ -1013,6 +1131,9 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState("");
     const [registrationType, setRegistrationType] = useState<"url" | "manual">(event.registration_type || "url");
+    const [isPaid, setIsPaid] = useState<boolean>(Boolean(event.is_paid));
+    const [amount, setAmount] = useState<string>(event.amount !== undefined && event.amount !== null ? String(event.amount) : "");
+    const [paymentButtonId, setPaymentButtonId] = useState<string>(event.payment_button_id || "pl_TxxlM2Z9Q4JvBr");
     const [formFields, setFormFields] = useState<{ id: string, type: string, label: string, options: string[], required: boolean }[]>(event.form_fields || []);
 
     const addFormField = () => {
@@ -1156,6 +1277,9 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
             registration_link: registrationType === "url" ? formData.get("registration_link") : "",
             registration_type: registrationType,
             form_fields: registrationType === "manual" ? formFields : [],
+            is_paid: isPaid,
+            amount: isPaid ? (parseFloat(amount) || 0) : 0,
+            payment_button_id: isPaid ? (paymentButtonId.trim() || "pl_TxxlM2Z9Q4JvBr") : "",
             cover_image: coverUrl,
             banner: bannerUrl,
             posters: posterUrls
@@ -1437,6 +1561,66 @@ const EditEventDialog = ({ event, onEdit }: { event: Event; onEdit: (id: string,
                             </div>
                         </div>
                     )}
+
+                    {/* Event Pricing (Free / Paid Toggle) */}
+                    <div className="space-y-4 pt-4 border-t border-primary/10">
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/10">
+                            <div className="space-y-0.5">
+                                <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <IndianRupee className="w-4 h-4 text-emerald-400" />
+                                    <span>Paid Event</span>
+                                </label>
+                                <p className="text-xs text-muted-foreground">
+                                    Enable paid ticketing. Attendees will pay the specified fee using Razorpay.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={isPaid}
+                                onCheckedChange={setIsPaid}
+                            />
+                        </div>
+
+                        {isPaid && (
+                            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+                                            Event Fee / Amount (₹) *
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">₹</span>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                step="any"
+                                                value={amount}
+                                                onChange={(e) => setAmount(e.target.value)}
+                                                placeholder="e.g., 499"
+                                                required={isPaid}
+                                                className="pl-8 bg-background border-primary/20 focus:border-emerald-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-emerald-600">
+                                            Razorpay Payment Button ID *
+                                        </label>
+                                        <Input
+                                            value={paymentButtonId}
+                                            onChange={(e) => setPaymentButtonId(e.target.value)}
+                                            placeholder="pl_TxxlM2Z9Q4JvBr"
+                                            required={isPaid}
+                                            className="bg-background border-primary/20 focus:border-emerald-500 font-mono text-xs"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-primary/10 flex items-center gap-2">
+                                    <span className="font-semibold text-emerald-600 shrink-0">Razorpay Button:</span>
+                                    <span>Configured with Button ID <code className="text-emerald-500 font-mono font-bold">{paymentButtonId || "pl_TxxlM2Z9Q4JvBr"}</code>. Attendees will pay ₹{amount || "0"} upon registration with success confetti celebration.</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Hidden Status */}
                     <input type="hidden" name="status" value="upcoming" />

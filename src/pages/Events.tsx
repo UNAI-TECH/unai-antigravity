@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, ArrowRight, Clock, X, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowRight, Clock, X, ChevronLeft, ChevronRight, ArrowUpRight, CheckCircle2, IndianRupee, Sparkles, ShieldCheck } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
 import { Magnetic } from "@/components/effects/Magnetic";
@@ -11,24 +11,47 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { triggerPaymentSuccessConfetti } from "@/utils/confetti";
+import { RazorpayPaymentButton } from "@/components/events/RazorpayPaymentButton";
 
 // ─── Registration Modal ──────────────────────────────────────────────────────────
 const RegistrationModal = ({ event }: { event: any }) => {
   const { addEventRegistration } = useData();
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "payment" | "success">("form");
   const [formData, setFormData] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<any>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const resetModal = () => {
+    setStep("form");
+    setFormData({});
+    setPaymentResult(null);
+    setIsSubmitting(false);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setTimeout(resetModal, 300);
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If it's a paid event, move to payment step
+    if (event.is_paid) {
+      setStep("payment");
+      return;
+    }
+
+    // Free event submission
     setIsSubmitting(true);
-    
-    // Extract default fields
     const name = formData['name'] || '';
     const email = formData['email'] || '';
     const phone = formData['phone'] || '';
 
-    // Extract dynamic answers
     const answers = { ...formData };
     delete answers['name'];
     delete answers['email'];
@@ -41,11 +64,61 @@ const RegistrationModal = ({ event }: { event: any }) => {
         email,
         phone,
         answers,
+        payment_status: "free",
+        amount_paid: 0
       });
+      triggerPaymentSuccessConfetti();
+      setStep("success");
       toast.success("Registration Successful!");
-      setOpen(false);
-    } catch (error) {
-      toast.error("Registration failed. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentData: any) => {
+    setIsSubmitting(true);
+    const name = formData['name'] || '';
+    const email = formData['email'] || '';
+    const phone = formData['phone'] || '';
+
+    const answers = { ...formData };
+    delete answers['name'];
+    delete answers['email'];
+    delete answers['phone'];
+
+    const paymentId = paymentData?.razorpay_payment_id || `pay_${Date.now().toString(36)}`;
+
+    try {
+      await addEventRegistration({
+        event_id: event.id,
+        applicant_name: name,
+        email,
+        phone,
+        answers: {
+          ...answers,
+          payment_id: paymentId,
+          payment_status: "paid",
+          amount_paid: event.amount
+        },
+        payment_status: "paid",
+        payment_id: paymentId,
+        amount_paid: Number(event.amount) || 0
+      });
+
+      setPaymentResult({
+        ...paymentData,
+        payment_id: paymentId,
+      });
+
+      // Trigger spectacular celebratory confetti!
+      triggerPaymentSuccessConfetti();
+      setStep("success");
+      toast.success("Payment & Registration confirmed!");
+    } catch (error: any) {
+      console.error("Failed to complete registration:", error);
+      toast.error(error.message || "Payment processed, but saving registration failed. Please contact support.");
     } finally {
       setIsSubmitting(false);
     }
@@ -56,124 +129,316 @@ const RegistrationModal = ({ event }: { event: any }) => {
   };
 
   const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
-      setFormData((prev: any) => {
-          const current = prev[key] || [];
-          if (checked) {
-              return { ...prev, [key]: [...current, value] };
-          } else {
-              return { ...prev, [key]: current.filter((v: string) => v !== value) };
-          }
-      });
+    setFormData((prev: any) => {
+      const current = prev[key] || [];
+      if (checked) {
+        return { ...prev, [key]: [...current, value] };
+      } else {
+        return { ...prev, [key]: current.filter((v: string) => v !== value) };
+      }
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-700 transition-all duration-300 flex items-center justify-center gap-3 group">
-          Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          {event.is_paid ? (
+            <>
+              Register & Pay ₹{Number(event.amount || 0).toLocaleString("en-IN")}{" "}
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </>
+          ) : (
+            <>
+              Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </>
+          )}
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-white border-slate-100 text-slate-900 p-8 rounded-[2rem] max-h-[85vh] overflow-y-auto custom-scrollbar">
-        <DialogHeader className="mb-6">
-          <DialogTitle className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Register for {event.title}
-          </DialogTitle>
-          <p className="text-sm text-slate-500 mt-2">Please fill in the details below to secure your spot.</p>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Default Fields */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Full Name *</label>
-              <Input required onChange={(e) => handleFieldChange("name", e.target.value)} className="bg-slate-50 border-slate-200" />
+      <DialogContent className="sm:max-w-[620px] bg-white border-slate-100 text-slate-900 p-8 rounded-[2rem] max-h-[88vh] overflow-y-auto custom-scrollbar">
+        {/* Step Indicator for Paid Events */}
+        {event.is_paid && step !== "success" && (
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${step === "form" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"}`}>
+              <span>1</span> Attendee Details
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Email *</label>
-                <Input type="email" required onChange={(e) => handleFieldChange("email", e.target.value)} className="bg-slate-50 border-slate-200" />
-                </div>
-                <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Phone *</label>
-                <Input type="tel" required onChange={(e) => handleFieldChange("phone", e.target.value)} className="bg-slate-50 border-slate-200" />
-                </div>
+            <div className="w-6 h-px bg-slate-200" />
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${step === "payment" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+              <span>2</span> Payment (₹{Number(event.amount || 0).toLocaleString("en-IN")})
             </div>
           </div>
+        )}
 
-          {/* Dynamic Fields */}
-          {event.form_fields && event.form_fields.length > 0 && (
-            <div className="space-y-5 pt-5 border-t border-slate-100">
-                <h4 className="text-sm font-black uppercase tracking-widest text-slate-800">Additional Information</h4>
-                {event.form_fields.map((field: any) => (
+        {/* STEP 1: Registration Form */}
+        {step === "form" && (
+          <>
+            <DialogHeader className="mb-6">
+              <div className="flex items-center justify-between gap-4">
+                <DialogTitle className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Register for {event.title}
+                </DialogTitle>
+                {event.is_paid && (
+                  <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-black">
+                    <IndianRupee className="w-3.5 h-3.5" />
+                    {Number(event.amount || 0).toLocaleString("en-IN")}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 mt-2">
+                {event.is_paid
+                  ? "Enter your details to proceed to the secure payment step."
+                  : "Please fill in the details below to secure your spot."}
+              </p>
+            </DialogHeader>
+
+            <form onSubmit={handleFormSubmit} className="space-y-6">
+              {/* Default Fields */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Full Name *</label>
+                  <Input
+                    required
+                    value={formData['name'] || ''}
+                    onChange={(e) => handleFieldChange("name", e.target.value)}
+                    placeholder="e.g. John Doe"
+                    className="bg-slate-50 border-slate-200"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Email *</label>
+                    <Input
+                      type="email"
+                      required
+                      value={formData['email'] || ''}
+                      onChange={(e) => handleFieldChange("email", e.target.value)}
+                      placeholder="john@example.com"
+                      className="bg-slate-50 border-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Phone *</label>
+                    <Input
+                      type="tel"
+                      required
+                      value={formData['phone'] || ''}
+                      onChange={(e) => handleFieldChange("phone", e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="bg-slate-50 border-slate-200"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Fields */}
+              {event.form_fields && event.form_fields.length > 0 && (
+                <div className="space-y-5 pt-5 border-t border-slate-100">
+                  <h4 className="text-sm font-black uppercase tracking-widest text-slate-800">Additional Information</h4>
+                  {event.form_fields.map((field: any) => (
                     <div key={field.id} className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600 block">
-                            {field.label} {field.required && "*"}
-                        </label>
-                        
-                        {field.type === 'short_answer' && (
-                            <Input 
-                                required={field.required} 
+                      <label className="text-xs font-bold text-slate-600 block">
+                        {field.label} {field.required && "*"}
+                      </label>
+
+                      {field.type === 'short_answer' && (
+                        <Input
+                          required={field.required}
+                          value={formData[field.label] || ''}
+                          onChange={(e) => handleFieldChange(field.label, e.target.value)}
+                          className="bg-slate-50 border-slate-200"
+                        />
+                      )}
+
+                      {field.type === 'long_answer' && (
+                        <Textarea
+                          required={field.required}
+                          value={formData[field.label] || ''}
+                          onChange={(e) => handleFieldChange(field.label, e.target.value)}
+                          className="bg-slate-50 border-slate-200 resize-none h-24"
+                        />
+                      )}
+
+                      {field.type === 'multiple_choice' && (
+                        <div className="space-y-2">
+                          {field.options.map((opt: string, i: number) => (
+                            <label key={i} className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`field_${field.id}`}
+                                required={field.required}
+                                checked={formData[field.label] === opt}
+                                value={opt}
                                 onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                className="bg-slate-50 border-slate-200"
-                            />
-                        )}
+                                className="w-4 h-4 accent-slate-900"
+                              />
+                              <span className="text-sm text-slate-600">{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
 
-                        {field.type === 'long_answer' && (
-                            <Textarea 
-                                required={field.required} 
-                                onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                className="bg-slate-50 border-slate-200 resize-none h-24"
-                            />
-                        )}
-
-                        {field.type === 'multiple_choice' && (
-                            <div className="space-y-2">
-                                {field.options.map((opt: string, i: number) => (
-                                    <label key={i} className="flex items-center gap-3 cursor-pointer">
-                                        <input 
-                                            type="radio" 
-                                            name={`field_${field.id}`} 
-                                            required={field.required}
-                                            value={opt}
-                                            onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                            className="w-4 h-4 accent-slate-900"
-                                        />
-                                        <span className="text-sm text-slate-600">{opt}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-
-                        {field.type === 'checkboxes' && (
-                            <div className="space-y-2">
-                                {field.options.map((opt: string, i: number) => (
-                                    <label key={i} className="flex items-center gap-3 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            value={opt}
-                                            onChange={(e) => handleCheckboxChange(field.label, opt, e.target.checked)}
-                                            className="w-4 h-4 rounded border-slate-300 accent-slate-900"
-                                        />
-                                        <span className="text-sm text-slate-600">{opt}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
+                      {field.type === 'checkboxes' && (
+                        <div className="space-y-2">
+                          {field.options.map((opt: string, i: number) => (
+                            <label key={i} className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                value={opt}
+                                checked={Array.isArray(formData[field.label]) && formData[field.label].includes(opt)}
+                                onChange={(e) => handleCheckboxChange(field.label, opt, e.target.checked)}
+                                className="w-4 h-4 rounded border-slate-300 accent-slate-900"
+                              />
+                              <span className="text-sm text-slate-600">{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                ))}
-            </div>
-          )}
+                  ))}
+                </div>
+              )}
 
-          <div className="pt-6">
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-4 rounded-xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
-            >
-                {isSubmitting ? "Submitting..." : "Complete Registration"}
-            </button>
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 rounded-xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    "Submitting..."
+                  ) : event.is_paid ? (
+                    <>
+                      Proceed to Payment (₹{Number(event.amount || 0).toLocaleString("en-IN")}){" "}
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  ) : (
+                    "Complete Registration"
+                  )}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {/* STEP 2: Razorpay Payment Step */}
+        {step === "payment" && (
+          <div className="space-y-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Complete Payment
+              </DialogTitle>
+              <p className="text-sm text-slate-500 mt-1">
+                Pay using the secure Razorpay button below to finalize your registration for <span className="font-bold text-slate-800">{event.title}</span>.
+              </p>
+            </DialogHeader>
+
+            {/* Attendee Summary Pill */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div>
+                <p className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">Registered Attendee</p>
+                <p className="font-black text-slate-900 text-sm">{formData['name']}</p>
+                <p className="text-slate-600">{formData['email']} • {formData['phone']}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                className="text-xs font-bold text-slate-600 hover:text-slate-900 underline self-start sm:self-center"
+              >
+                Edit Details
+              </button>
+            </div>
+
+            {/* Embedded Razorpay Button */}
+            <RazorpayPaymentButton
+              buttonId={event.payment_button_id || "pl_TxxlM2Z9Q4JvBr"}
+              amount={event.amount}
+              onSuccess={handlePaymentSuccess}
+            />
+
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep("form")}
+                className="w-full text-slate-600 border-slate-200"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" /> Back to Registration Form
+              </Button>
+            </div>
           </div>
-        </form>
+        )}
+
+        {/* STEP 3: Celebratory Confetti Success Screen */}
+        {step === "success" && (
+          <div className="py-6 flex flex-col items-center text-center space-y-6 animate-in fade-in-50 zoom-in-95 duration-500">
+            {/* Animated Celebration Icon */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-600 shadow-xl shadow-emerald-500/20">
+                <CheckCircle2 className="w-12 h-12 stroke-[2.5]" />
+              </div>
+              <div className="absolute -top-1 -right-1 p-2 rounded-full bg-amber-400 text-slate-950 shadow-md">
+                <Sparkles className="w-4 h-4 fill-current" />
+              </div>
+            </div>
+
+            <div className="space-y-2 max-w-md">
+              <h3 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {event.is_paid ? "Payment & Registration Confirmed!" : "Registration Successful!"}
+              </h3>
+              <p className="text-slate-600 text-sm">
+                Woohoo! You are officially registered for <span className="font-bold text-slate-900">{event.title}</span>. A confirmation has been recorded.
+              </p>
+            </div>
+
+            {/* Receipt Summary Card */}
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left text-xs space-y-3">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Attendee</span>
+                <span className="font-black text-slate-900 text-sm">{formData['name']}</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Email & Contact</span>
+                <span className="font-semibold text-slate-700">{formData['email']} • {formData['phone']}</span>
+              </div>
+              {event.is_paid && (
+                <>
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Amount Paid</span>
+                    <span className="font-black text-emerald-600 text-base">₹{Number(event.amount || 0).toLocaleString("en-IN")}</span>
+                  </div>
+                  {paymentResult?.payment_id && (
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Transaction ID</span>
+                      <span className="font-mono font-bold text-slate-700 text-[11px]">{paymentResult.payment_id}</span>
+                    </div>
+                  )}
+                </>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Event Date & Venue</span>
+                <span className="font-medium text-slate-700">{event.date} • {event.location}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => triggerPaymentSuccessConfetti()}
+                className="flex-1 py-3.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-100 font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" /> Celebrate Again 🎉
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOpenChange(false)}
+                className="flex-1 py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest transition-colors shadow-lg shadow-slate-900/10"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -296,12 +561,21 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
             </div>
           )}
 
-          {/* Type Badge */}
-          <div className="absolute top-4 left-4">
+          {/* Type & Price Badges */}
+          <div className="absolute top-4 left-4 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm border border-white/50">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               {event.type || "Event"}
             </span>
+            {event.is_paid ? (
+              <span className="inline-flex items-center gap-0.5 px-2.5 py-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-sm">
+                ₹{Number(event.amount || 0).toLocaleString("en-IN")}
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest shadow-sm border border-white/20">
+                Free
+              </span>
+            )}
           </div>
 
           {/* Arrow Icon */}
@@ -341,6 +615,16 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
             {/* Footer */}
             <div className="flex items-center justify-between">
               <Countdown targetDate={event.date} />
+              {event.is_paid ? (
+                <span className="text-xs font-black text-emerald-600 flex items-center gap-0.5">
+                  <IndianRupee className="w-3 h-3" />
+                  {Number(event.amount || 0).toLocaleString("en-IN")}
+                </span>
+              ) : (
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Free
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -366,6 +650,15 @@ const Events = () => {
   useEffect(() => {
     setSelectedEventId(eventId || null);
   }, [eventId]);
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment_status");
+    const razorpayPaymentId = searchParams.get("razorpay_payment_id");
+    if (paymentStatus === "success" || razorpayPaymentId) {
+      triggerPaymentSuccessConfetti();
+      toast.success("Payment Successful! Your registration is confirmed.");
+    }
+  }, [searchParams]);
 
   const handleOpenEvent = (id: string) => {
     setSearchParams({ id });
@@ -395,10 +688,21 @@ const Events = () => {
 
             <div className="absolute inset-0 flex flex-col justify-end px-4 sm:px-8 md:px-16 pb-8 md:pb-16 max-w-[1400px] mx-auto w-full">
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}>
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] mb-4 sm:mb-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {selectedEvent.type || "Event"}
-                </span>
+                <div className="flex items-center gap-2 mb-4 sm:mb-6 flex-wrap">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    {selectedEvent.type || "Event"}
+                  </span>
+                  {selectedEvent.is_paid ? (
+                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20">
+                      ₹{Number(selectedEvent.amount || 0).toLocaleString("en-IN")} • Paid Event
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">
+                      Free Entry
+                    </span>
+                  )}
+                </div>
                 <h1 style={{ fontFamily: "'Playfair Display', serif" }}
                   className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] mb-2 sm:mb-4 max-w-4xl">
                   {selectedEvent.title}
@@ -468,16 +772,27 @@ const Events = () => {
                       </div>
                       <div className="text-3xl font-black">{selectedEvent.attendees ?? "—"}</div>
                     </div>
+                    <div className="h-px bg-white/10" />
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-white/30 font-black mb-2 flex items-center gap-2">
+                        <IndianRupee className="w-3 h-3 text-emerald-400" /> Entry Fee
+                      </div>
+                      <div className="text-2xl font-black text-emerald-400">
+                        {selectedEvent.is_paid
+                          ? `₹${Number(selectedEvent.amount || 0).toLocaleString("en-IN")}`
+                          : "Free Entry"}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
 
                 {/* CTA */}
-                {(selectedEvent.registration_link || selectedEvent.registration_type === 'manual') && (
+                {(selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || selectedEvent.is_paid) && (
                   <motion.div
                     initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                   >
-                    {selectedEvent.registration_type === 'manual' ? (
+                    {selectedEvent.registration_type === 'manual' || selectedEvent.is_paid ? (
                         <RegistrationModal event={selectedEvent} />
                     ) : (
                         <button

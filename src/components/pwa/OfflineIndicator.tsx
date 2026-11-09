@@ -6,6 +6,11 @@ export const OfflineIndicator: React.FC = () => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showRestored, setShowRestored] = useState(false);
 
+  // Strictly only show on admin routes
+  if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin")) {
+    return null;
+  }
+
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);

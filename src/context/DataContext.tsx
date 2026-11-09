@@ -21,6 +21,9 @@ export interface Event {
     registration_link?: string;
     registration_type?: 'url' | 'manual';
     form_fields?: any[];
+    is_paid?: boolean;
+    amount?: number | string;
+    payment_button_id?: string;
 }
 
 export interface EventRegistration {
@@ -31,6 +34,9 @@ export interface EventRegistration {
     phone: string;
     answers: any;
     created_at: string;
+    payment_status?: string;
+    payment_id?: string;
+    amount_paid?: number | string;
 }
 
 export interface JobQuestion {
@@ -256,10 +262,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .insert([event])
             .select();
 
-        if (data) {
+        if (data && data.length > 0) {
             setEvents(prev => [data[0] as Event, ...prev]);
         }
-        if (error) console.error("Error adding event:", error);
+        if (error) {
+            console.error("Error adding event:", error);
+            // Fallback: If is_paid, amount, or payment_button_id columns are not yet in Supabase schema
+            if (error.message && (error.message.includes('is_paid') || error.message.includes('amount') || error.message.includes('payment_button_id'))) {
+                const { is_paid, amount, payment_button_id, ...fallbackEvent } = event as any;
+                const { data: fallbackData, error: fbError } = await supabase
+                    .from('events')
+                    .insert([fallbackEvent])
+                    .select();
+                if (fallbackData && fallbackData.length > 0) {
+                    const mergedEvent = { ...fallbackData[0], is_paid, amount, payment_button_id } as Event;
+                    setEvents(prev => [mergedEvent, ...prev]);
+                }
+                if (fbError) console.error("Error with fallback event insert:", fbError);
+            }
+        }
     };
 
     const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
@@ -272,7 +293,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data && data.length > 0) {
             setEvents(prev => prev.map(e => e.id === id ? data[0] as Event : e));
         }
-        if (error) console.error("Error updating event:", error);
+        if (error) {
+            console.error("Error updating event:", error);
+            if (error.message && (error.message.includes('is_paid') || error.message.includes('amount') || error.message.includes('payment_button_id'))) {
+                const { is_paid, amount, payment_button_id, ...fallbackUpdates } = updatedEvent as any;
+                const { data: fbData } = await supabase
+                    .from('events')
+                    .update(fallbackUpdates)
+                    .eq('id', id)
+                    .select();
+                if (fbData && fbData.length > 0) {
+                    setEvents(prev => prev.map(e => e.id === id ? { ...fbData[0], is_paid, amount, payment_button_id } as Event : e));
+                }
+            }
+        }
     };
 
     const deleteEvent = async (id: string) => {
@@ -569,7 +603,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (error) {
             console.error("Error adding event registration:", error);
-            throw error;
+            // Fallback: If payment columns are not yet added to event_registrations table
+            if (error.message && (error.message.includes('payment_status') || error.message.includes('payment_id') || error.message.includes('amount_paid'))) {
+                const { payment_status, payment_id, amount_paid, ...baseApp } = app as any;
+                const fallbackAnswers = {
+                    ...(baseApp.answers || {}),
+                    payment_status,
+                    payment_id,
+                    amount_paid
+                };
+                const { data: fbData, error: fbError } = await supabase
+                    .from('event_registrations')
+                    .insert([{
+                        ...baseApp,
+                        answers: fallbackAnswers,
+                        created_at: new Date().toISOString()
+                    }])
+                    .select();
+
+                if (fbData && fbData.length > 0) {
+                    setEventRegistrations(prev => [fbData[0] as EventRegistration, ...prev]);
+                    return;
+                }
+                if (fbError) throw fbError;
+            } else {
+                throw error;
+            }
         }
 
         if (data && data.length > 0) {

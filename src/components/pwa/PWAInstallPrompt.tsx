@@ -13,6 +13,12 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onInstalled 
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
+    // Strictly only show on admin routes
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin")) {
+      setIsOpen(false);
+      return;
+    }
+
     // If already installed, don't show
     if (isInstalled) {
       setIsOpen(false);
@@ -87,14 +93,14 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onInstalled 
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-bold text-base tracking-tight text-white">
-                      UNAI TECH App
+                      UNAI Admin Portal
                     </h3>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      PWA
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Admin App
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Install on your device for instant offline access
+                    Install Admin Dashboard for quick access & offline management
                   </p>
                 </div>
               </div>
@@ -150,7 +156,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onInstalled 
                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 active:scale-[0.98] transition-all duration-200"
               >
                 <Download className="w-4 h-4" />
-                {isIOS ? "Show How to Install" : "Install UNAI App"}
+                {isIOS ? "Show How to Install" : "Install Admin App"}
               </button>
               <button
                 onClick={handleDismiss}
