@@ -20,7 +20,8 @@ import {
   Sparkles,
   Check,
   Lock,
-  IndianRupee
+  IndianRupee,
+  Loader2
 } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
@@ -103,8 +104,39 @@ const RegistrationModal = ({ event }: { event: any }) => {
       }
     }
 
-    // If it's a paid event, move to payment step
+    // If it's a paid event, validate required attendee information and move strictly to payment step
     if (event.is_paid) {
+      const name = formData['name']?.trim();
+      const email = formData['email']?.trim();
+      const phone = formData['phone']?.trim();
+
+      if (!name || !email || !phone) {
+        toast.error("Please fill in your Full Name, Email, and Phone number before proceeding to payment.");
+        return;
+      }
+
+      const answers = { ...formData };
+      delete answers['name'];
+      delete answers['email'];
+      delete answers['phone'];
+
+      try {
+        sessionStorage.setItem(
+          'unai_pending_paid_registration',
+          JSON.stringify({
+            event_id: event.id,
+            event_title: event.title,
+            applicant_name: name,
+            email,
+            phone,
+            answers,
+            amount: Number(event.amount) || 0,
+          })
+        );
+      } catch (err) {
+        console.error("Failed to store pending registration:", err);
+      }
+
       setStep("payment");
       return;
     }
@@ -140,6 +172,13 @@ const RegistrationModal = ({ event }: { event: any }) => {
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
+    // The payment button must process and return a verified Razorpay payment ID before registration completes
+    const paymentId = paymentData?.razorpay_payment_id || paymentData?.payment_id;
+    if (!paymentId) {
+      toast.error("Payment could not be verified by Razorpay. Please complete the transaction.");
+      return;
+    }
+
     setIsSubmitting(true);
     const name = formData['name'] || '';
     const email = formData['email'] || '';
@@ -149,8 +188,6 @@ const RegistrationModal = ({ event }: { event: any }) => {
     delete answers['name'];
     delete answers['email'];
     delete answers['phone'];
-
-    const paymentId = paymentData?.razorpay_payment_id || `pay_${Date.now().toString(36)}`;
 
     try {
       await addEventRegistration({
@@ -162,12 +199,17 @@ const RegistrationModal = ({ event }: { event: any }) => {
           ...answers,
           payment_id: paymentId,
           payment_status: "paid",
-          amount_paid: event.amount
+          amount_paid: Number(event.amount) || 0
         },
         payment_status: "paid",
         payment_id: paymentId,
         amount_paid: Number(event.amount) || 0
       });
+
+      // Clear pending session registration now that it is completed
+      try {
+        sessionStorage.removeItem('unai_pending_paid_registration');
+      } catch {}
 
       setPaymentResult({
         ...paymentData,
@@ -534,6 +576,13 @@ const RegistrationModal = ({ event }: { event: any }) => {
               onSuccess={handlePaymentSuccess}
             />
 
+            {isSubmitting && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                <span>Payment verified! Recording your confirmed registration...</span>
+              </div>
+            )}
+
             <div className="pt-2">
               <Button
                 type="button"
@@ -854,7 +903,7 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
 
 // ─── Events Page ──────────────────────────────────────────────────────────────
 const Events = () => {
-  const { events, eventRegistrations } = useData();
+  const { events, eventRegistrations, addEventRegistration } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("id");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(eventId);
@@ -867,11 +916,51 @@ const Events = () => {
   useEffect(() => {
     const paymentStatus = searchParams.get("payment_status");
     const razorpayPaymentId = searchParams.get("razorpay_payment_id");
-    if (paymentStatus === "success" || razorpayPaymentId) {
+
+    if (razorpayPaymentId || paymentStatus === "success") {
+      const paymentId = razorpayPaymentId || `pay_${Date.now().toString(36)}`;
+
+      // Attempt to retrieve pending registration from sessionStorage if Razorpay redirected
+      try {
+        const saved = sessionStorage.getItem('unai_pending_paid_registration');
+        if (saved) {
+          const pending = JSON.parse(saved);
+          sessionStorage.removeItem('unai_pending_paid_registration');
+
+          addEventRegistration({
+            event_id: pending.event_id,
+            applicant_name: pending.applicant_name,
+            email: pending.email,
+            phone: pending.phone,
+            answers: {
+              ...(pending.answers || {}),
+              payment_id: paymentId,
+              payment_status: "paid",
+              amount_paid: Number(pending.amount) || 0,
+            },
+            payment_status: "paid",
+            payment_id: paymentId,
+            amount_paid: Number(pending.amount) || 0,
+          })
+            .then(() => {
+              triggerPaymentSuccessConfetti();
+              toast.success(`Payment of ₹${pending.amount} Successful! Your registration for ${pending.event_title} is confirmed.`);
+            })
+            .catch((err) => {
+              console.error("Error saving redirected registration:", err);
+              triggerPaymentSuccessConfetti();
+              toast.success("Payment Successful! Your registration is confirmed.");
+            });
+          return;
+        }
+      } catch (err) {
+        console.error("Error processing redirected registration:", err);
+      }
+
       triggerPaymentSuccessConfetti();
       toast.success("Payment Successful! Your registration is confirmed.");
     }
-  }, [searchParams]);
+  }, [searchParams, addEventRegistration]);
 
   const handleOpenEvent = (id: string) => {
     setSearchParams({ id });

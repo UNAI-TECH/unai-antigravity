@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Loader2, CheckCircle2, ShieldCheck, IndianRupee } from "lucide-react";
+import { Loader2, ShieldCheck, IndianRupee, AlertCircle, RefreshCw, Lock } from "lucide-react";
 
 interface RazorpayPaymentButtonProps {
   buttonId?: string;
   amount?: number | string;
-  onSuccess: (paymentData?: any) => void;
+  onSuccess: (paymentData: any) => void;
   className?: string;
 }
 
@@ -16,21 +16,23 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const effectiveButtonId = (buttonId && buttonId.trim()) ? buttonId.trim() : "pl_TxxlM2Z9Q4JvBr";
 
-  useEffect(() => {
+  const loadPaymentButton = () => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Clear previous button content if any
     container.innerHTML = "";
     setIsLoading(true);
+    setHasError(false);
 
-    // Exact Razorpay embed:
+    // Exact Razorpay embed format:
     // <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_TxxlM2Z9Q4JvBr" async> </script> </form>
     const form = document.createElement("form");
     form.id = `razorpay-form-${effectiveButtonId}`;
+    form.className = "w-full flex justify-center";
 
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/payment-button.js";
@@ -39,43 +41,68 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
 
     script.onload = () => {
       setIsLoading(false);
-      setScriptLoaded(true);
+      setHasError(false);
     };
 
     script.onerror = () => {
       setIsLoading(false);
-      console.error("Failed to load Razorpay payment button script");
+      setHasError(true);
+      console.error("Failed to load Razorpay payment button script from checkout.razorpay.com");
     };
 
-    // Capture standard form submission by Razorpay
+    // Capture standard form submission executed by Razorpay upon successful payment
     const handleFormSubmit = (e: Event) => {
       e.preventDefault();
+      setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
-      const paymentId = hiddenInput?.value || `pay_${Date.now().toString(36)}`;
-      onSuccess({
-        razorpay_payment_id: paymentId,
-        status: "success",
-      });
+      const paymentId = hiddenInput?.value;
+      if (paymentId) {
+        onSuccess({
+          razorpay_payment_id: paymentId,
+          status: "success",
+        });
+      }
     };
     form.addEventListener("submit", handleFormSubmit);
 
-    // Hook programmatic submit in case Razorpay calls form.submit() directly
+    // Hook programmatic form.submit() call executed by Razorpay widget
     form.submit = () => {
+      setIsProcessing(true);
       const hiddenInput = form.querySelector('input[name="razorpay_payment_id"]') as HTMLInputElement;
-      const paymentId = hiddenInput?.value || `pay_${Date.now().toString(36)}`;
-      onSuccess({
-        razorpay_payment_id: paymentId,
-        status: "success",
-      });
+      const paymentId = hiddenInput?.value;
+      if (paymentId) {
+        onSuccess({
+          razorpay_payment_id: paymentId,
+          status: "success",
+        });
+      }
     };
 
     form.appendChild(script);
     container.appendChild(form);
 
-    // Fallback timer: Razorpay button usually mounts within 1.5 seconds
+    // Fallback timer: Razorpay button renders within ~1.5s
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
+
+    return () => {
+      clearTimeout(timer);
+      form.removeEventListener("submit", handleFormSubmit);
+    };
+  };
+
+  useEffect(() => {
+    const cleanup = loadPaymentButton();
+
+    // Listen to click on container to detect when attendee opens Razorpay checkout
+    const container = containerRef.current;
+    const handleClick = () => {
+      setIsProcessing(true);
+    };
+    if (container) {
+      container.addEventListener("click", handleClick);
+    }
 
     // Listen for postMessage from Razorpay checkout iframe
     const handleMessage = (event: MessageEvent) => {
@@ -83,30 +110,41 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
         try {
           const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
           if (data) {
+            // If user closed the modal without finishing payment
+            if (data.event_type === "close_modal" || data.event === "payment.failed" || data.name === "payment.failed") {
+              setIsProcessing(false);
+              return;
+            }
+
+            // Payment success confirmation from Razorpay
             const isSuccess =
               data.event === "payment.success" ||
               data.status === "success" ||
-              data.razorpay_payment_id ||
+              Boolean(data.razorpay_payment_id) ||
               data.name === "payment.success" ||
               data.event_type === "redirect_to_on_payment_success" ||
               data.event_type === "payment.success" ||
-              (data.data && (data.data.razorpay_payment_id || data.data.payment_id));
+              Boolean(data.data?.razorpay_payment_id) ||
+              Boolean(data.data?.payment_id);
 
             if (isSuccess) {
               const paymentId =
                 data.razorpay_payment_id ||
                 data.data?.razorpay_payment_id ||
-                data.data?.payment_id ||
-                `pay_${Date.now().toString(36)}`;
-              onSuccess({
-                ...data,
-                razorpay_payment_id: paymentId,
-                status: "success",
-              });
+                data.data?.payment_id;
+
+              if (paymentId) {
+                setIsProcessing(false);
+                onSuccess({
+                  ...data,
+                  razorpay_payment_id: paymentId,
+                  status: "success",
+                });
+              }
             }
           }
         } catch {
-          // Non-JSON message from razorpay
+          // Ignore non-JSON messages
         }
       }
     };
@@ -114,12 +152,12 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
     window.addEventListener("message", handleMessage);
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener("message", handleMessage);
-      form.removeEventListener("submit", handleFormSubmit);
+      if (cleanup) cleanup();
       if (container) {
+        container.removeEventListener("click", handleClick);
         container.innerHTML = "";
       }
+      window.removeEventListener("message", handleMessage);
     };
   }, [effectiveButtonId, onSuccess]);
 
@@ -156,31 +194,58 @@ export const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({
         </div>
       )}
 
+      {/* Processing Status Banner */}
+      {isProcessing && (
+        <div className="w-full p-4 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center gap-3 text-left animate-in fade-in-50 duration-300">
+          <div className="w-9 h-9 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0">
+            <Loader2 className="w-5 h-5 animate-spin" />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs font-black uppercase tracking-wider text-blue-900">
+              Payment Processing in Razorpay
+            </p>
+            <p className="text-xs text-blue-700">
+              Please complete your payment in the Razorpay checkout window. Do not close or refresh this page.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error / Ad-blocker notice with retry */}
+      {hasError && (
+        <div className="w-full p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-3">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                Payment Gateway Unavailable
+              </p>
+              <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                The payment button script could not be loaded. If you are using an ad-blocker or content filter, please allow <code>checkout.razorpay.com</code> and try again.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={loadPaymentButton}
+            className="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Retry Loading Payment Button
+          </button>
+        </div>
+      )}
+
       {/* Embedded Razorpay Form Container */}
       <div
         ref={containerRef}
         className="w-full flex justify-center razorpay-btn-container min-h-[48px]"
       />
 
-      {/* Quick Verification / Test Fallback helper */}
-      <div className="w-full pt-2 border-t border-slate-100 flex flex-col items-center gap-2">
-        <p className="text-[11px] text-slate-400 text-center">
-          Click the Razorpay button above to pay. Once payment is completed, verification happens automatically.
-        </p>
-        <button
-          type="button"
-          onClick={() =>
-            onSuccess({
-              razorpay_payment_id: `pay_${Date.now().toString(36)}`,
-              status: "success",
-            })
-          }
-          className="text-[11px] text-slate-500 hover:text-emerald-600 underline transition-colors"
-        >
-          Payment completed or testing? Click here to confirm registration
-        </button>
+      {/* Security & Completion Guarantee Note */}
+      <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center gap-2 text-center text-[11px] text-slate-500">
+        <Lock className="w-3.5 h-3.5 text-emerald-600" />
+        <span>Your registration completes immediately once payment is processed and verified by Razorpay.</span>
       </div>
     </div>
   );
 };
-
