@@ -608,11 +608,12 @@ const Events = () => {
   // ── Redesigned Event Preview / Detail Page (SEPARATE 3:1 ULTRA-WIDE HERO) ─────
   if (selectedEventId && selectedEvent) {
     const formattedDate = selectedEvent.date ? selectedEvent.date.split('T')[0] : "TBA";
+    const isManual = selectedEvent.registration_type === 'manual';
     const currentEventRegs = eventRegistrations.filter((r) => r.event_id === selectedEvent.id);
     const eventCapacity = selectedEvent.max_registrations
       ? Number(selectedEvent.max_registrations)
       : parseInt(String(selectedEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
-    const isCapacityReached = !isNaN(eventCapacity) && eventCapacity > 0 && currentEventRegs.length >= eventCapacity;
+    const isCapacityReached = isManual && !isNaN(eventCapacity) && eventCapacity > 0 && currentEventRegs.length >= eventCapacity;
     const isRegistrationClosed = isCapacityReached || selectedEvent.status === 'past';
 
     return (
@@ -794,11 +795,11 @@ const Events = () => {
                       <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200 flex items-center gap-1">
                         <Lock className="w-3 h-3" /> Registration Closed
                       </span>
-                    ) : (
+                    ) : isManual ? (
                       <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
                         Open {!isNaN(eventCapacity) && eventCapacity > 0 ? `(${currentEventRegs.length}/${eventCapacity})` : ''}
                       </span>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Countdown Ticker - Light Theme */}

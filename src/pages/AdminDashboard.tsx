@@ -277,7 +277,7 @@ const AdminDashboard = () => {
                                     ? Number(event.max_registrations)
                                     : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
                                 const hasCap = !isNaN(rawCap) && rawCap > 0;
-                                const isCapReached = hasCap && regCount >= rawCap;
+                                const isCapReached = event.registration_type === 'manual' && hasCap && regCount >= rawCap;
                                 return (
                                     <GlassCard key={event.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/30 transition-colors">
                                         <div>
