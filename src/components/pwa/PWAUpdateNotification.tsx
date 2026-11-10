@@ -13,6 +13,11 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
   onUpdate,
   onDismiss,
 }) => {
+  // Strictly only show on admin routes
+  if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <AnimatePresence>
       {needRefresh && (
@@ -30,10 +35,10 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
 
             <div className="flex-1 min-w-0">
               <h4 className="text-sm font-semibold text-white tracking-wide">
-                New Update Available
+                Admin Portal Update Available
               </h4>
               <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                A new version of UNAI TECH is ready. Update now for the latest features & improvements.
+                A new version of UNAI Admin Portal is ready. Update now for the latest features & improvements.
               </p>
 
               <div className="mt-3 flex items-center gap-2">

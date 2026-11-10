@@ -22,6 +22,9 @@ export interface Event {
     registration_link?: string;
     registration_type?: 'url' | 'manual';
     form_fields?: any[];
+    is_paid?: boolean;
+    amount?: number | string;
+    payment_button_id?: string;
 }
 
 export interface EventRegistration {
@@ -32,7 +35,59 @@ export interface EventRegistration {
     phone: string;
     answers: any;
     created_at: string;
+    payment_status?: string;
+    payment_id?: string;
+    amount_paid?: number | string;
 }
+
+/**
+ * Normalizes event paid configuration across devices (desktop, mobile, tablet),
+ * ensuring that paid status, ticket amount, and Razorpay button IDs are accurately
+ * preserved even if new Supabase database columns are not yet provisioned.
+ */
+export const normalizeEventPaidData = (event: any): Event => {
+    if (!event) return event;
+    let is_paid = Boolean(event.is_paid === true || event.is_paid === 'true' || event.is_paid === 1 || event.is_paid === '1');
+    let amount = event.amount !== undefined && event.amount !== null && event.amount !== '' ? Number(event.amount) : 0;
+    let payment_button_id = event.payment_button_id ? String(event.payment_button_id).trim() : '';
+
+    // Check for embedded config in description or caption
+    const rawText = `${event.description || ''} ${event.caption || ''}`;
+    const match = rawText.match(/__PAID_CONFIG__:(\{.*?\})/);
+    if (match && match[1]) {
+        try {
+            const parsed = JSON.parse(match[1]);
+            if (!is_paid && parsed.is_paid) is_paid = true;
+            if ((isNaN(amount) || amount <= 0) && parsed.amount) amount = Number(parsed.amount);
+            if (!payment_button_id && parsed.payment_button_id) payment_button_id = String(parsed.payment_button_id).trim();
+        } catch {}
+    }
+
+    if (!isNaN(amount) && amount > 0) {
+        is_paid = true;
+    }
+
+    if (is_paid && (!payment_button_id || payment_button_id.length === 0)) {
+        payment_button_id = "pl_TxxlM2Z9Q4JvBr";
+    }
+
+    // Clean display description and caption so attendees don't see internal metadata tag
+    const cleanDesc = typeof event.description === 'string'
+        ? event.description.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()
+        : event.description;
+    const cleanCaption = typeof event.caption === 'string'
+        ? event.caption.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()
+        : event.caption;
+
+    return {
+        ...event,
+        description: cleanDesc,
+        caption: cleanCaption,
+        is_paid,
+        amount: is_paid ? (amount || 0) : 0,
+        payment_button_id: is_paid ? payment_button_id : ''
+    };
+};
 
 export interface JobQuestion {
     id: string;
@@ -147,6 +202,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Fetch Initial Data
     useEffect(() => {
+        let isMounted = true;
         const fetchData = async () => {
             console.log("Fetching data from Supabase...");
             // Events
@@ -157,20 +213,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             let loadedEvents = (eventsData as Event[]) || [];
             try {
-                const localCustomEvents = JSON.parse(localStorage.getItem('unai_events_custom') || '[]');
-                if (Array.isArray(localCustomEvents) && localCustomEvents.length > 0) {
-                    const localMap = new Map(localCustomEvents.map((e: any) => [e.id, e]));
-                    loadedEvents = loadedEvents.map(e => localMap.has(e.id) ? { ...e, ...localMap.get(e.id) } : e);
-                    const loadedIds = new Set(loadedEvents.map(e => e.id));
-                    const missing = localCustomEvents.filter((e: any) => !loadedIds.has(e.id));
-                    loadedEvents = [...loadedEvents, ...missing];
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    const localCustomEvents = JSON.parse(window.localStorage.getItem('unai_events_custom') || '[]');
+                    if (Array.isArray(localCustomEvents) && localCustomEvents.length > 0) {
+                        const localMap = new Map(localCustomEvents.map((e: any) => [e.id, e]));
+                        loadedEvents = loadedEvents.map(e => localMap.has(e.id) ? { ...e, ...localMap.get(e.id) } : e);
+                        const loadedIds = new Set(loadedEvents.map(e => e.id));
+                        const missing = localCustomEvents.filter((e: any) => !loadedIds.has(e.id));
+                        loadedEvents = [...loadedEvents, ...missing];
+                    }
                 }
             } catch (e) {
                 console.error("Error reading local events:", e);
             }
 
-            if (loadedEvents.length > 0) setEvents(loadedEvents);
-            else if (eventsData) setEvents(eventsData as Event[]);
+            // Normalize all events across desktop and mobile devices
+            const normalizedLoadedEvents = loadedEvents.map(normalizeEventPaidData);
+
+            if (!isMounted) return;
+            if (normalizedLoadedEvents.length > 0) setEvents(normalizedLoadedEvents);
+            else if (eventsData) setEvents((eventsData as Event[]).map(normalizeEventPaidData));
             if (eventsError) console.error("Error fetching events:", eventsError);
 
             // Jobs
@@ -178,14 +240,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .from('jobs')
                 .select('*')
                 .order('created_at', { ascending: false });
-            if (jobsData) setJobs(jobsData as Job[]);
+            if (jobsData && isMounted) setJobs(jobsData as Job[]);
             if (jobsError) console.error("Error fetching jobs:", jobsError);
 
             // Internships
             let loadedInternships: Internship[] = [];
             const pausedMap = (() => {
                 try {
-                    return JSON.parse(localStorage.getItem('unai_internships_paused') || '{}');
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                        return JSON.parse(window.localStorage.getItem('unai_internships_paused') || '{}');
+                    }
+                    return {};
                 } catch {
                     return {};
                 }
@@ -238,14 +303,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     });
                 }
             }
-            setInternships(loadedInternships);
+            if (isMounted) setInternships(loadedInternships);
 
             // Team
             const { data: teamData, error: teamError } = await supabase
                 .from('team_members')
                 .select('*')
                 .order('created_at', { ascending: false });
-            if (teamData) setTeamMembers(teamData as TeamMember[]);
+            if (teamData && isMounted) setTeamMembers(teamData as TeamMember[]);
             if (teamError) console.error("Error fetching team:", teamError);
 
             // Gallery
@@ -253,7 +318,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .from('gallery_items')
                 .select('*')
                 .order('created_at', { ascending: false });
-            if (galleryData) setGalleryItems(galleryData as GalleryItem[]);
+            if (galleryData && isMounted) setGalleryItems(galleryData as GalleryItem[]);
             if (galleryError) console.error("Error fetching gallery:", galleryError);
 
             // Event Registrations (Fetched for both public visitors and admins so capacity can auto-close registration live)
@@ -262,17 +327,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            let fetchedRegs = (eventsRegData as EventRegistration[]) || [];
+            let fetchedRegs = ((eventsRegData as EventRegistration[]) || []).map(reg => {
+                const answers = (reg.answers || {}) as any;
+                return {
+                    ...reg,
+                    payment_status: reg.payment_status || answers.payment_status || "free",
+                    payment_id: reg.payment_id || answers.payment_id || undefined,
+                    amount_paid: reg.amount_paid !== undefined ? reg.amount_paid : answers.amount_paid
+                };
+            });
             try {
-                const localRegs = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');
-                const fetchedIds = new Set(fetchedRegs.map(r => r.id));
-                const missing = localRegs.filter((r: any) => !fetchedIds.has(r.id));
-                fetchedRegs = [...fetchedRegs, ...missing];
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    const localRegs = JSON.parse(window.localStorage.getItem('unai_event_registrations') || '[]');
+                    const fetchedIds = new Set(fetchedRegs.map(r => r.id));
+                    const missing = localRegs.filter((r: any) => !fetchedIds.has(r.id));
+                    fetchedRegs = [...fetchedRegs, ...missing];
+                }
             } catch (e) {
                 console.error("Error reading local registrations:", e);
             }
 
-            setEventRegistrations(fetchedRegs);
+            if (isMounted) setEventRegistrations(fetchedRegs);
             if (eventsRegError) console.error("Error fetching event registrations:", eventsRegError);
 
             // Job Applications (Admin only)
@@ -281,19 +356,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .from('job_applications')
                     .select('*')
                     .order('created_at', { ascending: false });
-                if (appsData) setJobApplications(appsData as JobApplication[]);
+                if (appsData && isMounted) setJobApplications(appsData as JobApplication[]);
                 if (appsError) console.error("Error fetching job applications:", appsError);
             }
         };
 
         fetchData();
+        return () => {
+            isMounted = false;
+        };
     }, [isAuthenticated]);
 
 
     // Actions
     const addEvent = async (event: Omit<Event, "id">) => {
+        const isPaid = Boolean(event.is_paid) || Number(event.amount || 0) > 0;
+        const normalized = normalizeEventPaidData({
+            ...event,
+            is_paid: isPaid,
+            amount: isPaid ? (Number(event.amount) || 0) : 0,
+            payment_button_id: isPaid ? (event.payment_button_id || 'pl_TxxlM2Z9Q4JvBr') : ''
+        });
+
         const tempId = 'event_' + Date.now();
-        const optimisticEvent: Event = { ...event, id: tempId };
+        const optimisticEvent: Event = { ...normalized, id: tempId };
 
         setEvents(prev => {
             const next = [optimisticEvent, ...prev];
@@ -303,14 +389,52 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return next;
         });
 
+        // Always embed __PAID_CONFIG__ in description so Supabase accurately preserves paid status
+        // and amounts across mobile, tablet, and desktop without requiring custom table migrations
+        let payloadDescription = event.description || '';
+        if (isPaid) {
+            const paidConfig = `__PAID_CONFIG__:${JSON.stringify({
+                is_paid: true,
+                amount: Number(event.amount) || 0,
+                payment_button_id: event.payment_button_id || 'pl_TxxlM2Z9Q4JvBr'
+            })}`;
+            payloadDescription = payloadDescription
+                ? `${payloadDescription.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()}\n\n${paidConfig}`
+                : paidConfig;
+        }
+
+        const dbPayload: any = {
+            title: event.title,
+            caption: event.caption || '',
+            date: event.date || 'Upcoming',
+            location: event.location || 'Chennai',
+            type: event.type || 'Workshop',
+            attendees: event.attendees || '100+',
+            max_registrations: event.max_registrations || null,
+            status: event.status || 'upcoming',
+            description: payloadDescription,
+            registration_link: event.registration_link || '',
+            registration_type: isPaid ? 'manual' : (event.registration_type || 'manual'),
+            form_fields: event.form_fields || [],
+            cover_image: event.cover_image || '',
+            banner: event.banner || '',
+            posters: event.posters || []
+        };
+
         const { data, error } = await supabase
             .from('events')
-            .insert([event])
+            .insert([dbPayload])
             .select();
 
         if (data && data.length > 0) {
+            const savedEvent = normalizeEventPaidData({
+                ...data[0],
+                is_paid: isPaid,
+                amount: isPaid ? (Number(event.amount) || 0) : 0,
+                payment_button_id: isPaid ? (event.payment_button_id || 'pl_TxxlM2Z9Q4JvBr') : ''
+            });
             setEvents(prev => {
-                const next = prev.map(e => e.id === tempId ? data[0] as Event : e);
+                const next = prev.map(e => e.id === tempId ? savedEvent : e);
                 try {
                     localStorage.setItem('unai_events_custom', JSON.stringify(next));
                 } catch (e) {}
@@ -322,31 +446,61 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
-        // Optimistically update local state & localStorage so changes reflect instantly everywhere on the site
         setEvents(prev => {
-            const next = prev.map(e => e.id === id ? { ...e, ...updatedEvent } as Event : e);
+            const next = prev.map(e => e.id === id ? normalizeEventPaidData({ ...e, ...updatedEvent }) : e);
             try {
                 localStorage.setItem('unai_events_custom', JSON.stringify(next));
             } catch (e) {}
             return next;
         });
 
+        const currentTarget = events.find(e => e.id === id);
+        const mergedEvent = { ...currentTarget, ...updatedEvent };
+        const isPaid = Boolean(mergedEvent.is_paid) || Number(mergedEvent.amount || 0) > 0;
+
+        let payloadDescription = updatedEvent.description !== undefined ? updatedEvent.description : (currentTarget?.description || '');
+        if (isPaid) {
+            const paidConfig = `__PAID_CONFIG__:${JSON.stringify({
+                is_paid: true,
+                amount: Number(mergedEvent.amount) || 0,
+                payment_button_id: mergedEvent.payment_button_id || 'pl_TxxlM2Z9Q4JvBr'
+            })}`;
+            payloadDescription = payloadDescription
+                ? `${payloadDescription.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim()}\n\n${paidConfig}`
+                : paidConfig;
+        } else if (payloadDescription) {
+            payloadDescription = payloadDescription.replace(/__PAID_CONFIG__:\{.*?\}/g, '').trim();
+        }
+
+        const { is_paid, amount, payment_button_id, ...safeUpdates } = updatedEvent as any;
+        if (payloadDescription !== undefined) {
+            safeUpdates.description = payloadDescription;
+        }
+        if (isPaid) {
+            safeUpdates.registration_type = 'manual';
+        }
+
         const { data, error } = await supabase
             .from('events')
-            .update(updatedEvent)
+            .update(safeUpdates)
             .eq('id', id)
             .select();
 
         if (data && data.length > 0) {
+            const normalizedResult = normalizeEventPaidData({
+                ...data[0],
+                is_paid: isPaid,
+                amount: isPaid ? (Number(mergedEvent.amount) || 0) : 0,
+                payment_button_id: isPaid ? (mergedEvent.payment_button_id || 'pl_TxxlM2Z9Q4JvBr') : ''
+            });
             setEvents(prev => {
-                const next = prev.map(e => e.id === id ? data[0] as Event : e);
+                const next = prev.map(e => e.id === id ? normalizedResult : e);
                 try {
                     localStorage.setItem('unai_events_custom', JSON.stringify(next));
                 } catch (e) {}
                 return next;
             });
-        }
-        if (error) {
+        } else if (error) {
             console.error("Error updating event in Supabase:", error);
         }
     };
@@ -712,6 +866,49 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         }
 
+        // ─── Mandatory Payment Enforcement for Paid Events ─────────
+        const normalizedTarget = targetEvent ? normalizeEventPaidData(targetEvent) : null;
+        let isPaidEvent = Boolean(normalizedTarget?.is_paid) || (normalizedTarget ? Number(normalizedTarget.amount || 0) > 0 : false);
+        let expectedAmount = normalizedTarget ? Number(normalizedTarget.amount || 0) : 0;
+
+        // If targetEvent wasn't in memory or wasn't marked paid, query Supabase to ensure accurate paid configuration
+        if (!isPaidEvent) {
+            try {
+                const { data: dbEvent } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('id', app.event_id)
+                    .maybeSingle();
+                if (dbEvent) {
+                    const normalizedDb = normalizeEventPaidData(dbEvent);
+                    if (normalizedDb.is_paid || Number(normalizedDb.amount || 0) > 0) {
+                        isPaidEvent = true;
+                        expectedAmount = Number(normalizedDb.amount || 0);
+                    }
+                }
+            } catch (err) {
+                console.warn("Could not verify event paid status from DB:", err);
+            }
+        }
+
+        if (isPaidEvent) {
+            const paymentId = typeof app.payment_id === 'string' ? app.payment_id.trim() : '';
+            const paymentStatus = typeof app.payment_status === 'string' ? app.payment_status.trim().toLowerCase() : '';
+            const amountPaid = Number(app.amount_paid);
+
+            if (paymentStatus !== 'paid') {
+                throw new Error("Payment is compulsory for this event. Registration cannot be accepted without a confirmed payment status.");
+            }
+
+            if (!paymentId || !paymentId.startsWith('pay_') || paymentId.length < 8) {
+                throw new Error("Payment is compulsory for this event. A valid verified Razorpay transaction ID is required.");
+            }
+
+            if (isNaN(amountPaid) || amountPaid <= 0) {
+                throw new Error(`Payment is compulsory for this event. An amount greater than 0 must be paid (expected ₹${expectedAmount || 'entry fee'}).`);
+            }
+        }
+
         const tempReg: EventRegistration = {
             ...app,
             id: 'reg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
@@ -730,6 +927,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (error) {
             console.error("Error adding event registration:", error);
+            // Fallback: If payment columns are not yet added to event_registrations table
+            if (error.message && (error.message.includes('payment_status') || error.message.includes('payment_id') || error.message.includes('amount_paid'))) {
+                const { payment_status, payment_id, amount_paid, ...baseApp } = app as any;
+                const fallbackAnswers = {
+                    ...(baseApp.answers || {}),
+                    payment_status,
+                    payment_id,
+                    amount_paid
+                };
+                const { data: fbData, error: fbError } = await supabase
+                    .from('event_registrations')
+                    .insert([{
+                        ...baseApp,
+                        answers: fallbackAnswers,
+                        created_at: new Date().toISOString()
+                    }])
+                    .select();
+
+                if (fbData && fbData.length > 0) {
+                    const fallbackReg: EventRegistration = {
+                        ...(fbData[0] as EventRegistration),
+                        payment_status: app.payment_status || (isPaidEvent ? "paid" : "free"),
+                        payment_id: app.payment_id,
+                        amount_paid: app.amount_paid
+                    };
+                    setEventRegistrations(prev => [fallbackReg, ...prev]);
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('unai_event_registrations') || '[]');
+                        localStorage.setItem('unai_event_registrations', JSON.stringify([fallbackReg, ...stored]));
+                    } catch (e) {}
+                    return;
+                }
+                if (fbError) console.error("Error in fallback registration insert:", fbError);
+            }
+
             // Fallback optimistic entry so data isn't lost
             setEventRegistrations(prev => [tempReg, ...prev]);
             try {

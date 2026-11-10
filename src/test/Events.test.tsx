@@ -7,8 +7,8 @@ import { BrowserRouter } from "react-router-dom";
 // Mock the DataContext or provide a wrapper if needed
 // For now, let's just check if it renders within the necessary providers
 
-describe("Events Page Redesign", () => {
-    it("renders the Global Collective heading", async () => {
+describe("Events Page", () => {
+    it("renders the Events heading", async () => {
         render(
             <BrowserRouter>
                 <DataProvider>
@@ -17,12 +17,10 @@ describe("Events Page Redesign", () => {
             </BrowserRouter>
         );
 
-        // Check for the new premium heading text
-        expect(screen.getByText(/Global/i)).toBeDefined();
-        expect(screen.getByText(/Collective/i)).toBeDefined();
+        expect(screen.getAllByText(/EVENTS/i).length).toBeGreaterThan(0);
     });
 
-    it("renders the Engineering Communities badge", () => {
+    it("renders the UNAI TECH Live Events badge", () => {
         render(
             <BrowserRouter>
                 <DataProvider>
@@ -31,6 +29,6 @@ describe("Events Page Redesign", () => {
             </BrowserRouter>
         );
 
-        expect(screen.getByText(/Engineering Communities/i)).toBeDefined();
+        expect(screen.getAllByText(/UNAI TECH — Live Events/i).length).toBeGreaterThan(0);
     });
 });

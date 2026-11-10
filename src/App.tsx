@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { LenisSmoothScroll } from "@/components/effects/LenisSmoothScroll";
 import { FloatingNavbar } from "@/components/layout/FloatingNavbar";
@@ -34,23 +34,37 @@ import { usePWA } from "@/hooks/usePWA";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+// PWA features (Install Prompt, Offline Indicator, Update Notification) are strictly restricted to Admin routes
+const AdminPWAManager = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
   const { needRefresh, updateServiceWorker, setNeedRefresh } = usePWA();
 
+  if (!isAdminRoute) return null;
+
+  return (
+    <>
+      <OfflineIndicator />
+      <PWAInstallPrompt />
+      <PWAUpdateNotification
+        needRefresh={needRefresh}
+        onUpdate={() => updateServiceWorker(true)}
+        onDismiss={() => setNeedRefresh(false)}
+      />
+    </>
+  );
+};
+
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <DataProvider>
-          <OfflineIndicator />
-          <PWAUpdateNotification
-            needRefresh={needRefresh}
-            onUpdate={() => updateServiceWorker(true)}
-            onDismiss={() => setNeedRefresh(false)}
-          />
           <LenisSmoothScroll>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              <AdminPWAManager />
               <FloatingNavbar />
               <ScrollToTop />
               <Routes>

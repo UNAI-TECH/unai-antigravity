@@ -31,18 +31,18 @@ export default defineConfig(({ mode }) => ({
         "robots.txt"
       ],
       manifest: {
-        name: "UNAI TECH | AI Engineering & Intelligent Systems",
-        short_name: "UNAI TECH",
-        description: "UNAI TECH provides elite AI engineering, intelligent software architecture, and autonomous operational systems.",
+        name: "UNAI TECH Admin Portal",
+        short_name: "UNAI Admin",
+        description: "UNAI TECH administrative control center and management dashboard.",
         theme_color: "#0A0B10",
         background_color: "#0A0B10",
         display: "standalone",
         display_override: ["window-controls-overlay", "standalone", "minimal-ui"],
         orientation: "portrait-primary",
         scope: "/",
-        start_url: "/",
-        id: "/",
-        categories: ["business", "education", "productivity", "utilities"],
+        start_url: "/admin",
+        id: "/admin",
+        categories: ["business", "productivity", "utilities"],
         icons: [
           {
             src: "/pwa-64x64.png",
@@ -74,31 +74,24 @@ export default defineConfig(({ mode }) => ({
         ],
         shortcuts: [
           {
-            name: "Services & AI Systems",
-            short_name: "Services",
-            description: "Explore AI engineering and enterprise solutions",
-            url: "/services",
+            name: "Admin Dashboard",
+            short_name: "Dashboard",
+            description: "Access UNAI Admin Dashboard",
+            url: "/admin/dashboard",
             icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
           },
           {
-            name: "Products & Platforms",
-            short_name: "Products",
-            description: "Explore My Vidyon ERP and autonomous software",
-            url: "/products",
+            name: "Events Management",
+            short_name: "Events",
+            description: "Manage events and registrations",
+            url: "/admin/dashboard",
             icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
           },
           {
-            name: "Careers at UNAI",
-            short_name: "Careers",
-            description: "Explore open engineering & AI positions",
-            url: "/careers",
-            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
-          },
-          {
-            name: "Contact UNAI",
-            short_name: "Contact",
-            description: "Connect with UNAI leadership & engineering",
-            url: "/contact",
+            name: "Job Applications",
+            short_name: "Applications",
+            description: "Review candidates & applications",
+            url: "/admin/dashboard",
             icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
           }
         ]

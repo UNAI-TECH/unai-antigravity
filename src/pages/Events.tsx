@@ -19,78 +19,170 @@ import {
   ExternalLink,
   Sparkles,
   Check,
-  Lock
+  Lock,
+  IndianRupee,
+  Loader2
 } from "lucide-react";
-import { useData } from "@/context/DataContext";
+import { useData, normalizeEventPaidData } from "@/context/DataContext";
 import { useSearchParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { triggerPaymentSuccessConfetti } from "@/utils/confetti";
+import { RazorpayPaymentButton } from "@/components/events/RazorpayPaymentButton";
 
 // ─── Registration Modal ──────────────────────────────────────────────────────────
 const RegistrationModal = ({ event }: { event: any }) => {
   const { addEventRegistration, eventRegistrations } = useData();
+  const normalizedEvent = normalizeEventPaidData(event);
+  const isPaid = Boolean(normalizedEvent.is_paid) || Number(normalizedEvent.amount || 0) > 0;
+  const eventAmount = Number(normalizedEvent.amount || 0);
+  const paymentButtonId = normalizedEvent.payment_button_id || "pl_TxxlM2Z9Q4JvBr";
+
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "success">("form");
   const [formData, setFormData] = useState<any>({});
   const [selectedRadio, setSelectedRadio] = useState<{ [fieldId: string]: string }>({});
   const [otherTextValues, setOtherTextValues] = useState<{ [fieldId: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<any>(null);
 
-  const currentCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
-  const capacity = event.max_registrations
-    ? Number(event.max_registrations)
-    : parseInt(String(event.attendees || '').replace(/[^0-9]/g, ''), 10);
+  const currentCount = eventRegistrations.filter((r) => r.event_id === normalizedEvent.id).length;
+  const capacity = normalizedEvent.max_registrations
+    ? Number(normalizedEvent.max_registrations)
+    : parseInt(String(normalizedEvent.attendees || '').replace(/[^0-9]/g, ''), 10);
   const isCapacityReached = !isNaN(capacity) && capacity > 0 && currentCount >= capacity;
 
-  // CRITICAL FIX: Lock body scroll & stop Lenis smooth scroll while modal is open
-  // This allows native trackpad two-finger scrolling inside the popup without scrolling the background page.
+  // Lock body scroll & stop Lenis smooth scroll while modal is open
   useEffect(() => {
     if (open) {
-      if (typeof window !== "undefined" && window.lenis) {
-        window.lenis.stop();
+      if (typeof window !== "undefined" && (window as any).lenis) {
+        (window as any).lenis.stop();
       }
       document.body.style.overflow = "hidden";
     } else {
-      if (typeof window !== "undefined" && window.lenis) {
-        window.lenis.start();
+      if (typeof window !== "undefined" && (window as any).lenis) {
+        (window as any).lenis.start();
       }
       document.body.style.overflow = "";
     }
     return () => {
-      if (typeof window !== "undefined" && window.lenis) {
-        window.lenis.start();
+      if (typeof window !== "undefined" && (window as any).lenis) {
+        (window as any).lenis.start();
       }
       document.body.style.overflow = "";
     };
   }, [open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetModal = () => {
+    setStep("form");
+    setFormData({});
+    setSelectedRadio({});
+    setOtherTextValues({});
+    setPaymentResult(null);
+    setIsSubmitting(false);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setTimeout(resetModal, 300);
+    }
+  };
+
+  const validateAttendeeDetails = (): boolean => {
+    const name = (formData['name'] || '').trim();
+    const email = (formData['email'] || '').trim();
+    const phone = (formData['phone'] || '').trim();
+
+    if (!name) {
+      toast.error("Please enter your Full Name.");
+      return false;
+    }
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid Email address.");
+      return false;
+    }
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      toast.error("Please enter a valid 10-digit Phone number.");
+      return false;
+    }
 
     // Validate any selected "Other" fields that are required
-    if (event.form_fields && Array.isArray(event.form_fields)) {
-      for (const field of event.form_fields) {
-        if (field.type === 'multiple_choice' && field.required) {
-          const selected = selectedRadio[field.id];
-          const isOther = selected && (selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others');
-          if (isOther && (!otherTextValues[field.id] || !otherTextValues[field.id].trim())) {
-            toast.error(`Please specify your answer for "${field.label}"`);
-            return;
+    if (normalizedEvent.form_fields && Array.isArray(normalizedEvent.form_fields)) {
+      for (const field of normalizedEvent.form_fields) {
+        if (field.required) {
+          if (field.type === 'multiple_choice') {
+            const selected = selectedRadio[field.id];
+            if (!selected) {
+              toast.error(`Please select an option for "${field.label}"`);
+              return false;
+            }
+            const isOther = selected.trim().toLowerCase() === 'other' || selected.trim().toLowerCase() === 'others';
+            if (isOther && (!otherTextValues[field.id] || !otherTextValues[field.id].trim())) {
+              toast.error(`Please specify your answer for "${field.label}"`);
+              return false;
+            }
+          } else if (field.type === 'checkboxes') {
+            const current = formData[field.label] || [];
+            if (!Array.isArray(current) || current.length === 0) {
+              toast.error(`Please select at least one option for "${field.label}"`);
+              return false;
+            }
+          } else {
+            const val = formData[field.label];
+            if (!val || !String(val).trim()) {
+              toast.error(`Please fill in "${field.label}"`);
+              return false;
+            }
           }
         }
       }
     }
 
-    setIsSubmitting(true);
-    
-    // Extract default fields
-    const name = formData['name'] || '';
-    const email = formData['email'] || '';
-    const phone = formData['phone'] || '';
+    // Cache pending registration in case of payment redirect
+    try {
+      const answers = { ...formData };
+      delete answers['name'];
+      delete answers['email'];
+      delete answers['phone'];
+      sessionStorage.setItem(
+        'unai_pending_paid_registration',
+        JSON.stringify({
+          event_id: normalizedEvent.id,
+          event_title: normalizedEvent.title,
+          applicant_name: name,
+          email,
+          phone,
+          answers,
+          amount: eventAmount,
+        })
+      );
+    } catch (err) {
+      console.error("Failed to store pending registration:", err);
+    }
 
-    // Extract dynamic answers
+    return true;
+  };
+
+  const handleFreeSubmit = async () => {
+    if (isPaid || eventAmount > 0) {
+      toast.error("Payment is compulsory for this event. Please complete payment using the Razorpay button.");
+      return;
+    }
+
+    if (!validateAttendeeDetails()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const name = (formData['name'] || '').trim();
+    const email = (formData['email'] || '').trim();
+    const phone = (formData['phone'] || '').trim();
+
     const answers = { ...formData };
     delete answers['name'];
     delete answers['email'];
@@ -98,19 +190,78 @@ const RegistrationModal = ({ event }: { event: any }) => {
 
     try {
       await addEventRegistration({
-        event_id: event.id,
+        event_id: normalizedEvent.id,
         applicant_name: name,
         email,
         phone,
         answers,
+        payment_status: "free",
+        amount_paid: 0
       });
+      triggerPaymentSuccessConfetti();
+      setStep("success");
       toast.success("Registration Successful!");
-      setFormData({});
-      setSelectedRadio({});
-      setOtherTextValues({});
-      setOpen(false);
     } catch (error: any) {
       toast.error(error?.message || "Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentData: any) => {
+    // Payment is compulsory: verify authentic Razorpay transaction ID before registration completes
+    const rawPaymentId = paymentData?.razorpay_payment_id || paymentData?.payment_id;
+    const paymentId = typeof rawPaymentId === "string" ? rawPaymentId.trim() : "";
+
+    if (!paymentId || !paymentId.startsWith("pay_") || paymentId.length < 8) {
+      toast.error("Payment is compulsory. A verified Razorpay transaction is required to complete registration.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const name = (formData['name'] || '').trim();
+    const email = (formData['email'] || '').trim();
+    const phone = (formData['phone'] || '').trim();
+
+    const answers = { ...formData };
+    delete answers['name'];
+    delete answers['email'];
+    delete answers['phone'];
+
+    try {
+      await addEventRegistration({
+        event_id: normalizedEvent.id,
+        applicant_name: name,
+        email,
+        phone,
+        answers: {
+          ...answers,
+          payment_id: paymentId,
+          payment_status: "paid",
+          amount_paid: eventAmount
+        },
+        payment_status: "paid",
+        payment_id: paymentId,
+        amount_paid: eventAmount
+      });
+
+      // Clear pending session registration now that it is completed
+      try {
+        sessionStorage.removeItem('unai_pending_paid_registration');
+      } catch {}
+
+      setPaymentResult({
+        ...paymentData,
+        payment_id: paymentId,
+      });
+
+      // Trigger spectacular celebratory confetti!
+      triggerPaymentSuccessConfetti();
+      setStep("success");
+      toast.success("Payment & Registration confirmed!");
+    } catch (error: any) {
+      console.error("Failed to complete registration:", error);
+      toast.error(error?.message || "Payment processed, but saving registration failed. Please contact support.");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,14 +288,14 @@ const RegistrationModal = ({ event }: { event: any }) => {
   };
 
   const handleCheckboxChange = (field: any, value: string, checked: boolean) => {
-      setFormData((prev: any) => {
-          const current = prev[field.label] || [];
-          if (checked) {
-              return { ...prev, [field.label]: [...current, value] };
-          } else {
-              return { ...prev, [field.label]: current.filter((v: string) => v !== value) };
-          }
-      });
+    setFormData((prev: any) => {
+      const current = prev[field.label] || [];
+      if (checked) {
+        return { ...prev, [field.label]: [...current, value] };
+      } else {
+        return { ...prev, [field.label]: current.filter((v: string) => v !== value) };
+      }
+    });
   };
 
   if (isCapacityReached) {
@@ -160,223 +311,358 @@ const RegistrationModal = ({ event }: { event: any }) => {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all duration-300 flex items-center justify-center gap-3 group cursor-pointer">
-          Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          {isPaid ? (
+            <>
+              Register & Pay ₹{eventAmount.toLocaleString("en-IN")}{" "}
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </>
+          ) : (
+            <>
+              Register Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </>
+          )}
         </button>
       </DialogTrigger>
       <DialogContent 
         data-lenis-prevent
-        onWheel={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
-        className="sm:max-w-[620px] w-[95vw] bg-white text-slate-900 border border-slate-200 p-6 sm:p-8 rounded-[2rem] max-h-[88vh] overflow-y-auto custom-scrollbar shadow-2xl overscroll-contain"
+        className="sm:max-w-[620px] w-[95vw] bg-white text-slate-900 border border-slate-200 p-5 sm:p-8 rounded-[2rem] max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl overscroll-contain z-[60]"
         style={{ overscrollBehavior: 'contain' }}
       >
-        <DialogHeader className="mb-5 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Registration Open</span>
-          </div>
-          <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-            Register for {event.title}
-          </DialogTitle>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">Please fill in your details below to secure your entry pass.</p>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Default Fields */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Full Name *</label>
-              <Input 
-                required 
-                onChange={(e) => handleFieldChange("name", e.target.value)} 
-                placeholder="e.g. John Doe"
-                className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Email Address *</label>
-                  <Input 
-                    type="email" 
-                    required 
-                    onChange={(e) => handleFieldChange("email", e.target.value)} 
-                    placeholder="john@example.com"
-                    className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
-                  />
+        {/* Registration Form Step (Directly embeds Razorpay Payment Button for every paid event) */}
+        {step === "form" && (
+          <div className="space-y-6">
+            <DialogHeader className="mb-2 pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Registration Open</span>
                 </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Phone Number *</label>
-                  <Input 
-                    type="tel" 
-                    required 
-                    onChange={(e) => handleFieldChange("phone", e.target.value)} 
-                    placeholder="+91 98765 43210"
-                    className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
-                  />
-                </div>
-            </div>
-          </div>
-
-          {/* Dynamic Fields */}
-          {event.form_fields && event.form_fields.length > 0 && (
-            <div className="space-y-5 pt-5 border-t border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800">Additional Information</span>
-                  <div className="flex-1 h-px bg-slate-100" />
-                </div>
-                {event.form_fields.map((field: any) => (
-                    <div key={field.id} className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 block">
-                            {field.label} {field.required && <span className="text-red-500">*</span>}
-                        </label>
-                        
-                        {field.type === 'short_answer' && (
-                            <Input 
-                                required={field.required} 
-                                onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                placeholder="Your answer..."
-                                className="bg-slate-50 border-slate-200 text-slate-900 h-10 rounded-xl focus:border-primary focus:bg-white"
-                            />
-                        )}
-
-                        {field.type === 'long_answer' && (
-                            <Textarea 
-                                required={field.required} 
-                                onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                                placeholder="Provide your detailed answer..."
-                                className="bg-slate-50 border-slate-200 text-slate-900 resize-none h-24 rounded-xl focus:border-primary focus:bg-white"
-                            />
-                        )}
-
-                        {field.type === 'multiple_choice' && (
-                            <div className="space-y-2.5 pt-1">
-                                {field.options.map((opt: string, i: number) => {
-                                    const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
-                                    const isSelected = selectedRadio[field.id] === opt;
-
-                                    return (
-                                        <div key={i} className="space-y-2">
-                                            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                                                <input 
-                                                    type="radio" 
-                                                    name={`field_${field.id}`} 
-                                                    required={field.required && !selectedRadio[field.id]}
-                                                    value={opt}
-                                                    checked={selectedRadio[field.id] === opt}
-                                                    onChange={() => handleRadioChange(field, opt)}
-                                                    className="w-4 h-4 accent-primary cursor-pointer"
-                                                />
-                                                <span className="text-sm font-medium text-slate-800">{opt}</span>
-                                            </label>
-
-                                            {isOther && isSelected && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: -4 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    className="pl-7 pt-1"
-                                                >
-                                                    <Input
-                                                        placeholder="Please specify your other answer..."
-                                                        required={field.required}
-                                                        value={otherTextValues[field.id] || ""}
-                                                        onChange={(e) => handleOtherInputChange(field, e.target.value)}
-                                                        className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
-                                                        autoFocus
-                                                    />
-                                                </motion.div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {field.type === 'checkboxes' && (
-                            <div className="space-y-2 pt-1">
-                                {field.options.map((opt: string, i: number) => {
-                                    const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
-                                    const checked = (formData[field.label] || []).some((v: string) => v === opt || v.startsWith(`Other:`));
-
-                                    return (
-                                        <div key={i} className="space-y-2">
-                                            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                                                <input 
-                                                    type="checkbox" 
-                                                    value={opt}
-                                                    checked={checked}
-                                                    onChange={(e) => {
-                                                        const isChecked = e.target.checked;
-                                                        if (isOther) {
-                                                            const custom = otherTextValues[field.id]?.trim();
-                                                            const val = custom ? `Other: ${custom}` : 'Other';
-                                                            handleCheckboxChange(field, val, isChecked);
-                                                        } else {
-                                                            handleCheckboxChange(field, opt, isChecked);
-                                                        }
-                                                    }}
-                                                    className="w-4 h-4 rounded accent-primary cursor-pointer"
-                                                />
-                                                <span className="text-sm font-medium text-slate-800">{opt}</span>
-                                            </label>
-
-                                            {isOther && checked && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: -4 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    className="pl-7 pt-1"
-                                                >
-                                                    <Input
-                                                        placeholder="Please specify your other answer..."
-                                                        value={otherTextValues[field.id] || ""}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            setOtherTextValues(prev => ({ ...prev, [field.id]: val }));
-                                                            setFormData((prev: any) => {
-                                                                const current: string[] = prev[field.label] || [];
-                                                                const filtered = current.filter(c => c !== 'Other' && !c.startsWith('Other:'));
-                                                                const newVal = val.trim() ? `Other: ${val.trim()}` : 'Other';
-                                                                return { ...prev, [field.label]: [...filtered, newVal] };
-                                                            });
-                                                        }}
-                                                        className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
-                                                        autoFocus
-                                                    />
-                                                </motion.div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-          )}
-
-          <div className="pt-4 border-t border-slate-100">
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Submitting Registration...
-                  </>
-                ) : (
-                  <>
-                    Complete Registration
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                {isPaid && (
+                  <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-black">
+                    <IndianRupee className="w-3.5 h-3.5" />
+                    {eventAmount.toLocaleString("en-IN")} • Paid Event
+                  </span>
                 )}
-            </button>
-            <p className="text-[11px] text-center text-slate-400 mt-2">Your information is securely verified and will only be used for event admission.</p>
+              </div>
+              <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                Register for {normalizedEvent.title}
+              </DialogTitle>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                {isPaid
+                  ? "Please fill in your attendee details and process your fee using the Razorpay payment button below."
+                  : "Please fill in your details below to secure your entry pass."}
+              </p>
+            </DialogHeader>
+
+            {/* Inputs Container (DIV to prevent nested form conflicts with Razorpay) */}
+            <div className="space-y-5">
+              {/* Default Fields */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Full Name *</label>
+                  <Input 
+                    required 
+                    value={formData['name'] || ''}
+                    onChange={(e) => handleFieldChange("name", e.target.value)} 
+                    placeholder="e.g. John Doe"
+                    className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Email Address *</label>
+                    <Input 
+                      type="email" 
+                      required 
+                      value={formData['email'] || ''}
+                      onChange={(e) => handleFieldChange("email", e.target.value)} 
+                      placeholder="john@example.com"
+                      className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">Phone Number *</label>
+                    <Input 
+                      type="tel" 
+                      required 
+                      value={formData['phone'] || ''}
+                      onChange={(e) => handleFieldChange("phone", e.target.value)} 
+                      placeholder="+91 98765 43210"
+                      className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-11 rounded-xl focus:border-primary focus:bg-white" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Fields */}
+              {event.form_fields && event.form_fields.length > 0 && (
+                <div className="space-y-5 pt-5 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">Additional Information</span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                  </div>
+                  {event.form_fields.map((field: any) => (
+                    <div key={field.id} className="space-y-2">
+                      <label className="text-xs font-bold text-slate-700 block">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                      </label>
+
+                      {field.type === 'short_answer' && (
+                        <Input 
+                          required={field.required} 
+                          value={formData[field.label] || ''}
+                          onChange={(e) => handleFieldChange(field.label, e.target.value)} 
+                          placeholder="Your answer..."
+                          className="bg-slate-50 border-slate-200 text-slate-900 h-10 rounded-xl focus:border-primary focus:bg-white"
+                        />
+                      )}
+
+                      {field.type === 'long_answer' && (
+                        <Textarea 
+                          required={field.required} 
+                          value={formData[field.label] || ''}
+                          onChange={(e) => handleFieldChange(field.label, e.target.value)} 
+                          placeholder="Provide your detailed answer..."
+                          className="bg-slate-50 border-slate-200 text-slate-900 resize-none h-24 rounded-xl focus:border-primary focus:bg-white"
+                        />
+                      )}
+
+                      {field.type === 'multiple_choice' && (
+                        <div className="space-y-2.5 pt-1">
+                          {field.options.map((opt: string, i: number) => {
+                            const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+                            const isSelected = selectedRadio[field.id] === opt;
+
+                            return (
+                              <div key={i} className="space-y-2">
+                                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                                  <input 
+                                    type="radio" 
+                                    name={`field_${field.id}`} 
+                                    value={opt}
+                                    checked={selectedRadio[field.id] === opt}
+                                    onChange={() => handleRadioChange(field, opt)}
+                                    className="w-4 h-4 accent-primary cursor-pointer"
+                                  />
+                                  <span className="text-sm font-medium text-slate-800">{opt}</span>
+                                </label>
+
+                                {isOther && isSelected && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pl-7 pt-1"
+                                  >
+                                    <Input
+                                      placeholder="Please specify your other answer..."
+                                      value={otherTextValues[field.id] || ""}
+                                      onChange={(e) => handleOtherInputChange(field, e.target.value)}
+                                      className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
+                                      autoFocus
+                                    />
+                                  </motion.div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {field.type === 'checkboxes' && (
+                        <div className="space-y-2 pt-1">
+                          {field.options.map((opt: string, i: number) => {
+                            const isOther = opt.trim().toLowerCase() === 'other' || opt.trim().toLowerCase() === 'others';
+                            const checked = (formData[field.label] || []).some((v: string) => v === opt || v.startsWith(`Other:`));
+
+                            return (
+                              <div key={i} className="space-y-2">
+                                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                                  <input 
+                                    type="checkbox" 
+                                    value={opt}
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const isChecked = e.target.checked;
+                                      if (isOther) {
+                                        const custom = otherTextValues[field.id]?.trim();
+                                        const val = custom ? `Other: ${custom}` : 'Other';
+                                        handleCheckboxChange(field, val, isChecked);
+                                      } else {
+                                        handleCheckboxChange(field, opt, isChecked);
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded accent-primary cursor-pointer"
+                                  />
+                                  <span className="text-sm font-medium text-slate-800">{opt}</span>
+                                </label>
+
+                                {isOther && checked && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pl-7 pt-1"
+                                  >
+                                    <Input
+                                      placeholder="Please specify your other answer..."
+                                      value={otherTextValues[field.id] || ""}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setOtherTextValues(prev => ({ ...prev, [field.id]: val }));
+                                        setFormData((prev: any) => {
+                                          const current: string[] = prev[field.label] || [];
+                                          const filtered = current.filter(c => c !== 'Other' && !c.startsWith('Other:'));
+                                          const newVal = val.trim() ? `Other: ${val.trim()}` : 'Other';
+                                          return { ...prev, [field.label]: [...filtered, newVal] };
+                                        });
+                                      }}
+                                      className="bg-slate-50 border-slate-300 text-slate-900 text-sm h-10 rounded-xl focus:border-primary focus:bg-white"
+                                      autoFocus
+                                    />
+                                  </motion.div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Payment Section for Paid Events vs Free Submission */}
+              {isPaid ? (
+                <div className="pt-6 border-t border-slate-200/90 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      Payment & Submission (Compulsory)
+                    </span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                  </div>
+
+                  {/* Complete Embedded Razorpay Payment Button */}
+                  <RazorpayPaymentButton
+                    buttonId={paymentButtonId}
+                    amount={eventAmount}
+                    onSuccess={handlePaymentSuccess}
+                    beforePayment={validateAttendeeDetails}
+                    className="w-full"
+                  />
+
+                  {isSubmitting && (
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                      <span>Payment verified! Recording your confirmed registration...</span>
+                    </div>
+                  )}
+
+                  <p className="text-[11px] text-center text-slate-400">
+                    Use the Razorpay payment button above to complete your ticket purchase. Your registration is officially confirmed only upon verified payment.
+                  </p>
+                </div>
+              ) : (
+                <div className="pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={handleFreeSubmit}
+                    disabled={isSubmitting}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Submitting Registration...
+                      </>
+                    ) : (
+                      <>
+                        Complete Registration
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[11px] text-center text-slate-400 mt-2">
+                    Your information is securely verified and will only be used for event admission.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </form>
+        )}
+
+        {/* STEP 3: Celebratory Confetti Success Screen */}
+        {step === "success" && (
+          <div className="py-6 flex flex-col items-center text-center space-y-6 animate-in fade-in-50 zoom-in-95 duration-500">
+            {/* Animated Celebration Icon */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-600 shadow-xl shadow-emerald-500/20">
+                <CheckCircle2 className="w-12 h-12 stroke-[2.5]" />
+              </div>
+              <div className="absolute -top-1 -right-1 p-2 rounded-full bg-amber-400 text-slate-950 shadow-md">
+                <Sparkles className="w-4 h-4 fill-current" />
+              </div>
+            </div>
+
+            <div className="space-y-2 max-w-md">
+              <h3 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {isPaid ? "Payment & Registration Confirmed!" : "Registration Successful!"}
+              </h3>
+              <p className="text-slate-600 text-sm">
+                Woohoo! You are officially registered for <span className="font-bold text-slate-900">{normalizedEvent.title}</span>. A confirmation has been recorded.
+              </p>
+            </div>
+
+            {/* Receipt Summary Card */}
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left text-xs space-y-3">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Attendee</span>
+                <span className="font-black text-slate-900 text-sm">{formData['name']}</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Email & Contact</span>
+                <span className="font-semibold text-slate-700">{formData['email']} • {formData['phone']}</span>
+              </div>
+              {isPaid && (
+                <>
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Amount Paid</span>
+                    <span className="font-black text-emerald-600 text-base">₹{eventAmount.toLocaleString("en-IN")}</span>
+                  </div>
+                  {paymentResult?.payment_id && (
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/80">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Transaction ID</span>
+                      <span className="font-mono font-bold text-slate-700 text-[11px]">{paymentResult.payment_id}</span>
+                    </div>
+                  )}
+                </>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Event Date & Venue</span>
+                <span className="font-medium text-slate-700">{event.date} • {event.location}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => triggerPaymentSuccessConfetti()}
+                className="flex-1 py-3.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-100 font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" /> Celebrate Again 🎉
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOpenChange(false)}
+                className="flex-1 py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest transition-colors shadow-lg shadow-slate-900/10"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -480,8 +766,12 @@ const Countdown = ({ targetDate, dark = false }: { targetDate?: string; dark?: b
 };
 
 // ─── Event Card (1:1 Ratio Cover Image, Clean Card Layout) ────────────────────
-const EventCard = ({ event, index, onClick }: { event: any; index: number; onClick: () => void }) => {
+const EventCard = ({ event: rawEvent, index, onClick }: { event: any; index: number; onClick: () => void }) => {
   const { eventRegistrations } = useData();
+  const event = normalizeEventPaidData(rawEvent);
+  const isPaid = Boolean(event.is_paid) || Number(event.amount || 0) > 0;
+  const eventAmount = Number(event.amount || 0);
+
   const displayImage = event.cover_image || event.banner;
   const regCount = eventRegistrations.filter((r) => r.event_id === event.id).length;
   const capacity = event.max_registrations
@@ -518,28 +808,42 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
 
         {/* Top Floating Badges */}
         <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between pointer-events-none">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-white border border-white/20 shadow-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {event.type || "Event"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-white border border-white/20 shadow-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              {event.type || "Event"}
+            </span>
+            {isPaid ? (
+              <span className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-md">
+                ₹{eventAmount.toLocaleString("en-IN")}
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold uppercase tracking-wider border border-white/20 shadow-md">
+                Free
+              </span>
+            )}
+          </div>
 
           <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-300">
             <ArrowUpRight className="w-4 h-4" />
           </div>
         </div>
 
-        {event.registration_type === 'manual' && (
-          <div className="absolute bottom-3 left-3.5 pointer-events-none flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
-              Manual Form
-            </span>
+        {/* Bottom Floating Badges on image */}
+        <div className="absolute bottom-3 left-3.5 right-3.5 pointer-events-none flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            {event.registration_type === 'manual' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
+                Manual Form
+              </span>
+            )}
             {isFull && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-rose-600/90 backdrop-blur-md text-[10px] font-bold text-white border border-white/20 shadow-sm">
                 Closed
               </span>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Card Body with proper vertical distribution & NO cutoffs */}
@@ -575,9 +879,21 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
           {/* Footer Action Row */}
           <div className="flex items-center justify-between pt-1">
             <Countdown targetDate={event.date} />
-            <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-              Details <ChevronRight className="w-3.5 h-3.5" />
-            </span>
+            <div className="flex items-center gap-2.5">
+              {isPaid ? (
+                <span className="text-xs font-black text-emerald-600 flex items-center gap-0.5">
+                  <IndianRupee className="w-3 h-3" />
+                  {eventAmount.toLocaleString("en-IN")}
+                </span>
+              ) : (
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Free
+                </span>
+              )}
+              <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                Details <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -587,7 +903,7 @@ const EventCard = ({ event, index, onClick }: { event: any; index: number; onCli
 
 // ─── Events Page ──────────────────────────────────────────────────────────────
 const Events = () => {
-  const { events, eventRegistrations } = useData();
+  const { events, eventRegistrations, addEventRegistration } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("id");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(eventId);
@@ -597,13 +913,84 @@ const Events = () => {
     setSelectedEventId(eventId || null);
   }, [eventId]);
 
+  useEffect(() => {
+    const rawRazorpayPaymentId = searchParams.get("razorpay_payment_id");
+    const rawPaymentStatus = searchParams.get("payment_status");
+    const razorpayPaymentId = rawRazorpayPaymentId?.trim() || "";
+    const paymentStatus = rawPaymentStatus?.trim().toLowerCase() || "";
+
+    // Clear payment query parameters from URL once read to avoid replay or refresh issues
+    if (rawRazorpayPaymentId || rawPaymentStatus) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("razorpay_payment_id");
+      newParams.delete("payment_status");
+      newParams.delete("razorpay_payment_link_id");
+      newParams.delete("razorpay_payment_link_status");
+      newParams.delete("razorpay_signature");
+      setSearchParams(newParams, { replace: true });
+    }
+
+    // Payment is compulsory: require authentic Razorpay payment ID format
+    if (razorpayPaymentId && razorpayPaymentId.startsWith("pay_") && razorpayPaymentId.length >= 8) {
+      // Attempt to retrieve pending registration from sessionStorage if Razorpay redirected
+      try {
+        const saved = sessionStorage.getItem('unai_pending_paid_registration');
+        if (saved) {
+          const pending = JSON.parse(saved);
+          sessionStorage.removeItem('unai_pending_paid_registration');
+
+          const paidAmount = Number(pending.amount) || 0;
+          if (paidAmount <= 0) {
+            toast.error("Payment verification failed: invalid amount.");
+            return;
+          }
+
+          addEventRegistration({
+            event_id: pending.event_id,
+            applicant_name: pending.applicant_name,
+            email: pending.email,
+            phone: pending.phone,
+            answers: {
+              ...(pending.answers || {}),
+              payment_id: razorpayPaymentId,
+              payment_status: "paid",
+              amount_paid: paidAmount,
+            },
+            payment_status: "paid",
+            payment_id: razorpayPaymentId,
+            amount_paid: paidAmount,
+          })
+            .then(() => {
+              triggerPaymentSuccessConfetti();
+              toast.success(`Payment of ₹${paidAmount} Verified! Your registration for "${pending.event_title}" is confirmed.`);
+            })
+            .catch((err) => {
+              console.error("Error saving redirected registration:", err);
+              toast.error(err?.message || "Payment verified, but saving registration failed. Please contact support.");
+            });
+          return;
+        }
+      } catch (err) {
+        console.error("Error processing redirected registration:", err);
+      }
+
+      triggerPaymentSuccessConfetti();
+      toast.success("Payment Verified! Your registration is confirmed.");
+    } else if (paymentStatus === "failed" || paymentStatus === "cancelled") {
+      toast.error("Payment was not completed. Payment is compulsory to register for this event.");
+    }
+  }, [searchParams, setSearchParams, addEventRegistration]);
+
   const handleOpenEvent = (id: string) => {
     setSearchParams({ id });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCloseEvent = () => setSearchParams({});
-  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const rawSelectedEvent = events.find((e) => e.id === selectedEventId);
+  const selectedEvent = rawSelectedEvent ? normalizeEventPaidData(rawSelectedEvent) : undefined;
+  const isSelectedEventPaid = Boolean(selectedEvent?.is_paid) || Number(selectedEvent?.amount || 0) > 0;
+  const selectedEventAmount = Number(selectedEvent?.amount || 0);
 
   // ── Redesigned Event Preview / Detail Page (SEPARATE 3:1 ULTRA-WIDE HERO) ─────
   if (selectedEventId && selectedEvent) {
@@ -685,6 +1072,15 @@ const Events = () => {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {selectedEvent.type || "Conference"}
               </span>
+              {isSelectedEventPaid ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-sm">
+                  ₹{selectedEventAmount.toLocaleString("en-IN")} • Paid Event
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white text-xs font-bold uppercase tracking-wider text-slate-700 border border-slate-200/90 shadow-sm">
+                  Free Entry
+                </span>
+              )}
               <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-blue-600 text-xs font-semibold text-white shadow-sm">
                 {selectedEvent.status === 'past' ? 'Past Event' : 'Official Event'}
               </span>
@@ -724,12 +1120,71 @@ const Events = () => {
 
               <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  <Ticket className="w-3.5 h-3.5 text-primary shrink-0" /> Admission
+                  {isSelectedEventPaid ? (
+                    <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Ticket className="w-3.5 h-3.5 text-primary shrink-0" />
+                  )}
+                  {isSelectedEventPaid ? "Entry Fee" : "Admission"}
                 </div>
                 <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">
-                  {selectedEvent.registration_type === 'manual' ? "Direct Entry" : "Online Pass"}
+                  {isSelectedEventPaid
+                    ? `₹${selectedEventAmount.toLocaleString("en-IN")}`
+                    : selectedEvent.registration_type === 'manual' ? "Direct Entry (Free)" : "Online Pass (Free)"}
                 </div>
               </div>
+            </div>
+
+            {/* Mobile Quick Registration Action (Direct access on mobile touch devices) */}
+            <div className="block lg:hidden mt-5">
+              {isRegistrationClosed ? (
+                <button
+                  disabled
+                  className="w-full py-4 rounded-2xl bg-slate-200 text-slate-500 font-black text-sm uppercase tracking-wider border border-slate-300 shadow-none flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                >
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  Registration closed
+                </button>
+              ) : isSelectedEventPaid ? (
+                <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/5 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block">
+                        Official Entry Pass
+                      </span>
+                      <span className="text-2xl font-black text-slate-900">
+                        ₹{selectedEventAmount.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      Secured by Razorpay
+                    </span>
+                  </div>
+
+                  <RegistrationModal event={selectedEvent} />
+
+                  <p className="text-[11px] text-center text-slate-400">
+                    Payment is compulsory. Verified Razorpay ticket pass issued instantly upon payment.
+                  </p>
+                </div>
+              ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual') ? (
+                selectedEvent.registration_type === 'manual' ? (
+                  <RegistrationModal event={selectedEvent} />
+                ) : (
+                  <button
+                    onClick={() => window.open(selectedEvent.registration_link, "_blank")}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                  >
+                    Register for Event
+                    <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                )
+              ) : (
+                <div className="w-full py-4 text-center text-sm font-semibold text-slate-500 bg-slate-100 rounded-2xl border border-slate-200">
+                  Registrations Opening Soon
+                </div>
+              )}
             </div>
           </div>
 
@@ -823,8 +1278,8 @@ const Events = () => {
                         </p>
                       )}
                     </div>
-                  ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual') ? (
-                    selectedEvent.registration_type === 'manual' ? (
+                  ) : (selectedEvent.registration_link || selectedEvent.registration_type === 'manual' || isSelectedEventPaid) ? (
+                    selectedEvent.registration_type === 'manual' || isSelectedEventPaid ? (
                       <RegistrationModal event={selectedEvent} />
                     ) : (
                       <button
