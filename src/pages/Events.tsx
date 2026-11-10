@@ -1072,13 +1072,9 @@ const Events = () => {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {selectedEvent.type || "Conference"}
               </span>
-              {isSelectedEventPaid ? (
+              {isSelectedEventPaid && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-sm">
                   ₹{selectedEventAmount.toLocaleString("en-IN")} • Paid Event
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white text-xs font-bold uppercase tracking-wider text-slate-700 border border-slate-200/90 shadow-sm">
-                  Free Entry
                 </span>
               )}
               <span className="inline-flex items-center px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-blue-600 text-xs font-semibold text-white shadow-sm">
@@ -1096,7 +1092,7 @@ const Events = () => {
             )}
 
             {/* Key Info Cards Grid - Light Theme */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 mt-6">
               <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                   <Calendar className="w-3.5 h-3.5 text-primary shrink-0" /> Date
@@ -1116,22 +1112,6 @@ const Events = () => {
                   <Users className="w-3.5 h-3.5 text-primary shrink-0" /> Capacity
                 </div>
                 <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">{selectedEvent.attendees || "Open Access"}</div>
-              </div>
-
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
-                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  {isSelectedEventPaid ? (
-                    <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  ) : (
-                    <Ticket className="w-3.5 h-3.5 text-primary shrink-0" />
-                  )}
-                  {isSelectedEventPaid ? "Entry Fee" : "Admission"}
-                </div>
-                <div className="text-xs sm:text-base font-extrabold text-slate-900 truncate">
-                  {isSelectedEventPaid
-                    ? `₹${selectedEventAmount.toLocaleString("en-IN")}`
-                    : selectedEvent.registration_type === 'manual' ? "Direct Entry (Free)" : "Online Pass (Free)"}
-                </div>
               </div>
             </div>
 
