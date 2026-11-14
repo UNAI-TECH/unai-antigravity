@@ -813,13 +813,9 @@ const EventCard = ({ event: rawEvent, index, onClick }: { event: any; index: num
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               {event.type || "Event"}
             </span>
-            {isPaid ? (
+            {isPaid && (
               <span className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-md">
                 ₹{eventAmount.toLocaleString("en-IN")}
-              </span>
-            ) : (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold uppercase tracking-wider border border-white/20 shadow-md">
-                Free
               </span>
             )}
           </div>
